@@ -333,43 +333,45 @@ export const PeriodViewSystem: React.FC<PeriodViewSystemProps> = ({
                 {dayData.bookBreakdown.filter(x => x.sold > 0).length} টি বই বিক্রি হয়েছে
               </span>
             </div>
-            <table className="w-full text-left border-collapse text-xs">
-              <thead>
-                <tr className="bg-zinc-100 text-zinc-700 font-semibold border-b border-zinc-200">
-                  <th className="py-2.5 px-3">বইয়ের নাম</th>
-                  <th className="py-2.5 px-3 text-center">আজকের বিক্রি</th>
-                  <th className="py-2.5 px-3 text-right">আজকের রাজস্ব</th>
-                  <th className="py-2.5 px-3 text-right">আজকের নিট লাভ</th>
-                  <th className="py-2.5 px-3 text-center">অ্যাকশন</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-zinc-100">
-                {dayData.bookBreakdown.map((item, idx) => (
-                  <tr key={item.bookId} className="hover:bg-zinc-50 transition-colors">
-                    <td className="py-2.5 px-3 font-semibold text-zinc-900">
-                      {idx + 1}. {item.bookName}
-                    </td>
-                    <td className="py-2.5 px-3 text-center font-bold text-zinc-900">
-                      {item.sold > 0 ? `${formatNumber(item.sold)} কপি` : '-'}
-                    </td>
-                    <td className="py-2.5 px-3 text-right font-medium text-zinc-800">
-                      {item.revenue > 0 ? formatBDT(item.revenue) : '-'}
-                    </td>
-                    <td className="py-2.5 px-3 text-right font-bold text-zinc-900">
-                      {item.profit > 0 ? `+${formatBDT(item.profit)}` : '-'}
-                    </td>
-                    <td className="py-2.5 px-3 text-center">
-                      <button
-                        onClick={() => onOpenDailyEntryForBookAndDay(item.bookId, selectedDay)}
-                        className="text-[11px] text-zinc-800 hover:text-black font-semibold px-2 py-1 bg-zinc-100 hover:bg-zinc-200 rounded border border-zinc-200"
-                      >
-                        এন্ট্রি সম্পাদন
-                      </button>
-                    </td>
+            <div className="overflow-x-auto w-full">
+              <table className="w-full min-w-[550px] text-left border-collapse text-xs">
+                <thead>
+                  <tr className="bg-zinc-100 text-zinc-700 font-semibold border-b border-zinc-200">
+                    <th className="py-2.5 px-3">বইয়ের নাম</th>
+                    <th className="py-2.5 px-3 text-center">আজকের বিক্রি</th>
+                    <th className="py-2.5 px-3 text-right">আজকের রাজস্ব</th>
+                    <th className="py-2.5 px-3 text-right">আজকের নিট লাভ</th>
+                    <th className="py-2.5 px-3 text-center">অ্যাকশন</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-zinc-100">
+                  {dayData.bookBreakdown.map((item, idx) => (
+                    <tr key={item.bookId} className="hover:bg-zinc-50 transition-colors">
+                      <td className="py-2.5 px-3 font-semibold text-zinc-900">
+                        {idx + 1}. {item.bookName}
+                      </td>
+                      <td className="py-2.5 px-3 text-center font-bold text-zinc-900">
+                        {item.sold > 0 ? `${formatNumber(item.sold)} কপি` : '-'}
+                      </td>
+                      <td className="py-2.5 px-3 text-right font-medium text-zinc-800">
+                        {item.revenue > 0 ? formatBDT(item.revenue) : '-'}
+                      </td>
+                      <td className="py-2.5 px-3 text-right font-bold text-zinc-900">
+                        {item.profit > 0 ? `+${formatBDT(item.profit)}` : '-'}
+                      </td>
+                      <td className="py-2.5 px-3 text-center">
+                        <button
+                          onClick={() => onOpenDailyEntryForBookAndDay(item.bookId, selectedDay)}
+                          className="text-[11px] text-zinc-800 hover:text-black font-semibold px-2 py-1 bg-zinc-100 hover:bg-zinc-200 rounded border border-zinc-200"
+                        >
+                          এন্ট্রি সম্পাদন
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
 
         </div>
