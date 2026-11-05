@@ -24,6 +24,8 @@ interface HeaderProps {
   onResetData: () => void;
   onPrint: () => void;
   bookCount: number;
+  zoom?: '75' | '100';
+  onSetZoom?: (zoom: '75' | '100') => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -36,6 +38,8 @@ export const Header: React.FC<HeaderProps> = ({
   onResetData,
   onPrint,
   bookCount,
+  zoom = '75',
+  onSetZoom,
 }) => {
   return (
     <header className="bg-white border-b border-zinc-200 sticky top-0 z-30 shadow-xs">
@@ -65,9 +69,38 @@ export const Header: React.FC<HeaderProps> = ({
 
           {/* Action Buttons */}
           <div className="flex flex-wrap items-center gap-2">
+            
+            {/* View Zoom Switcher (75% default vs 100%) */}
+            <div className="flex items-center bg-zinc-100 p-0.5 rounded-lg border border-zinc-200 text-xs font-bold">
+              <button
+                type="button"
+                onClick={() => onSetZoom?.('75')}
+                className={`px-2.5 py-1 rounded-md transition-all ${
+                  zoom === '75'
+                    ? 'bg-zinc-900 text-white shadow-xs'
+                    : 'text-zinc-600 hover:text-zinc-900'
+                }`}
+                title="৭৫% কমপ্যাক্ট ভিউ (পারফেক্ট সাইজ)"
+              >
+                75%
+              </button>
+              <button
+                type="button"
+                onClick={() => onSetZoom?.('100')}
+                className={`px-2.5 py-1 rounded-md transition-all ${
+                  zoom === '100'
+                    ? 'bg-zinc-900 text-white shadow-xs'
+                    : 'text-zinc-600 hover:text-zinc-900'
+                }`}
+                title="১০০% স্বাভাবিক ভিউ"
+              >
+                100%
+              </button>
+            </div>
+
             <button
               onClick={onOpenDailyEntry}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-white bg-zinc-900 hover:bg-black rounded-lg shadow-xs transition-colors"
+              className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-white bg-zinc-900 hover:bg-black rounded-lg shadow-xs transition-colors"
               title="সহজ ডেটা এন্ট্রি ফরম খুলুন"
             >
               <CalendarPlus className="w-4 h-4" />
@@ -89,7 +122,7 @@ export const Header: React.FC<HeaderProps> = ({
               title="এক্সেল (.xlsx) ফাইল ডাউনলোড করুন"
             >
               <Download className="w-4 h-4 text-zinc-700" />
-              <span>এক্সেল এক্সপোর্ট</span>
+              <span>এক্সপোর্ট</span>
             </button>
 
             <button
@@ -98,7 +131,7 @@ export const Header: React.FC<HeaderProps> = ({
               title="এক্সেল ফাইল ইমপোর্ট করুন"
             >
               <Upload className="w-4 h-4 text-zinc-500" />
-              <span className="hidden sm:inline">ইমপোর্ট</span>
+              <span>ইমপোর্ট</span>
             </button>
 
             <button
@@ -119,7 +152,7 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
         </div>
 
-        {/* Navigation Tabs (Full Width Responsive Grid - Never Scrolls) */}
+        {/* Navigation Tabs (Full Width Responsive Grid - Never Overflows or Scrolls) */}
         <nav className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-1.5 mt-3.5 border-t border-zinc-100 pt-3">
           <button
             onClick={() => setActiveTab('dashboard')}

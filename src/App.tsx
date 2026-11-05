@@ -14,6 +14,7 @@ import { QuickDataEntry } from './components/QuickDataEntry';
 import { exportBooksToExcel } from './utils/excelHandler';
 
 const STORAGE_KEY = 'biddabari_books_data_v1';
+const ZOOM_STORAGE_KEY = 'biddabari_ui_zoom_v1';
 
 export const App: React.FC = () => {
   // Load initial books from localStorage if available
@@ -34,6 +35,26 @@ export const App: React.FC = () => {
 
   const [activeTab, setActiveTab] = useState<ActiveTab>('dashboard');
   const [selectedMatrixBookId, setSelectedMatrixBookId] = useState<string>(books[0]?.id || 'book-1');
+
+  // UI Zoom state: default 75% compact view as requested
+  const [uiZoom, setUiZoom] = useState<'75' | '100'>(() => {
+    try {
+      const savedZoom = localStorage.getItem(ZOOM_STORAGE_KEY);
+      if (savedZoom === '100') return '100';
+    } catch (e) {
+      // fallback
+    }
+    return '75';
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(ZOOM_STORAGE_KEY, uiZoom);
+      document.body.style.zoom = uiZoom === '75' ? '0.75' : '1';
+    } catch (e) {
+      console.error(e);
+    }
+  }, [uiZoom]);
 
   // Input states
   const [entrySelectedDay, setEntrySelectedDay] = useState<number>(1);
@@ -218,7 +239,7 @@ export const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col font-sans">
+    <div className="min-h-screen bg-[#fafafa] flex flex-col font-sans text-zinc-900">
       
       {/* Top Header & Navigation */}
       <Header
@@ -236,6 +257,8 @@ export const App: React.FC = () => {
         onResetData={handleResetData}
         onPrint={() => setActiveTab('reports')}
         bookCount={books.length}
+        zoom={uiZoom}
+        onSetZoom={setUiZoom}
       />
 
       {/* Main Content Area */}
@@ -300,8 +323,8 @@ export const App: React.FC = () => {
       </main>
 
       {/* Footer */}
-      <footer className="print:hidden bg-white border-t border-slate-200 py-4 mt-auto">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-2">
+      <footer className="print:hidden bg-white border-t border-zinc-200/80 py-4 mt-auto">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between text-xs text-zinc-500 gap-2">
           <div>
             © {new Date().getFullYear()} <b>বিদ্যাবাড়ি পাবলিকেশন (Biddabari Publication)</b>. সর্বস্বত্ব সংরক্ষিত।
           </div>
@@ -318,7 +341,7 @@ export const App: React.FC = () => {
             <a
               href="/biddabari_publication_books_data.xlsx"
               download="biddabari publication all books data.xlsx"
-              className="text-slate-600 hover:underline"
+              className="text-zinc-600 hover:underline"
             >
               মূল ফাইল ডাউনলোড
             </a>
