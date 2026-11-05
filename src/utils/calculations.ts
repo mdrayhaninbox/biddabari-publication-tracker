@@ -288,6 +288,53 @@ export function calculateWeekBreakdowns(books: BookRecord[]): WeekBreakdown[] {
   });
 }
 
+export function calculateWeekBookBreakdown(books: BookRecord[], startDay: number, endDay: number) {
+  return books.map(b => {
+    let weekOnline = 0;
+    let weekOffline = 0;
+    let weekPressReceipt = 0;
+    let weekReturns = 0;
+
+    for (let d = startDay; d <= endDay; d++) {
+      const boibari = Number(b.boibari?.[d]) || 0;
+      const rokomari = Number(b.rokomari?.[d]) || 0;
+      const wafilife = Number(b.wafilife?.[d]) || 0;
+      const others = Number(b.othersOnline?.[d]) || 0;
+      weekOnline += boibari + rokomari + wafilife + others;
+
+      const ho = Number(b.headOfficeSellOffline?.[d]) || 0;
+      const nilkhet = Number(b.nilkhetLibrary?.[d]) || 0;
+      const sumona = Number(b.sumonaLibrary?.[d]) || 0;
+      const promise = Number(b.promiseLibrary?.[d]) || 0;
+      const joystar = Number(b.joystarLibrary?.[d]) || 0;
+      weekOffline += ho + nilkhet + sumona + promise + joystar;
+
+      weekPressReceipt += Number(b.pressDailyReceipts?.[d]) || 0;
+      weekReturns += Number(b.dailyReturns?.[d]) || 0;
+    }
+
+    const totalSold = weekOnline + weekOffline;
+    const profitPerUnit = Number(b.perBookAmount || 0) - (Number(b.adCost || 0) + Number(b.makingCost || 0));
+    const revenue = totalSold * (Number(b.perBookAmount) || 0);
+    const profit = totalSold * profitPerUnit;
+
+    return {
+      bookId: b.id,
+      sl: b.sl,
+      bookName: b.bookName,
+      perBookAmount: b.perBookAmount,
+      profitPerBook: profitPerUnit,
+      onlineSold: weekOnline,
+      offlineSold: weekOffline,
+      totalSold,
+      pressReceipt: weekPressReceipt,
+      returns: weekReturns,
+      revenue,
+      profit,
+    };
+  });
+}
+
 export function formatBDT(amount: number): string {
   return new Intl.NumberFormat('bn-BD', {
     style: 'currency',
