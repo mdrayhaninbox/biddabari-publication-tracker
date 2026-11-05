@@ -26,3 +26,68 @@
 ::-webkit-scrollbar-thumb:hover {
   background: #a1a1aa;
 }
+
+/* ======================================================== */
+/* Standard A4 Paper Print Rules & Multi-page Auto Break */
+/* ======================================================== */
+@page {
+  size: A4 portrait;
+  margin: 10mm 12mm 12mm 12mm;
+}
+
+@media print {
+  html, body {
+    background: #ffffff !important;
+    color: #000000 !important;
+    font-size: 10.5pt !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* Hide interactive non-printable elements */
+  header, footer, nav, .print\:hidden {
+    display: none !important;
+  }
+
+  main {
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+  }
+
+  .print-page-container {
+    width: 100% !important;
+    max-width: 100% !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: transparent !important;
+    border-radius: 0 !important;
+  }
+
+  /* Repeat table header on top of each A4 page */
+  thead {
+    display: table-header-group !important;
+  }
+
+  tfoot {
+    display: table-footer-group !important;
+  }
+
+  /* Prevent awkward page cuts in table rows and cards */
+  tr, .avoid-break, .report-card {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  /* Ensure signatures never get split */
+  .signature-block {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    margin-top: 15mm !important;
+  }
+}

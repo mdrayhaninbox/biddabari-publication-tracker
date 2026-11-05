@@ -91,6 +91,10 @@ export const PrintableReport: React.FC<PrintableReportProps> = ({ books }) => {
           </div>
 
           <div className="flex items-center gap-2">
+            <span className="hidden sm:inline-flex items-center gap-1 text-[11px] font-semibold text-zinc-600 bg-zinc-100 border border-zinc-200 px-2.5 py-1.5 rounded-lg">
+              📄 A4 সাইজ ফরম্যাট (প্রয়োজনে স্বয়ংক্রিয় পৃষ্ঠা বৃদ্ধি)
+            </span>
+
             <button
               onClick={() => exportBooksToExcel(books)}
               className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-zinc-800 bg-white hover:bg-zinc-100 rounded-lg transition-colors border border-zinc-300"
@@ -104,7 +108,7 @@ export const PrintableReport: React.FC<PrintableReportProps> = ({ books }) => {
               className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-zinc-900 hover:bg-black rounded-lg transition-colors shadow-xs"
             >
               <Printer className="w-4 h-4" />
-              <span>প্রিন্ট / PDF করুন</span>
+              <span>A4 প্রিন্ট / PDF</span>
             </button>
           </div>
         </div>
@@ -211,9 +215,9 @@ export const PrintableReport: React.FC<PrintableReportProps> = ({ books }) => {
       </div>
 
       {/* ======================================================== */}
-      {/* Formal Printable Document Body */}
+      {/* Formal Printable Document Body (A4 Paper Standard) */}
       {/* ======================================================== */}
-      <div className="bg-white p-8 rounded-2xl border border-zinc-200 shadow-xs print:border-none print:shadow-none print:p-0 max-w-5xl mx-auto space-y-6">
+      <div className="print-page-container bg-white p-8 sm:p-12 rounded-2xl border border-zinc-200 shadow-xs max-w-[210mm] w-full mx-auto space-y-6 print:max-w-none print:p-0 print:border-none print:shadow-none print:rounded-none">
         
         {/* Publication Header */}
         <div className="border-b-2 border-zinc-900 pb-5 text-center relative">
@@ -605,8 +609,8 @@ export const PrintableReport: React.FC<PrintableReportProps> = ({ books }) => {
           </div>
         )}
 
-        {/* Signatures block */}
-        <div className="pt-12 grid grid-cols-3 gap-6 text-center text-xs text-zinc-600 border-t border-zinc-200">
+        {/* Signatures block (Auto avoid cut across pages) */}
+        <div className="signature-block avoid-break pt-12 grid grid-cols-3 gap-6 text-center text-xs text-zinc-600 border-t border-zinc-200">
           <div>
             <div className="border-t border-zinc-400 w-36 mx-auto pt-1 mb-1"></div>
             <span className="font-semibold block text-zinc-800">ইনভেন্টরি অফিসার</span>
