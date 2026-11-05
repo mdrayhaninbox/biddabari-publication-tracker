@@ -119,80 +119,80 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
         </div>
 
-        {/* Navigation Tabs */}
-        <div className="flex space-x-1.5 mt-3.5 border-t border-zinc-100 pt-3 overflow-x-auto">
+        {/* Navigation Tabs (Full Width Responsive Grid - Never Scrolls) */}
+        <nav className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-1.5 mt-3.5 border-t border-zinc-100 pt-3">
           <button
             onClick={() => setActiveTab('dashboard')}
-            className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all ${
+            className={`flex items-center justify-center gap-1.5 px-2.5 py-2 rounded-xl text-xs font-bold transition-all text-center ${
               activeTab === 'dashboard'
                 ? 'bg-zinc-900 text-white shadow-xs'
-                : 'text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100'
+                : 'bg-zinc-50 text-zinc-700 hover:bg-zinc-100 hover:text-zinc-900 border border-zinc-200/60'
             }`}
           >
-            <BarChart3 className="w-4 h-4" />
-            <span>ড্যাশবোর্ড (Dashboard)</span>
+            <BarChart3 className="w-3.5 h-3.5 shrink-0" />
+            <span className="truncate">ড্যাশবোর্ড</span>
           </button>
 
           <button
             onClick={() => setActiveTab('period')}
-            className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all ${
+            className={`flex items-center justify-center gap-1.5 px-2.5 py-2 rounded-xl text-xs font-bold transition-all text-center ${
               activeTab === 'period'
                 ? 'bg-zinc-900 text-white shadow-xs'
-                : 'text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100'
+                : 'bg-zinc-50 text-zinc-700 hover:bg-zinc-100 hover:text-zinc-900 border border-zinc-200/60'
             }`}
           >
-            <CalendarRange className="w-4 h-4" />
-            <span>📅 দৈনিক / সাপ্তাহিক / মাসিক ভিউ</span>
+            <CalendarRange className="w-3.5 h-3.5 shrink-0" />
+            <span className="truncate">তারিখভিত্তিক ভিউ</span>
           </button>
 
           <button
             onClick={() => setActiveTab('entry')}
-            className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all ${
+            className={`flex items-center justify-center gap-1.5 px-2.5 py-2 rounded-xl text-xs font-bold transition-all text-center ${
               activeTab === 'entry'
                 ? 'bg-zinc-900 text-white shadow-xs'
-                : 'text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100'
+                : 'bg-zinc-50 text-zinc-700 hover:bg-zinc-100 hover:text-zinc-900 border border-zinc-200/60'
             }`}
           >
-            <CalendarPlus className="w-4 h-4" />
-            <span>⚡ সহজ ডেটা এন্ট্রি (Data Input)</span>
+            <CalendarPlus className="w-3.5 h-3.5 shrink-0" />
+            <span className="truncate">ডাটা এন্ট্রি</span>
           </button>
 
           <button
             onClick={() => setActiveTab('books')}
-            className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all ${
+            className={`flex items-center justify-center gap-1.5 px-2.5 py-2 rounded-xl text-xs font-bold transition-all text-center ${
               activeTab === 'books'
                 ? 'bg-zinc-900 text-white shadow-xs'
-                : 'text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100'
+                : 'bg-zinc-50 text-zinc-700 hover:bg-zinc-100 hover:text-zinc-900 border border-zinc-200/60'
             }`}
           >
-            <TableIcon className="w-4 h-4" />
-            <span>বই তালিকা ও স্টক খতিয়ান</span>
+            <TableIcon className="w-3.5 h-3.5 shrink-0" />
+            <span className="truncate">বই তালিকা</span>
           </button>
 
           <button
             onClick={() => setActiveTab('matrix')}
-            className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all ${
+            className={`flex items-center justify-center gap-1.5 px-2.5 py-2 rounded-xl text-xs font-bold transition-all text-center ${
               activeTab === 'matrix'
                 ? 'bg-zinc-900 text-white shadow-xs'
-                : 'text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100'
+                : 'bg-zinc-50 text-zinc-700 hover:bg-zinc-100 hover:text-zinc-900 border border-zinc-200/60'
             }`}
           >
-            <FileSpreadsheet className="w-4 h-4" />
-            <span>৩১ দিনের সম্পূর্ণ ম্যাট্রিক্স</span>
+            <FileSpreadsheet className="w-3.5 h-3.5 shrink-0" />
+            <span className="truncate">৩১ দিনের ম্যাট্রিক্স</span>
           </button>
 
           <button
             onClick={() => setActiveTab('reports')}
-            className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all ${
+            className={`flex items-center justify-center gap-1.5 px-2.5 py-2 rounded-xl text-xs font-bold transition-all text-center ${
               activeTab === 'reports'
                 ? 'bg-zinc-900 text-white shadow-xs'
-                : 'text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100'
+                : 'bg-zinc-50 text-zinc-700 hover:bg-zinc-100 hover:text-zinc-900 border border-zinc-200/60'
             }`}
           >
-            <Printer className="w-4 h-4" />
-            <span>এক্সিকিউটিভ রিপোর্ট</span>
+            <Printer className="w-3.5 h-3.5 shrink-0" />
+            <span className="truncate">রিপোর্ট ও প্রিন্ট</span>
           </button>
-        </div>
+        </nav>
       </div>
     </header>
   );
