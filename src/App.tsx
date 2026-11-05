@@ -310,7 +310,7 @@ export const App: React.FC = () => {
             <span>•</span>
             <button
               onClick={() => exportBooksToExcel(books)}
-              className="text-rose-700 hover:underline font-medium"
+              className="text-zinc-900 hover:underline font-semibold"
             >
               এক্সেল এক্সপোর্ট
             </button>
