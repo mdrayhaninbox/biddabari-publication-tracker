@@ -9,7 +9,8 @@ import {
   Upload, 
   PlusCircle, 
   Printer, 
-  RotateCcw 
+  RotateCcw,
+  CalendarRange
 } from 'lucide-react';
 import { ActiveTab } from '../types/book';
 
@@ -53,11 +54,11 @@ export const Header: React.FC<HeaderProps> = ({
                   বিদ্যাবাড়ি পাবলিকেশন
                 </h1>
                 <span className="bg-rose-100 text-rose-800 text-xs px-2.5 py-0.5 rounded-full font-medium border border-rose-200">
-                  সফটওয়্যার v1.0
+                  স্মার্ট সফটওয়্যার
                 </span>
               </div>
               <p className="text-xs sm:text-sm text-slate-500 font-normal">
-                বুক সেলস, স্টক ইনভেন্টরি ও প্রেস ট্র্যাকিং সিস্টেম • {bookCount} টি বই নিবন্ধিত
+                দৈনিক, সাপ্তাহিক ও মাসিক সেলস ও স্টক হিসাব ট্র্যাকার • {bookCount} টি বই
               </p>
             </div>
           </div>
@@ -66,11 +67,11 @@ export const Header: React.FC<HeaderProps> = ({
           <div className="flex flex-wrap items-center gap-2">
             <button
               onClick={onOpenDailyEntry}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 text-sm font-medium text-white bg-rose-700 hover:bg-rose-800 rounded-lg shadow-sm transition-colors focus:ring-2 focus:ring-rose-500 focus:outline-hidden"
-              title="দৈনিক বিক্রয় ও স্টক এন্ট্রি দিন"
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 text-sm font-semibold text-white bg-rose-700 hover:bg-rose-800 rounded-lg shadow-sm transition-colors focus:ring-2 focus:ring-rose-500 focus:outline-hidden"
+              title="সহজ ডেটা এন্ট্রি ফরম খুলুন"
             >
               <CalendarPlus className="w-4 h-4" />
-              <span>দৈনিক এন্ট্রি</span>
+              <span>সহজ এন্ট্রি</span>
             </button>
 
             <button
@@ -119,12 +120,12 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
 
         {/* Navigation Tabs */}
-        <div className="flex space-x-1 mt-4 border-t border-slate-100 pt-3 overflow-x-auto">
+        <div className="flex space-x-1.5 mt-4 border-t border-slate-100 pt-3 overflow-x-auto">
           <button
             onClick={() => setActiveTab('dashboard')}
-            className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-sm font-medium whitespace-nowrap transition-all ${
+            className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all ${
               activeTab === 'dashboard'
-                ? 'bg-rose-50 text-rose-800 font-semibold border border-rose-200'
+                ? 'bg-rose-700 text-white shadow-xs'
                 : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
             }`}
           >
@@ -133,10 +134,34 @@ export const Header: React.FC<HeaderProps> = ({
           </button>
 
           <button
+            onClick={() => setActiveTab('period')}
+            className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all ${
+              activeTab === 'period'
+                ? 'bg-rose-700 text-white shadow-xs'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+            }`}
+          >
+            <CalendarRange className="w-4 h-4 text-rose-500" />
+            <span>📅 দৈনিক / সাপ্তাহিক / মাসিক ভিউ</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('entry')}
+            className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all ${
+              activeTab === 'entry'
+                ? 'bg-rose-700 text-white shadow-xs'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+            }`}
+          >
+            <CalendarPlus className="w-4 h-4" />
+            <span>⚡ সহজ ডেটা এন্ট্রি (Data Input)</span>
+          </button>
+
+          <button
             onClick={() => setActiveTab('books')}
-            className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-sm font-medium whitespace-nowrap transition-all ${
+            className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all ${
               activeTab === 'books'
-                ? 'bg-rose-50 text-rose-800 font-semibold border border-rose-200'
+                ? 'bg-rose-700 text-white shadow-xs'
                 : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
             }`}
           >
@@ -145,34 +170,22 @@ export const Header: React.FC<HeaderProps> = ({
           </button>
 
           <button
-            onClick={() => setActiveTab('entry')}
-            className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-sm font-medium whitespace-nowrap transition-all ${
-              activeTab === 'entry'
-                ? 'bg-rose-50 text-rose-800 font-semibold border border-rose-200'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-            }`}
-          >
-            <CalendarPlus className="w-4 h-4" />
-            <span>দৈনিক এন্ট্রি ফরম (Input Form)</span>
-          </button>
-
-          <button
             onClick={() => setActiveTab('matrix')}
-            className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-sm font-medium whitespace-nowrap transition-all ${
+            className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all ${
               activeTab === 'matrix'
-                ? 'bg-rose-50 text-rose-800 font-semibold border border-rose-200'
+                ? 'bg-rose-700 text-white shadow-xs'
                 : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
             }`}
           >
             <FileSpreadsheet className="w-4 h-4" />
-            <span>৩১ দিনের সম্পূর্ণ ম্যাট্রিক্স ভিউ</span>
+            <span>৩১ দিনের সম্পূর্ণ ম্যাট্রিক্স</span>
           </button>
 
           <button
             onClick={() => setActiveTab('reports')}
-            className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-sm font-medium whitespace-nowrap transition-all ${
+            className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all ${
               activeTab === 'reports'
-                ? 'bg-rose-50 text-rose-800 font-semibold border border-rose-200'
+                ? 'bg-rose-700 text-white shadow-xs'
                 : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
             }`}
           >

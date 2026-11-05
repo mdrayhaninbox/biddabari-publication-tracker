@@ -45,4 +45,4 @@ export interface BookRecord {
   updatedAt?: string;
 }
 
-export type ActiveTab = 'dashboard' | 'books' | 'entry' | 'matrix' | 'reports';
+export type ActiveTab = 'dashboard' | 'period' | 'entry' | 'books' | 'matrix' | 'reports';

@@ -9,6 +9,8 @@ import { BookDetailMatrix } from './components/BookDetailMatrix';
 import { AddEditBookModal } from './components/AddEditBookModal';
 import { ExcelSyncModal } from './components/ExcelSyncModal';
 import { PrintableReport } from './components/PrintableReport';
+import { PeriodViewSystem } from './components/PeriodViewSystem';
+import { QuickDataEntry } from './components/QuickDataEntry';
 import { exportBooksToExcel } from './utils/excelHandler';
 
 const STORAGE_KEY = 'biddabari_books_data_v1';
@@ -33,12 +35,16 @@ export const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<ActiveTab>('dashboard');
   const [selectedMatrixBookId, setSelectedMatrixBookId] = useState<string>(books[0]?.id || 'book-1');
 
+  // Input states
+  const [entrySelectedDay, setEntrySelectedDay] = useState<number>(1);
+  const [entrySelectedBookId, setEntrySelectedBookId] = useState<string>(books[0]?.id || 'book-1');
+
   // Modals state
   const [isAddEditOpen, setIsAddEditOpen] = useState(false);
   const [editingBook, setEditingBook] = useState<BookRecord | null>(null);
 
-  const [isDailyEntryOpen, setIsDailyEntryOpen] = useState(false);
-  const [dailyEntryBookId, setDailyEntryBookId] = useState<string>(books[0]?.id || 'book-1');
+  const [isDailyEntryModalOpen, setIsDailyEntryModalOpen] = useState(false);
+  const [modalBookId, setModalBookId] = useState<string>(books[0]?.id || 'book-1');
 
   const [isExcelSyncOpen, setIsExcelSyncOpen] = useState(false);
 
@@ -183,10 +189,10 @@ export const App: React.FC = () => {
     }
   };
 
-  // Open modal triggers
+  // Open triggers
   const handleOpenDailyEntryForBook = (bookId: string) => {
-    setDailyEntryBookId(bookId);
-    setIsDailyEntryOpen(true);
+    setModalBookId(bookId);
+    setIsDailyEntryModalOpen(true);
   };
 
   const handleSelectBookForMatrix = (bookId: string) => {
@@ -197,6 +203,18 @@ export const App: React.FC = () => {
   const handleOpenEditBook = (book: BookRecord) => {
     setEditingBook(book);
     setIsAddEditOpen(true);
+  };
+
+  // Navigation handlers from Period View to Quick Data Entry
+  const handleOpenDailyEntryForDay = (day: number) => {
+    setEntrySelectedDay(day);
+    setActiveTab('entry');
+  };
+
+  const handleOpenDailyEntryForBookAndDay = (bookId: string, day: number) => {
+    setEntrySelectedBookId(bookId);
+    setEntrySelectedDay(day);
+    setActiveTab('entry');
   };
 
   return (
@@ -211,8 +229,7 @@ export const App: React.FC = () => {
           setIsAddEditOpen(true);
         }}
         onOpenDailyEntry={() => {
-          setDailyEntryBookId(books[0]?.id || '');
-          setIsDailyEntryOpen(true);
+          setActiveTab('entry');
         }}
         onExportExcel={() => exportBooksToExcel(books)}
         onOpenImport={() => setIsExcelSyncOpen(true)}
@@ -223,6 +240,8 @@ export const App: React.FC = () => {
 
       {/* Main Content Area */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        
+        {/* 1. Main Dashboard */}
         {activeTab === 'dashboard' && (
           <Dashboard
             books={books}
@@ -231,6 +250,26 @@ export const App: React.FC = () => {
           />
         )}
 
+        {/* 2. Daily / Weekly / Monthly Period View System */}
+        {activeTab === 'period' && (
+          <PeriodViewSystem
+            books={books}
+            onOpenDailyEntryForDay={handleOpenDailyEntryForDay}
+            onOpenDailyEntryForBookAndDay={handleOpenDailyEntryForBookAndDay}
+          />
+        )}
+
+        {/* 3. Simple Data Input System */}
+        {activeTab === 'entry' && (
+          <QuickDataEntry
+            books={books}
+            initialBookId={entrySelectedBookId}
+            initialDay={entrySelectedDay}
+            onSaveDailyEntry={handleSaveDailyEntry}
+          />
+        )}
+
+        {/* 4. Books Master Table */}
         {activeTab === 'books' && (
           <BooksTable
             books={books}
@@ -245,23 +284,7 @@ export const App: React.FC = () => {
           />
         )}
 
-        {activeTab === 'entry' && (
-          <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs">
-            <h2 className="text-xl font-bold text-slate-900 mb-1">
-              দৈনিক এন্ট্রি ফরম (Daily Input Form)
-            </h2>
-            <p className="text-xs text-slate-500 mb-6">
-              নিচের বোতামে ক্লিক করে যেকোনো বই এবং দিনের সেলস বা প্রেস ডাটা এন্ট্রি দিন
-            </p>
-            <button
-              onClick={() => setIsDailyEntryOpen(true)}
-              className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-white bg-rose-700 hover:bg-rose-800 rounded-xl shadow-sm transition-all"
-            >
-              <span>এন্ট্রি উইন্ডো খুলুন</span>
-            </button>
-          </div>
-        )}
-
+        {/* 5. 31-Day Matrix View */}
         {activeTab === 'matrix' && (
           <BookDetailMatrix
             books={books}
@@ -272,6 +295,7 @@ export const App: React.FC = () => {
           />
         )}
 
+        {/* 6. Executive Reports & Print */}
         {activeTab === 'reports' && <PrintableReport books={books} />}
       </main>
 
@@ -302,15 +326,12 @@ export const App: React.FC = () => {
         </div>
       </footer>
 
-      {/* Modals */}
+      {/* Popups / Modals */}
       <DailyEntryModal
-        isOpen={isDailyEntryOpen || activeTab === 'entry'}
-        onClose={() => {
-          setIsDailyEntryOpen(false);
-          if (activeTab === 'entry') setActiveTab('dashboard');
-        }}
+        isOpen={isDailyEntryModalOpen}
+        onClose={() => setIsDailyEntryModalOpen(false)}
         books={books}
-        initialBookId={dailyEntryBookId}
+        initialBookId={modalBookId}
         onSaveDailyEntry={handleSaveDailyEntry}
       />
 
