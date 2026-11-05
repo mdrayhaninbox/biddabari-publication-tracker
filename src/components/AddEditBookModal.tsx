@@ -1,0 +1,219 @@
+import React, { useState, useEffect } from 'react';
+import { X, BookPlus, Save, AlertCircle } from 'lucide-react';
+import { BookRecord } from '../types/book';
+import { formatBDT } from '../utils/calculations';
+
+interface AddEditBookModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  editingBook?: BookRecord | null;
+  onSaveBook: (bookData: Partial<BookRecord>) => void;
+  nextSl: number;
+}
+
+export const AddEditBookModal: React.FC<AddEditBookModalProps> = ({
+  isOpen,
+  onClose,
+  editingBook,
+  onSaveBook,
+  nextSl,
+}) => {
+  const [bookName, setBookName] = useState('');
+  const [adCost, setAdCost] = useState<number>(30);
+  const [makingCost, setMakingCost] = useState<number>(250);
+  const [perBookAmount, setPerBookAmount] = useState<number>(390);
+  const [totalOrderFaridBhai, setTotalOrderFaridBhai] = useState<number>(5000);
+  const [remarks, setRemarks] = useState('');
+
+  useEffect(() => {
+    if (editingBook) {
+      setBookName(editingBook.bookName);
+      setAdCost(editingBook.adCost);
+      setMakingCost(editingBook.makingCost);
+      setPerBookAmount(editingBook.perBookAmount);
+      setTotalOrderFaridBhai(editingBook.totalOrderFaridBhai);
+      setRemarks(editingBook.remarks || '');
+    } else {
+      setBookName('');
+      setAdCost(30);
+      setMakingCost(250);
+      setPerBookAmount(390);
+      setTotalOrderFaridBhai(5000);
+      setRemarks('');
+    }
+  }, [editingBook, isOpen]);
+
+  if (!isOpen) return null;
+
+  const profitPerBook = perBookAmount - (adCost + makingCost);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!bookName.trim()) return;
+
+    onSaveBook({
+      sl: editingBook ? editingBook.sl : nextSl,
+      bookName: bookName.trim(),
+      adCost: Number(adCost) || 0,
+      makingCost: Number(makingCost) || 0,
+      perBookAmount: Number(perBookAmount) || 0,
+      profitPerBook,
+      totalOrderFaridBhai: Number(totalOrderFaridBhai) || 0,
+      remarks: remarks.trim(),
+    });
+
+    onClose();
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4">
+      <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden border border-slate-200 animate-in fade-in zoom-in duration-200">
+        
+        {/* Header */}
+        <div className="bg-gradient-to-r from-rose-800 to-rose-900 text-white px-6 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-white/10 rounded-lg">
+              <BookPlus className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="text-lg font-bold">
+                {editingBook ? 'বইয়ের তথ্য সম্পাদন করুন' : 'নতুন বই যুক্ত করুন'}
+              </h3>
+              <p className="text-xs text-rose-200">
+                {editingBook ? `SL: ${editingBook.sl}` : `নতুন ক্রমিক নং: ${nextSl}`}
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            className="text-white/80 hover:text-white hover:bg-white/10 p-1.5 rounded-lg transition-colors"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit}>
+          <div className="p-6 space-y-4">
+            
+            {/* Book Name */}
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                বইয়ের নাম (Book Name) *
+              </label>
+              <input
+                type="text"
+                required
+                value={bookName}
+                onChange={(e) => setBookName(e.target.value)}
+                placeholder="যেমন: ৪৭তম বিসিএস প্রিলিমিনারি গাইড"
+                className="w-full text-sm border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-rose-500 font-medium"
+              />
+            </div>
+
+            {/* Total Press Order */}
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                ফরিদ ভাই প্রেসে মোট অর্ডার সংখ্যা (Press Order) *
+              </label>
+              <input
+                type="number"
+                min="1"
+                required
+                value={totalOrderFaridBhai}
+                onChange={(e) => setTotalOrderFaridBhai(parseInt(e.target.value) || 0)}
+                className="w-full text-sm border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-rose-500 font-mono"
+              />
+            </div>
+
+            {/* Financials: 3 columns */}
+            <div className="grid grid-cols-3 gap-3">
+              <div>
+                <label className="block text-xs text-slate-600 mb-1 font-medium">
+                  বিক্রয় মূল্য (MRP) *
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  required
+                  value={perBookAmount}
+                  onChange={(e) => setPerBookAmount(parseInt(e.target.value) || 0)}
+                  className="w-full text-sm border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-rose-500 font-mono"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs text-slate-600 mb-1 font-medium">
+                  উৎপাদন খরচ *
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  required
+                  value={makingCost}
+                  onChange={(e) => setMakingCost(parseInt(e.target.value) || 0)}
+                  className="w-full text-sm border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-rose-500 font-mono"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs text-slate-600 mb-1 font-medium">
+                  বিজ্ঞাপন খরচ *
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  required
+                  value={adCost}
+                  onChange={(e) => setAdCost(parseInt(e.target.value) || 0)}
+                  className="w-full text-sm border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-rose-500 font-mono"
+                />
+              </div>
+            </div>
+
+            {/* Profit Margin Preview Banner */}
+            <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 flex items-center justify-between text-xs">
+              <span className="text-slate-600">কপি প্রতি লাভ (Profit/Loss):</span>
+              <span className={`font-bold text-sm ${profitPerBook >= 0 ? 'text-emerald-700' : 'text-rose-700'}`}>
+                {profitPerBook >= 0 ? '+' : ''}{formatBDT(profitPerBook)}
+              </span>
+            </div>
+
+            {/* Remarks */}
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                মন্তব্য (Remarks)
+              </label>
+              <textarea
+                rows={2}
+                value={remarks}
+                onChange={(e) => setRemarks(e.target.value)}
+                placeholder="বই সম্পর্কিত বিশেষ তথ্য বা সংস্করণ..."
+                className="w-full text-sm border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-rose-500"
+              />
+            </div>
+
+          </div>
+
+          {/* Footer */}
+          <div className="bg-slate-50 border-t border-slate-200 px-6 py-4 flex items-center justify-end gap-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-200 rounded-lg transition-colors"
+            >
+              বাতিল
+            </button>
+            <button
+              type="submit"
+              className="inline-flex items-center gap-1.5 px-5 py-2 text-sm font-semibold text-white bg-rose-700 hover:bg-rose-800 rounded-lg shadow-sm transition-colors focus:ring-2 focus:ring-rose-500"
+            >
+              <Save className="w-4 h-4" />
+              <span>{editingBook ? 'হালনাগাদ করুন' : 'যুক্ত করুন'}</span>
+            </button>
+          </div>
+        </form>
+
+      </div>
+    </div>
+  );
+};
