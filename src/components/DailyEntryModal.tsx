@@ -74,7 +74,6 @@ export const DailyEntryModal: React.FC<DailyEntryModalProps> = ({
 
   const [savedSuccess, setSavedSuccess] = useState(false);
 
-  // When selected book or day changes, load current values for that day
   useEffect(() => {
     if (initialBookId) {
       setSelectedBookId(initialBookId);
@@ -146,41 +145,41 @@ export const DailyEntryModal: React.FC<DailyEntryModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full overflow-hidden border border-slate-200 animate-in fade-in zoom-in duration-200">
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4">
+      <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full overflow-hidden border border-zinc-200 animate-in fade-in zoom-in duration-200">
         
-        {/* Modal Header */}
-        <div className="bg-gradient-to-r from-rose-800 to-rose-900 text-white px-6 py-4 flex items-center justify-between">
+        {/* Modal Header (Black & White) */}
+        <div className="bg-zinc-900 text-white px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-white/10 rounded-lg">
               <CalendarPlus className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-lg font-bold">দৈনিক বিক্রয় ও স্টক এন্ট্রি ফরম (Input Form)</h3>
-              <p className="text-xs text-rose-200">প্রতিদিনের সেলস, প্রেস চালান ও রিটার্ন ডাটা লিপিবদ্ধ করুন</p>
+              <h3 className="text-base font-bold">তারিখ ভিত্তিক ডেটা এন্ট্রি ফরম</h3>
+              <p className="text-xs text-zinc-400">প্রতিদিনের সেলস, প্রেস চালান ও রিটার্ন লিপিবদ্ধ করুন</p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="text-white/80 hover:text-white hover:bg-white/10 p-1.5 rounded-lg transition-colors"
+            className="text-zinc-400 hover:text-white hover:bg-white/10 p-1.5 rounded-lg transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         <form onSubmit={handleSubmit}>
-          <div className="p-6 space-y-6 max-h-[75vh] overflow-y-auto">
+          <div className="p-6 space-y-5 max-h-[75vh] overflow-y-auto">
             
-            {/* Book & Day Selectors */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-slate-50 p-4 rounded-xl border border-slate-200">
+            {/* Book & Date Selectors */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-zinc-50 p-4 rounded-xl border border-zinc-200">
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                <label className="block text-xs font-bold text-zinc-800 mb-1.5">
                   বই নির্বাচন করুন *
                 </label>
                 <select
                   value={selectedBookId}
                   onChange={(e) => setSelectedBookId(e.target.value)}
-                  className="w-full text-sm border border-slate-300 rounded-lg p-2.5 bg-white text-slate-900 focus:ring-2 focus:ring-rose-500 font-medium"
+                  className="w-full text-xs font-semibold border border-zinc-300 rounded-lg p-2.5 bg-white text-zinc-900 focus:ring-2 focus:ring-zinc-900"
                 >
                   {books.map(b => (
                     <option key={b.id} value={b.id}>
@@ -191,55 +190,55 @@ export const DailyEntryModal: React.FC<DailyEntryModalProps> = ({
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-                  তারিখ / দিন নির্বাচন করুন (Day 1 - 31) *
+                <label className="block text-xs font-bold text-zinc-800 mb-1.5">
+                  তারিখ নির্বাচন করুন (১লা থেকে ৩১শে তারিখ) *
                 </label>
                 <select
                   value={day}
                   onChange={(e) => setDay(Number(e.target.value))}
-                  className="w-full text-sm border border-slate-300 rounded-lg p-2.5 bg-white text-slate-900 focus:ring-2 focus:ring-rose-500 font-medium"
+                  className="w-full text-xs font-bold border border-zinc-300 rounded-lg p-2.5 bg-white text-zinc-900 focus:ring-2 focus:ring-zinc-900 font-mono"
                 >
                   {Array.from({ length: 31 }, (_, i) => i + 1).map(d => (
                     <option key={d} value={d}>
-                      দিন {d} ({d} তারিখ)
+                      {d} তারিখ ({d}তম দিন)
                     </option>
                   ))}
                 </select>
               </div>
             </div>
 
-            {/* Quick Live Summary of Selected Day */}
-            <div className="bg-rose-50/70 border border-rose-200 rounded-xl p-3 flex flex-wrap items-center justify-between gap-3 text-xs">
-              <span className="font-semibold text-rose-900">
-                দিন {day}-এর হিসাব:
+            {/* Quick Live Summary of Selected Date */}
+            <div className="bg-zinc-100 border border-zinc-200 rounded-xl p-3 flex flex-wrap items-center justify-between gap-3 text-xs">
+              <span className="font-bold text-zinc-900">
+                {day} তারিখের হিসাব:
               </span>
-              <span className="text-slate-700">
-                অনলাইন: <b className="text-sky-700">{formatNumber(dayOnlineSold)}</b> কপি
+              <span className="text-zinc-700">
+                অনলাইন: <b className="text-zinc-900">{formatNumber(dayOnlineSold)}</b> কপি
               </span>
-              <span className="text-slate-700">
-                অফলাইন: <b className="text-purple-700">{formatNumber(dayOfflineSold)}</b> কপি
+              <span className="text-zinc-700">
+                অফলাইন: <b className="text-zinc-900">{formatNumber(dayOfflineSold)}</b> কপি
               </span>
-              <span className="text-slate-700">
-                মোট বিক্রয়: <b className="text-blue-700">{formatNumber(dayTotalSold)}</b> কপি
+              <span className="text-zinc-700">
+                মোট বিক্রয়: <b className="text-zinc-900 font-bold">{formatNumber(dayTotalSold)}</b> কপি
               </span>
-              <span className="text-slate-700">
-                সম্ভাব্য রাজস্ব: <b className="text-slate-900">{formatBDT(dayRevenue)}</b>
+              <span className="text-zinc-700">
+                সম্ভাব্য রাজস্ব: <b className="text-zinc-900">{formatBDT(dayRevenue)}</b>
               </span>
-              <span className="text-slate-700">
-                প্রাক্কলিত লাভ: <b className="text-emerald-700 font-bold">+{formatBDT(dayProfit)}</b>
+              <span className="text-zinc-700">
+                প্রাক্কলিত লাভ: <b className="text-zinc-900 font-bold">+{formatBDT(dayProfit)}</b>
               </span>
             </div>
 
             {/* Section 1: Press Receipt */}
-            <div className="border border-slate-200 rounded-xl p-4 bg-white">
-              <div className="flex items-center gap-2 mb-3 text-amber-800 font-bold text-sm">
-                <Warehouse className="w-4 h-4 text-amber-600" />
+            <div className="border border-zinc-200 rounded-xl p-4 bg-white">
+              <div className="flex items-center gap-2 mb-3 text-zinc-900 font-bold text-xs">
+                <Warehouse className="w-4 h-4 text-zinc-700" />
                 <span>১. ফরিদ ভাই প্রেস থেকে হেড অফিসে চালান গ্রহণ (Press Receipt)</span>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs text-slate-600 mb-1">
-                    দিন {day}-এ প্রাপ্ত মোট বই (Farid Bhai to HO)
+                  <label className="block text-xs text-zinc-600 mb-1">
+                    {day} তারিখে প্রাপ্ত মোট বই (Farid Bhai to HO)
                   </label>
                   <input
                     type="number"
@@ -247,133 +246,133 @@ export const DailyEntryModal: React.FC<DailyEntryModalProps> = ({
                     value={pressReceipt || ''}
                     onChange={(e) => setPressReceipt(Math.max(0, parseInt(e.target.value) || 0))}
                     placeholder="0"
-                    className="w-full text-sm border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-amber-500 font-mono"
+                    className="w-full text-sm font-bold border border-zinc-300 rounded-lg p-2 focus:ring-2 focus:ring-zinc-900 font-mono"
                   />
-                  <span className="text-[11px] text-slate-400 mt-0.5 block">
+                  <span className="text-[11px] text-zinc-400 mt-0.5 block font-mono">
                     বর্তমান মোট প্রাপ্ত: {currentMetrics?.faridBhaiToHeadOffice || 0} কপি
                   </span>
                 </div>
-                <div className="p-3 bg-amber-50/60 rounded-lg text-xs text-amber-900 flex flex-col justify-center">
+                <div className="p-3 bg-zinc-50 rounded-lg text-xs text-zinc-800 border border-zinc-200 flex flex-col justify-center">
                   <span>প্রেসের মোট অর্ডার: <b>{formatNumber(currentMetrics?.totalOrderFaridBhai || 0)}</b> কপি</span>
-                  <span>প্রেসে বর্তমান স্টক: <b>{formatNumber(currentMetrics?.stockToFaridBhai || 0)}</b> কপি</span>
+                  <span className="mt-0.5">প্রেসে বর্তমান স্টক: <b>{formatNumber(currentMetrics?.stockToFaridBhai || 0)}</b> কপি</span>
                 </div>
               </div>
             </div>
 
             {/* Section 2: Online Sales */}
-            <div className="border border-slate-200 rounded-xl p-4 bg-white">
-              <div className="flex items-center gap-2 mb-3 text-sky-800 font-bold text-sm">
-                <Globe className="w-4 h-4 text-sky-600" />
-                <span>২. অনলাইন প্ল্যাটফর্মে বিক্রয় (Online Sales)</span>
+            <div className="border border-zinc-200 rounded-xl p-4 bg-white">
+              <div className="flex items-center gap-2 mb-3 text-zinc-900 font-bold text-xs">
+                <Globe className="w-4 h-4 text-zinc-700" />
+                <span>২. অনলাইন প্ল্যাটফর্মে বিক্রয় ({day} তারিখের অনলাইন সেলস)</span>
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 <div>
-                  <label className="block text-xs text-slate-600 mb-1 font-medium">বইবাড়ি (Boibari)</label>
+                  <label className="block text-xs text-zinc-700 mb-1 font-semibold">বইবাড়ি</label>
                   <input
                     type="number"
                     min="0"
                     value={boibari || ''}
                     onChange={(e) => setBoibari(Math.max(0, parseInt(e.target.value) || 0))}
                     placeholder="0"
-                    className="w-full text-sm border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-sky-500 font-mono"
+                    className="w-full text-sm font-bold border border-zinc-300 rounded-lg p-2 focus:ring-2 focus:ring-zinc-900 font-mono"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs text-slate-600 mb-1 font-medium">রকমারি (Rokomari)</label>
+                  <label className="block text-xs text-zinc-700 mb-1 font-semibold">রকমারি</label>
                   <input
                     type="number"
                     min="0"
                     value={rokomari || ''}
                     onChange={(e) => setRokomari(Math.max(0, parseInt(e.target.value) || 0))}
                     placeholder="0"
-                    className="w-full text-sm border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-sky-500 font-mono"
+                    className="w-full text-sm font-bold border border-zinc-300 rounded-lg p-2 focus:ring-2 focus:ring-zinc-900 font-mono"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs text-slate-600 mb-1 font-medium">ওয়াফিলাইফ (Wafilife)</label>
+                  <label className="block text-xs text-zinc-700 mb-1 font-semibold">ওয়াফিলাইফ</label>
                   <input
                     type="number"
                     min="0"
                     value={wafilife || ''}
                     onChange={(e) => setWafilife(Math.max(0, parseInt(e.target.value) || 0))}
                     placeholder="0"
-                    className="w-full text-sm border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-sky-500 font-mono"
+                    className="w-full text-sm font-bold border border-zinc-300 rounded-lg p-2 focus:ring-2 focus:ring-zinc-900 font-mono"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs text-slate-600 mb-1 font-medium">অন্যান্য অনলাইন</label>
+                  <label className="block text-xs text-zinc-700 mb-1 font-semibold">অন্যান্য অনলাইন</label>
                   <input
                     type="number"
                     min="0"
                     value={othersOnline || ''}
                     onChange={(e) => setOthersOnline(Math.max(0, parseInt(e.target.value) || 0))}
                     placeholder="0"
-                    className="w-full text-sm border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-sky-500 font-mono"
+                    className="w-full text-sm font-bold border border-zinc-300 rounded-lg p-2 focus:ring-2 focus:ring-zinc-900 font-mono"
                   />
                 </div>
               </div>
             </div>
 
             {/* Section 3: Offline & Libraries */}
-            <div className="border border-slate-200 rounded-xl p-4 bg-white">
-              <div className="flex items-center gap-2 mb-3 text-purple-800 font-bold text-sm">
-                <Store className="w-4 h-4 text-purple-600" />
-                <span>৩. অফলাইন ও লাইব্রেরি বিক্রয় (Offline & Libraries)</span>
+            <div className="border border-zinc-200 rounded-xl p-4 bg-white">
+              <div className="flex items-center gap-2 mb-3 text-zinc-900 font-bold text-xs">
+                <Store className="w-4 h-4 text-zinc-700" />
+                <span>৩. অফলাইন ও লাইব্রেরি বিক্রয় ({day} তারিখের অফলাইন সেলস)</span>
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
                 <div>
-                  <label className="block text-xs text-slate-600 mb-1 font-medium">হেড অফিস সেল</label>
+                  <label className="block text-xs text-zinc-700 mb-1 font-semibold">হেড অফিস সেল</label>
                   <input
                     type="number"
                     min="0"
                     value={headOfficeOffline || ''}
                     onChange={(e) => setHeadOfficeOffline(Math.max(0, parseInt(e.target.value) || 0))}
                     placeholder="0"
-                    className="w-full text-sm border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-purple-500 font-mono"
+                    className="w-full text-sm font-bold border border-zinc-300 rounded-lg p-2 focus:ring-2 focus:ring-zinc-900 font-mono"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs text-slate-600 mb-1 font-medium">নীলক্ষেত লাইব্রেরি</label>
+                  <label className="block text-xs text-zinc-700 mb-1 font-semibold">নীলক্ষেত লাইব্রেরি</label>
                   <input
                     type="number"
                     min="0"
                     value={nilkhet || ''}
                     onChange={(e) => setNilkhet(Math.max(0, parseInt(e.target.value) || 0))}
                     placeholder="0"
-                    className="w-full text-sm border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-purple-500 font-mono"
+                    className="w-full text-sm font-bold border border-zinc-300 rounded-lg p-2 focus:ring-2 focus:ring-zinc-900 font-mono"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs text-slate-600 mb-1 font-medium">সুমনা লাইব্রেরি (প্রেস)</label>
+                  <label className="block text-xs text-zinc-700 mb-1 font-semibold">সুমনা (প্রেস)</label>
                   <input
                     type="number"
                     min="0"
                     value={sumona || ''}
                     onChange={(e) => setSumona(Math.max(0, parseInt(e.target.value) || 0))}
                     placeholder="0"
-                    className="w-full text-sm border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-purple-500 font-mono"
+                    className="w-full text-sm font-bold border border-zinc-300 rounded-lg p-2 focus:ring-2 focus:ring-zinc-900 font-mono"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs text-slate-600 mb-1 font-medium">প্রমিজ লাইব্রেরি (প্রেস)</label>
+                  <label className="block text-xs text-zinc-700 mb-1 font-semibold">প্রমিজ (প্রেস)</label>
                   <input
                     type="number"
                     min="0"
                     value={promise || ''}
                     onChange={(e) => setPromise(Math.max(0, parseInt(e.target.value) || 0))}
                     placeholder="0"
-                    className="w-full text-sm border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-purple-500 font-mono"
+                    className="w-full text-sm font-bold border border-zinc-300 rounded-lg p-2 focus:ring-2 focus:ring-zinc-900 font-mono"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs text-slate-600 mb-1 font-medium">জয়স্টার লাইব্রেরি (প্রেস)</label>
+                  <label className="block text-xs text-zinc-700 mb-1 font-semibold">জয়স্টার (প্রেস)</label>
                   <input
                     type="number"
                     min="0"
                     value={joystar || ''}
                     onChange={(e) => setJoystar(Math.max(0, parseInt(e.target.value) || 0))}
                     placeholder="0"
-                    className="w-full text-sm border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-purple-500 font-mono"
+                    className="w-full text-sm font-bold border border-zinc-300 rounded-lg p-2 focus:ring-2 focus:ring-zinc-900 font-mono"
                   />
                 </div>
               </div>
@@ -383,13 +382,13 @@ export const DailyEntryModal: React.FC<DailyEntryModalProps> = ({
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               
               {/* Daily Returns */}
-              <div className="border border-slate-200 rounded-xl p-4 bg-white">
-                <div className="flex items-center gap-2 mb-2 text-rose-800 font-bold text-sm">
-                  <RotateCcw className="w-4 h-4 text-rose-600" />
-                  <span>৪. দৈনিক রিটার্ন (Daily Returns)</span>
+              <div className="border border-zinc-200 rounded-xl p-4 bg-white">
+                <div className="flex items-center gap-2 mb-2 text-zinc-900 font-bold text-xs">
+                  <RotateCcw className="w-4 h-4 text-zinc-700" />
+                  <span>৪. দৈনিক রিটার্ন ({day} তারিখে ফেরত আসা বই)</span>
                 </div>
-                <label className="block text-xs text-slate-600 mb-1">
-                  দিন {day}-এ হেড অফিসে ফেরত আসা বই (স্টকে যুক্ত হবে)
+                <label className="block text-xs text-zinc-600 mb-1">
+                  হেড অফিসে ফেরত আসা বই (স্টকে যুক্ত হবে)
                 </label>
                 <input
                   type="number"
@@ -397,65 +396,65 @@ export const DailyEntryModal: React.FC<DailyEntryModalProps> = ({
                   value={returns || ''}
                   onChange={(e) => setReturns(Math.max(0, parseInt(e.target.value) || 0))}
                   placeholder="0"
-                  className="w-full text-sm border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-rose-500 font-mono"
+                  className="w-full text-sm font-bold border border-zinc-300 rounded-lg p-2 focus:ring-2 focus:ring-zinc-900 font-mono"
                 />
               </div>
 
               {/* Promotional / Dept */}
-              <div className="border border-slate-200 rounded-xl p-4 bg-white">
-                <div className="flex items-center gap-2 mb-2 text-indigo-800 font-bold text-sm">
-                  <Gift className="w-4 h-4 text-indigo-600" />
+              <div className="border border-zinc-200 rounded-xl p-4 bg-white">
+                <div className="flex items-center gap-2 mb-2 text-zinc-900 font-bold text-xs">
+                  <Gift className="w-4 h-4 text-zinc-700" />
                   <span>৫. প্রমোশন ও ডিপার্টমেন্ট কপি</span>
                 </div>
                 <div className="grid grid-cols-5 gap-2">
                   <div>
-                    <label className="block text-[10px] text-slate-500 mb-0.5">মার্কেটিং</label>
+                    <label className="block text-[10px] text-zinc-500 mb-0.5">মার্কেটিং</label>
                     <input
                       type="number"
                       min="0"
                       value={marketing || ''}
                       onChange={(e) => setMarketing(Math.max(0, parseInt(e.target.value) || 0))}
-                      className="w-full text-xs border border-slate-300 rounded p-1.5 font-mono"
+                      className="w-full text-xs font-bold border border-zinc-300 rounded p-1.5 font-mono"
                     />
                   </div>
                   <div>
-                    <label className="block text-[10px] text-slate-500 mb-0.5">সার্ভিস</label>
+                    <label className="block text-[10px] text-zinc-500 mb-0.5">সার্ভিস</label>
                     <input
                       type="number"
                       min="0"
                       value={service || ''}
                       onChange={(e) => setService(Math.max(0, parseInt(e.target.value) || 0))}
-                      className="w-full text-xs border border-slate-300 rounded p-1.5 font-mono"
+                      className="w-full text-xs font-bold border border-zinc-300 rounded p-1.5 font-mono"
                     />
                   </div>
                   <div>
-                    <label className="block text-[10px] text-slate-500 mb-0.5">ভিডিও</label>
+                    <label className="block text-[10px] text-zinc-500 mb-0.5">ভিডিও</label>
                     <input
                       type="number"
                       min="0"
                       value={adVideoMaking || ''}
                       onChange={(e) => setAdVideoMaking(Math.max(0, parseInt(e.target.value) || 0))}
-                      className="w-full text-xs border border-slate-300 rounded p-1.5 font-mono"
+                      className="w-full text-xs font-bold border border-zinc-300 rounded p-1.5 font-mono"
                     />
                   </div>
                   <div>
-                    <label className="block text-[10px] text-slate-500 mb-0.5">R&D</label>
+                    <label className="block text-[10px] text-zinc-500 mb-0.5">R&D</label>
                     <input
                       type="number"
                       min="0"
                       value={rd || ''}
                       onChange={(e) => setRd(Math.max(0, parseInt(e.target.value) || 0))}
-                      className="w-full text-xs border border-slate-300 rounded p-1.5 font-mono"
+                      className="w-full text-xs font-bold border border-zinc-300 rounded p-1.5 font-mono"
                     />
                   </div>
                   <div>
-                    <label className="block text-[10px] text-slate-500 mb-0.5">উপহার</label>
+                    <label className="block text-[10px] text-zinc-500 mb-0.5">উপহার</label>
                     <input
                       type="number"
                       min="0"
                       value={gift || ''}
                       onChange={(e) => setGift(Math.max(0, parseInt(e.target.value) || 0))}
-                      className="w-full text-xs border border-slate-300 rounded p-1.5 font-mono"
+                      className="w-full text-xs font-bold border border-zinc-300 rounded p-1.5 font-mono"
                     />
                   </div>
                 </div>
@@ -466,14 +465,14 @@ export const DailyEntryModal: React.FC<DailyEntryModalProps> = ({
           </div>
 
           {/* Modal Footer */}
-          <div className="bg-slate-50 border-t border-slate-200 px-6 py-4 flex items-center justify-between">
+          <div className="bg-zinc-50 border-t border-zinc-200 px-6 py-4 flex items-center justify-between">
             {savedSuccess ? (
-              <div className="flex items-center gap-1.5 text-xs text-emerald-700 font-semibold animate-fade-in">
+              <div className="flex items-center gap-1.5 text-xs text-zinc-900 font-bold animate-fade-in">
                 <CheckCircle2 className="w-4 h-4" />
-                <span>সফলভাবে দিন {day}-এর ডাটা সংরক্ষিত হয়েছে!</span>
+                <span>সফলভাবে {day} তারিখের ডাটা সংরক্ষিত হয়েছে!</span>
               </div>
             ) : (
-              <span className="text-xs text-slate-500">
+              <span className="text-xs text-zinc-500">
                 সংরক্ষণ করলে তাৎক্ষণিক স্টক ও হিসাব আপডেট হবে
               </span>
             )}
@@ -482,13 +481,13 @@ export const DailyEntryModal: React.FC<DailyEntryModalProps> = ({
               <button
                 type="button"
                 onClick={onClose}
-                className="px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-200 rounded-lg transition-colors"
+                className="px-4 py-2 text-xs font-semibold text-zinc-700 hover:bg-zinc-200 rounded-lg transition-colors"
               >
                 বাতিল
               </button>
               <button
                 type="submit"
-                className="inline-flex items-center gap-1.5 px-5 py-2 text-sm font-semibold text-white bg-rose-700 hover:bg-rose-800 rounded-lg shadow-sm transition-colors focus:ring-2 focus:ring-rose-500"
+                className="inline-flex items-center gap-1.5 px-5 py-2 text-xs font-bold text-white bg-zinc-900 hover:bg-black rounded-lg shadow-xs transition-colors"
               >
                 <Save className="w-4 h-4" />
                 <span>সংরক্ষণ করুন</span>

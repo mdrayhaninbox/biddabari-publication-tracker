@@ -9,8 +9,8 @@ import {
   Store, 
   Warehouse, 
   RotateCcw,
-  ArrowRight,
-  Sparkles
+  Sparkles,
+  ArrowRight
 } from 'lucide-react';
 import { BookRecord } from '../types/book';
 import { calculateBookMetrics, formatBDT, formatNumber } from '../utils/calculations';
@@ -41,7 +41,6 @@ interface QuickDataEntryProps {
       gift: number;
     }
   ) => void;
-  onBatchSaveDailyEntries?: (day: number, entriesMap: { [bookId: string]: any }) => void;
 }
 
 export const QuickDataEntry: React.FC<QuickDataEntryProps> = ({
@@ -207,55 +206,55 @@ export const QuickDataEntry: React.FC<QuickDataEntryProps> = ({
   return (
     <div className="space-y-6">
       
-      {/* Top Card: Mode Selection */}
-      <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-xs flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      {/* Top Card: Mode Selection (Black & White Minimalist) */}
+      <div className="bg-white p-4 sm:p-5 rounded-2xl border border-zinc-200 shadow-xs flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <div className="p-2 bg-rose-100 text-rose-800 rounded-lg">
+            <div className="p-2 bg-zinc-100 text-zinc-900 rounded-lg border border-zinc-200">
               <CalendarPlus className="w-5 h-5" />
             </div>
-            <h2 className="text-lg font-bold text-slate-900">
-              সহজ ডেটা এন্ট্রি সিস্টেম (Simple Data Input)
+            <h2 className="text-lg font-bold text-zinc-900">
+              সহজ ডেটা এন্ট্রি সিস্টেম
             </h2>
           </div>
-          <p className="text-xs text-slate-500 mt-1">
-            একক বই অনুযায়ী অথবা একই দিনে সব বইয়ের চালান ও বিক্রয় এক ক্লিকে এন্ট্রি দিন
+          <p className="text-xs text-zinc-500 mt-1">
+            মাসের যেকোনো তারিখের (১ থেকে ৩১ তারিখ) সেলস, চালান ও রিটার্ন দ্রুত লিপিবদ্ধ করুন
           </p>
         </div>
 
         {/* Mode Toggle */}
-        <div className="flex bg-slate-100 p-1 rounded-xl self-start md:self-auto border border-slate-200">
+        <div className="flex bg-zinc-100 p-1 rounded-xl self-start md:self-auto border border-zinc-200">
           <button
             onClick={() => setEntryMode('single')}
             className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
               entryMode === 'single'
-                ? 'bg-rose-700 text-white shadow-xs'
-                : 'text-slate-600 hover:text-slate-900'
+                ? 'bg-zinc-900 text-white shadow-xs'
+                : 'text-zinc-600 hover:text-zinc-900'
             }`}
           >
             <Layers className="w-3.5 h-3.5" />
-            <span>একক বই এন্ট্রি (Single)</span>
+            <span>একক বই এন্ট্রি</span>
           </button>
 
           <button
             onClick={() => setEntryMode('sheet')}
             className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
               entryMode === 'sheet'
-                ? 'bg-rose-700 text-white shadow-xs'
-                : 'text-slate-600 hover:text-slate-900'
+                ? 'bg-zinc-900 text-white shadow-xs'
+                : 'text-zinc-600 hover:text-zinc-900'
             }`}
           >
             <TableProperties className="w-3.5 h-3.5" />
-            <span>সকল বই দৈনিক শিট এন্ট্রি (All Books)</span>
+            <span>সকল বই দৈনিক শিট এন্ট্রি</span>
           </button>
         </div>
       </div>
 
       {/* Success Notification Banner */}
       {saveSuccess && (
-        <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-800 text-xs font-semibold flex items-center gap-2 animate-in fade-in">
-          <CheckCircle2 className="w-5 h-5 text-emerald-600" />
-          <span>ডাটা সফলভাবে সংরক্ষিত হয়েছে এবং স্টক ও লাভ তাৎক্ষণিক আপডেট হয়েছে!</span>
+        <div className="p-3 bg-zinc-900 text-white rounded-xl text-xs font-semibold flex items-center gap-2 animate-in fade-in shadow-xs">
+          <CheckCircle2 className="w-5 h-5 text-white" />
+          <span>ডাটা সফলভাবে সংরক্ষিত হয়েছে এবং ইনভেন্টরি ও লাভ তাৎক্ষণিক আপডেট হয়েছে!</span>
         </div>
       )}
 
@@ -265,68 +264,67 @@ export const QuickDataEntry: React.FC<QuickDataEntryProps> = ({
       {entryMode === 'single' && (
         <form onSubmit={handleSaveSingle} className="space-y-5 animate-in fade-in duration-150">
           
-          {/* Book & Day Selectors */}
-          <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {/* Book & Date Selectors */}
+          <div className="bg-white p-5 rounded-2xl border border-zinc-200 shadow-xs grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1.5">
+              <label className="block text-xs font-bold text-zinc-800 mb-1.5">
                 ১. বই নির্বাচন করুন
               </label>
               <select
                 value={selectedBookId}
                 onChange={(e) => setSelectedBookId(e.target.value)}
-                className="w-full text-sm font-semibold border border-slate-300 rounded-xl p-2.5 bg-slate-50 text-slate-900 focus:ring-2 focus:ring-rose-500"
+                className="w-full text-sm font-semibold border border-zinc-300 rounded-xl p-2.5 bg-zinc-50 text-zinc-900 focus:ring-2 focus:ring-zinc-900 focus:bg-white"
               >
                 {books.map(b => (
                   <option key={b.id} value={b.id}>
-                    {b.sl}. {b.bookName} (মূল্য: {b.perBookAmount}৳ | লাভ: {b.profitPerBook}৳)
+                    {b.sl}. {b.bookName} (MRP: {b.perBookAmount}৳ | লাভ: +{b.profitPerBook}৳)
                   </option>
                 ))}
               </select>
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                ২. তারিখ / দিন নির্বাচন করুন
+              <label className="block text-xs font-bold text-zinc-800 mb-1.5">
+                ২. তারিখ নির্বাচন করুন (১লা থেকে ৩১শে তারিখ)
               </label>
               <select
                 value={day}
                 onChange={(e) => setDay(Number(e.target.value))}
-                className="w-full text-sm font-semibold border border-slate-300 rounded-xl p-2.5 bg-slate-50 text-slate-900 focus:ring-2 focus:ring-rose-500 font-mono"
+                className="w-full text-sm font-bold border border-zinc-300 rounded-xl p-2.5 bg-zinc-50 text-zinc-900 focus:ring-2 focus:ring-zinc-900 focus:bg-white font-mono"
               >
                 {Array.from({ length: 31 }, (_, i) => i + 1).map(d => (
                   <option key={d} value={d}>
-                    দিন {d} ({d} তারিখ)
+                    {d} তারিখ ({d}তম দিন)
                   </option>
                 ))}
               </select>
             </div>
           </div>
 
-          {/* Real-time Calculation Badge */}
-          <div className="bg-gradient-to-r from-rose-50 via-pink-50 to-amber-50 border border-rose-200 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-3 text-xs">
+          {/* Real-time Calculation Summary (Monochrome Minimalist) */}
+          <div className="bg-zinc-100 border border-zinc-200 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-3 text-xs">
             <div className="flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-rose-700" />
-              <span className="font-bold text-slate-800">
-                "{currentBook?.bookName}" - দিন {day}-এর হিসাব:
+              <span className="font-bold text-zinc-900">
+                "{currentBook?.bookName}" — {day} তারিখের হিসাব:
               </span>
             </div>
-            <div className="flex items-center gap-4 text-slate-700">
-              <span>মোট বিক্রি: <b className="text-blue-700 text-sm">{formatNumber(singleTotalSold)}</b> কপি</span>
-              <span>রাজস্ব: <b className="text-slate-900 text-sm">{formatBDT(singleRevenue)}</b></span>
-              <span>নিট লাভ: <b className="text-emerald-700 text-sm">+{formatBDT(singleProfit)}</b></span>
+            <div className="flex items-center gap-4 text-zinc-800">
+              <span>আজকের বিক্রি: <b className="text-zinc-900 text-sm font-bold">{formatNumber(singleTotalSold)}</b> কপি</span>
+              <span>সম্ভাব্য রাজস্ব: <b className="text-zinc-900 text-sm font-bold">{formatBDT(singleRevenue)}</b></span>
+              <span>নিট লাভ: <b className="text-zinc-900 text-sm font-bold">+{formatBDT(singleProfit)}</b></span>
             </div>
           </div>
 
           {/* Section 1: Press Receipt */}
-          <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
-            <h3 className="text-xs font-bold text-amber-900 mb-3 flex items-center gap-2">
-              <Warehouse className="w-4 h-4 text-amber-600" />
-              <span>প্রেস চালান (ফরিদ ভাই থেকে হেড অফিসে প্রাপ্ত)</span>
+          <div className="bg-white p-5 rounded-2xl border border-zinc-200 shadow-xs">
+            <h3 className="text-xs font-bold text-zinc-900 mb-3 flex items-center gap-2">
+              <Warehouse className="w-4 h-4 text-zinc-700" />
+              <span>প্রেস চালান (ফরিদ ভাই থেকে হেড অফিসে প্রাপ্ত বই)</span>
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center">
               <div>
-                <label className="block text-xs text-slate-600 mb-1">
-                  দিন {day}-এ ফরিদ ভাই প্রেস থেকে আসা বই
+                <label className="block text-xs text-zinc-600 mb-1">
+                  {day} তারিখে ফরিদ ভাই প্রেস থেকে হেড অফিসে আসা বই
                 </label>
                 <input
                   type="number"
@@ -334,140 +332,140 @@ export const QuickDataEntry: React.FC<QuickDataEntryProps> = ({
                   value={pressReceipt || ''}
                   onChange={(e) => setPressReceipt(Math.max(0, parseInt(e.target.value) || 0))}
                   placeholder="0"
-                  className="w-full text-base font-bold border border-slate-300 rounded-xl p-2.5 focus:ring-2 focus:ring-amber-500 font-mono"
+                  className="w-full text-base font-bold border border-zinc-300 rounded-xl p-2.5 focus:ring-2 focus:ring-zinc-900 focus:bg-white font-mono"
                 />
               </div>
-              <div className="p-3 bg-amber-50/70 rounded-xl text-xs text-amber-900">
-                <span className="block">প্রেসের মোট অর্ডার: <b>{formatNumber(m?.totalOrderFaridBhai || 0)}</b> কপি</span>
-                <span className="block mt-0.5">বর্তমান প্রেস ব্যালেন্স: <b>{formatNumber(m?.stockToFaridBhai || 0)}</b> কপি</span>
+              <div className="p-3 bg-zinc-50 rounded-xl text-xs text-zinc-800 border border-zinc-200">
+                <span className="block font-medium">প্রেসের মোট অর্ডার: <b>{formatNumber(m?.totalOrderFaridBhai || 0)}</b> কপি</span>
+                <span className="block mt-0.5 text-zinc-600">বর্তমান প্রেস ব্যালেন্স: <b>{formatNumber(m?.stockToFaridBhai || 0)}</b> কপি</span>
               </div>
             </div>
           </div>
 
           {/* Section 2: Online Sales */}
-          <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
-            <h3 className="text-xs font-bold text-sky-900 mb-3 flex items-center gap-2">
-              <Globe className="w-4 h-4 text-sky-600" />
-              <span>অনলাইন ডেলিভারি (হেড অফিস থেকে কুরিয়ার প্রেরিত)</span>
+          <div className="bg-white p-5 rounded-2xl border border-zinc-200 shadow-xs">
+            <h3 className="text-xs font-bold text-zinc-900 mb-3 flex items-center gap-2">
+              <Globe className="w-4 h-4 text-zinc-700" />
+              <span>অনলাইন ডেলিভারি ({day} তারিখের অনলাইন বিক্রি)</span>
             </h3>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               <div>
-                <label className="block text-xs text-slate-600 mb-1 font-medium">বইবাড়ি</label>
+                <label className="block text-xs text-zinc-700 mb-1 font-semibold">বইবাড়ি</label>
                 <input
                   type="number"
                   min="0"
                   value={boibari || ''}
                   onChange={(e) => setBoibari(Math.max(0, parseInt(e.target.value) || 0))}
                   placeholder="0"
-                  className="w-full text-base font-bold border border-slate-300 rounded-xl p-2 focus:ring-2 focus:ring-sky-500 font-mono"
+                  className="w-full text-base font-bold border border-zinc-300 rounded-xl p-2 focus:ring-2 focus:ring-zinc-900 font-mono"
                 />
               </div>
               <div>
-                <label className="block text-xs text-slate-600 mb-1 font-medium">রকমারি</label>
+                <label className="block text-xs text-zinc-700 mb-1 font-semibold">রকমারি</label>
                 <input
                   type="number"
                   min="0"
                   value={rokomari || ''}
                   onChange={(e) => setRokomari(Math.max(0, parseInt(e.target.value) || 0))}
                   placeholder="0"
-                  className="w-full text-base font-bold border border-slate-300 rounded-xl p-2 focus:ring-2 focus:ring-sky-500 font-mono"
+                  className="w-full text-base font-bold border border-zinc-300 rounded-xl p-2 focus:ring-2 focus:ring-zinc-900 font-mono"
                 />
               </div>
               <div>
-                <label className="block text-xs text-slate-600 mb-1 font-medium">ওয়াফিলাইফ</label>
+                <label className="block text-xs text-zinc-700 mb-1 font-semibold">ওয়াফিলাইফ</label>
                 <input
                   type="number"
                   min="0"
                   value={wafilife || ''}
                   onChange={(e) => setWafilife(Math.max(0, parseInt(e.target.value) || 0))}
                   placeholder="0"
-                  className="w-full text-base font-bold border border-slate-300 rounded-xl p-2 focus:ring-2 focus:ring-sky-500 font-mono"
+                  className="w-full text-base font-bold border border-zinc-300 rounded-xl p-2 focus:ring-2 focus:ring-zinc-900 font-mono"
                 />
               </div>
               <div>
-                <label className="block text-xs text-slate-600 mb-1 font-medium">অন্যান্য অনলাইন</label>
+                <label className="block text-xs text-zinc-700 mb-1 font-semibold">অন্যান্য অনলাইন</label>
                 <input
                   type="number"
                   min="0"
                   value={othersOnline || ''}
                   onChange={(e) => setOthersOnline(Math.max(0, parseInt(e.target.value) || 0))}
                   placeholder="0"
-                  className="w-full text-base font-bold border border-slate-300 rounded-xl p-2 focus:ring-2 focus:ring-sky-500 font-mono"
+                  className="w-full text-base font-bold border border-zinc-300 rounded-xl p-2 focus:ring-2 focus:ring-zinc-900 font-mono"
                 />
               </div>
             </div>
           </div>
 
           {/* Section 3: Offline Sales */}
-          <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
-            <h3 className="text-xs font-bold text-purple-900 mb-3 flex items-center gap-2">
-              <Store className="w-4 h-4 text-purple-600" />
-              <span>অফলাইন ও লাইব্রেরি ডেলিভারি</span>
+          <div className="bg-white p-5 rounded-2xl border border-zinc-200 shadow-xs">
+            <h3 className="text-xs font-bold text-zinc-900 mb-3 flex items-center gap-2">
+              <Store className="w-4 h-4 text-zinc-700" />
+              <span>অফলাইন ও লাইব্রেরি ডেলিভারি ({day} তারিখের অফলাইন বিক্রি)</span>
             </h3>
             <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
               <div>
-                <label className="block text-xs text-slate-600 mb-1 font-medium">হেড অফিস সেল</label>
+                <label className="block text-xs text-zinc-700 mb-1 font-semibold">হেড অফিস সেল</label>
                 <input
                   type="number"
                   min="0"
                   value={headOfficeOffline || ''}
                   onChange={(e) => setHeadOfficeOffline(Math.max(0, parseInt(e.target.value) || 0))}
                   placeholder="0"
-                  className="w-full text-base font-bold border border-slate-300 rounded-xl p-2 focus:ring-2 focus:ring-purple-500 font-mono"
+                  className="w-full text-base font-bold border border-zinc-300 rounded-xl p-2 focus:ring-2 focus:ring-zinc-900 font-mono"
                 />
               </div>
               <div>
-                <label className="block text-xs text-slate-600 mb-1 font-medium">নীলক্ষেত লাইব্রেরি</label>
+                <label className="block text-xs text-zinc-700 mb-1 font-semibold">নীলক্ষেত লাইব্রেরি</label>
                 <input
                   type="number"
                   min="0"
                   value={nilkhet || ''}
                   onChange={(e) => setNilkhet(Math.max(0, parseInt(e.target.value) || 0))}
                   placeholder="0"
-                  className="w-full text-base font-bold border border-slate-300 rounded-xl p-2 focus:ring-2 focus:ring-purple-500 font-mono"
+                  className="w-full text-base font-bold border border-zinc-300 rounded-xl p-2 focus:ring-2 focus:ring-zinc-900 font-mono"
                 />
               </div>
               <div>
-                <label className="block text-xs text-slate-600 mb-1 font-medium">সুমনা (প্রেস থেকে)</label>
+                <label className="block text-xs text-zinc-700 mb-1 font-semibold">সুমনা (প্রেস থেকে)</label>
                 <input
                   type="number"
                   min="0"
                   value={sumona || ''}
                   onChange={(e) => setSumona(Math.max(0, parseInt(e.target.value) || 0))}
                   placeholder="0"
-                  className="w-full text-base font-bold border border-slate-300 rounded-xl p-2 focus:ring-2 focus:ring-purple-500 font-mono"
+                  className="w-full text-base font-bold border border-zinc-300 rounded-xl p-2 focus:ring-2 focus:ring-zinc-900 font-mono"
                 />
               </div>
               <div>
-                <label className="block text-xs text-slate-600 mb-1 font-medium">প্রমিজ (প্রেস থেকে)</label>
+                <label className="block text-xs text-zinc-700 mb-1 font-semibold">প্রমিজ (প্রেস থেকে)</label>
                 <input
                   type="number"
                   min="0"
                   value={promise || ''}
                   onChange={(e) => setPromise(Math.max(0, parseInt(e.target.value) || 0))}
                   placeholder="0"
-                  className="w-full text-base font-bold border border-slate-300 rounded-xl p-2 focus:ring-2 focus:ring-purple-500 font-mono"
+                  className="w-full text-base font-bold border border-zinc-300 rounded-xl p-2 focus:ring-2 focus:ring-zinc-900 font-mono"
                 />
               </div>
               <div>
-                <label className="block text-xs text-slate-600 mb-1 font-medium">জয়স্টার (প্রেস থেকে)</label>
+                <label className="block text-xs text-zinc-700 mb-1 font-semibold">জয়স্টার (প্রেস থেকে)</label>
                 <input
                   type="number"
                   min="0"
                   value={joystar || ''}
                   onChange={(e) => setJoystar(Math.max(0, parseInt(e.target.value) || 0))}
                   placeholder="0"
-                  className="w-full text-base font-bold border border-slate-300 rounded-xl p-2 focus:ring-2 focus:ring-purple-500 font-mono"
+                  className="w-full text-base font-bold border border-zinc-300 rounded-xl p-2 focus:ring-2 focus:ring-zinc-900 font-mono"
                 />
               </div>
             </div>
           </div>
 
           {/* Section 4: Returns */}
-          <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
-            <h3 className="text-xs font-bold text-rose-900 mb-2 flex items-center gap-2">
-              <RotateCcw className="w-4 h-4 text-rose-600" />
-              <span>দৈনিক রিটার্ন (ফেরত এসে স্টকে যুক্ত হওয়া বই)</span>
+          <div className="bg-white p-5 rounded-2xl border border-zinc-200 shadow-xs">
+            <h3 className="text-xs font-bold text-zinc-900 mb-2 flex items-center gap-2">
+              <RotateCcw className="w-4 h-4 text-zinc-700" />
+              <span>দৈনিক রিটার্ন ({day} তারিখে ফেরত আসা বই)</span>
             </h3>
             <div className="max-w-xs">
               <input
@@ -476,7 +474,7 @@ export const QuickDataEntry: React.FC<QuickDataEntryProps> = ({
                 value={returns || ''}
                 onChange={(e) => setReturns(Math.max(0, parseInt(e.target.value) || 0))}
                 placeholder="0"
-                className="w-full text-base font-bold border border-slate-300 rounded-xl p-2 focus:ring-2 focus:ring-rose-500 font-mono"
+                className="w-full text-base font-bold border border-zinc-300 rounded-xl p-2.5 focus:ring-2 focus:ring-zinc-900 font-mono"
               />
             </div>
           </div>
@@ -487,18 +485,18 @@ export const QuickDataEntry: React.FC<QuickDataEntryProps> = ({
               <button
                 type="button"
                 onClick={() => setDay(d => Math.min(31, d + 1))}
-                className="text-xs font-semibold text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 px-3 py-2 rounded-xl transition-colors"
+                className="text-xs font-semibold text-zinc-700 hover:text-black bg-zinc-100 hover:bg-zinc-200 px-3 py-2 rounded-xl transition-colors border border-zinc-200"
               >
-                পরের দিন (দিন {Math.min(31, day + 1)}) ➔
+                পরবর্তী তারিখ ({Math.min(31, day + 1)} তারিখ) ➔
               </button>
             </div>
 
             <button
               type="submit"
-              className="inline-flex items-center gap-2 px-6 py-2.5 text-sm font-bold text-white bg-rose-700 hover:bg-rose-800 rounded-xl shadow-sm transition-all focus:ring-2 focus:ring-rose-500"
+              className="inline-flex items-center gap-2 px-6 py-2.5 text-xs font-bold text-white bg-zinc-900 hover:bg-black rounded-xl shadow-xs transition-all"
             >
               <Save className="w-4 h-4" />
-              <span>দিন {day}-এর ডাটা সংরক্ষণ করুন</span>
+              <span>{day} তারিখের ডাটা সংরক্ষণ করুন</span>
             </button>
           </div>
 
@@ -512,54 +510,54 @@ export const QuickDataEntry: React.FC<QuickDataEntryProps> = ({
         <div className="space-y-4 animate-in fade-in duration-150">
           
           {/* Day Picker & Bulk Save Bar */}
-          <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div className="bg-white p-4 rounded-2xl border border-zinc-200 shadow-xs flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div className="flex items-center gap-3">
-              <span className="text-xs font-bold text-slate-700">তারিখ / দিন:</span>
+              <span className="text-xs font-bold text-zinc-800">তারিখ নির্বাচন:</span>
               <select
                 value={sheetDay}
                 onChange={(e) => setSheetDay(Number(e.target.value))}
-                className="text-sm font-bold border border-slate-300 rounded-xl px-3 py-1.5 bg-slate-50 text-slate-900 focus:ring-2 focus:ring-rose-500 font-mono"
+                className="text-sm font-bold border border-zinc-300 rounded-xl px-3 py-1.5 bg-zinc-50 text-zinc-900 focus:ring-2 focus:ring-zinc-900 font-mono"
               >
                 {Array.from({ length: 31 }, (_, i) => i + 1).map(d => (
                   <option key={d} value={d}>
-                    দিন {d} ({d} তারিখ)
+                    {d} তারিখ ({d}তম দিন)
                   </option>
                 ))}
               </select>
-              <span className="text-xs text-slate-500">({books.length} টি বইয়ের জন্য একযোগে এন্ট্রি)</span>
+              <span className="text-xs text-zinc-500">({books.length} টি বইয়ের জন্য একযোগে এন্ট্রি)</span>
             </div>
 
             <button
               onClick={handleSaveSheet}
-              className="inline-flex items-center gap-2 px-5 py-2 text-xs font-bold text-white bg-rose-700 hover:bg-rose-800 rounded-xl shadow-xs transition-colors self-end sm:self-auto"
+              className="inline-flex items-center gap-2 px-5 py-2 text-xs font-bold text-white bg-zinc-900 hover:bg-black rounded-xl shadow-xs transition-colors self-end sm:self-auto"
             >
               <Save className="w-4 h-4" />
-              <span>দিন {sheetDay}-এ সব বইয়ের ডাটা সেভ করুন</span>
+              <span>{sheetDay} তারিখে সব বইয়ের ডাটা সেভ করুন</span>
             </button>
           </div>
 
           {/* Bulk Spreadsheet Table */}
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
+          <div className="bg-white rounded-2xl border border-zinc-200 shadow-xs overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse text-xs">
                 <thead>
-                  <tr className="bg-slate-100 text-slate-700 font-semibold border-b border-slate-200">
-                    <th className="py-2.5 px-3 min-w-[180px] sticky left-0 z-10 bg-slate-100">বইয়ের নাম</th>
-                    <th className="py-2.5 px-2 text-center bg-amber-50 min-w-[70px]">প্রেস প্রাপ্ত</th>
-                    <th className="py-2.5 px-2 text-center bg-sky-50 min-w-[65px]">বইবাড়ি</th>
-                    <th className="py-2.5 px-2 text-center bg-sky-50 min-w-[65px]">রকমারি</th>
-                    <th className="py-2.5 px-2 text-center bg-sky-50 min-w-[65px]">ওয়াফিলাইফ</th>
-                    <th className="py-2.5 px-2 text-center bg-sky-50 min-w-[65px]">অন্যান্য</th>
-                    <th className="py-2.5 px-2 text-center bg-purple-50 min-w-[65px]">HO কাউন্টার</th>
-                    <th className="py-2.5 px-2 text-center bg-purple-50 min-w-[65px]">নীলক্ষেত</th>
-                    <th className="py-2.5 px-2 text-center bg-purple-50 min-w-[65px]">সুমনা</th>
-                    <th className="py-2.5 px-2 text-center bg-purple-50 min-w-[65px]">প্রমিজ</th>
-                    <th className="py-2.5 px-2 text-center bg-purple-50 min-w-[65px]">জয়স্টার</th>
-                    <th className="py-2.5 px-2 text-center bg-rose-50 min-w-[65px]">রিটার্ন</th>
-                    <th className="py-2.5 px-3 text-center font-bold bg-blue-50 text-blue-900 min-w-[80px]">আজকের বিক্রি</th>
+                  <tr className="bg-zinc-100 text-zinc-700 font-semibold border-b border-zinc-200">
+                    <th className="py-2.5 px-3 min-w-[180px] sticky left-0 z-10 bg-zinc-100">বইয়ের নাম</th>
+                    <th className="py-2.5 px-2 text-center bg-zinc-50 min-w-[70px]">প্রেস প্রাপ্ত</th>
+                    <th className="py-2.5 px-2 text-center bg-zinc-50 min-w-[65px]">বইবাড়ি</th>
+                    <th className="py-2.5 px-2 text-center bg-zinc-50 min-w-[65px]">রকমারি</th>
+                    <th className="py-2.5 px-2 text-center bg-zinc-50 min-w-[65px]">ওয়াফিলাইফ</th>
+                    <th className="py-2.5 px-2 text-center bg-zinc-50 min-w-[65px]">অন্যান্য</th>
+                    <th className="py-2.5 px-2 text-center bg-zinc-50 min-w-[65px]">HO কাউন্টার</th>
+                    <th className="py-2.5 px-2 text-center bg-zinc-50 min-w-[65px]">নীলক্ষেত</th>
+                    <th className="py-2.5 px-2 text-center bg-zinc-50 min-w-[65px]">সুমনা</th>
+                    <th className="py-2.5 px-2 text-center bg-zinc-50 min-w-[65px]">প্রমিজ</th>
+                    <th className="py-2.5 px-2 text-center bg-zinc-50 min-w-[65px]">জয়স্টার</th>
+                    <th className="py-2.5 px-2 text-center bg-zinc-50 min-w-[65px]">রিটার্ন</th>
+                    <th className="py-2.5 px-3 text-center font-bold bg-zinc-200 text-zinc-900 min-w-[80px]">আজকের বিক্রি</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100">
+                <tbody className="divide-y divide-zinc-100">
                   {books.map(b => {
                     const row = sheetValues[b.id] || {
                       pressReceipt: 0,
@@ -587,145 +585,145 @@ export const QuickDataEntry: React.FC<QuickDataEntryProps> = ({
                       (row.joystar || 0);
 
                     return (
-                      <tr key={b.id} className="hover:bg-slate-50">
-                        <td className="py-2 px-3 font-semibold text-slate-900 sticky left-0 z-10 bg-white">
+                      <tr key={b.id} className="hover:bg-zinc-50 transition-colors">
+                        <td className="py-2 px-3 font-semibold text-zinc-900 sticky left-0 z-10 bg-white">
                           {b.sl}. {b.bookName}
                         </td>
 
                         {/* Press Receipt */}
-                        <td className="py-1 px-1 bg-amber-50/40">
+                        <td className="py-1 px-1">
                           <input
                             type="number"
                             min="0"
                             value={row.pressReceipt || ''}
                             onChange={(e) => handleSheetCellChange(b.id, 'pressReceipt', parseInt(e.target.value) || 0)}
-                            className="w-full text-center py-1 font-mono text-xs border border-slate-200 rounded focus:border-amber-500 focus:bg-white"
+                            className="w-full text-center py-1 font-mono text-xs border border-zinc-200 rounded focus:border-zinc-900 focus:bg-white"
                             placeholder="0"
                           />
                         </td>
 
                         {/* Boibari */}
-                        <td className="py-1 px-1 bg-sky-50/30">
+                        <td className="py-1 px-1">
                           <input
                             type="number"
                             min="0"
                             value={row.boibari || ''}
                             onChange={(e) => handleSheetCellChange(b.id, 'boibari', parseInt(e.target.value) || 0)}
-                            className="w-full text-center py-1 font-mono text-xs border border-slate-200 rounded focus:border-sky-500 focus:bg-white"
+                            className="w-full text-center py-1 font-mono text-xs border border-zinc-200 rounded focus:border-zinc-900 focus:bg-white"
                             placeholder="0"
                           />
                         </td>
 
                         {/* Rokomari */}
-                        <td className="py-1 px-1 bg-sky-50/30">
+                        <td className="py-1 px-1">
                           <input
                             type="number"
                             min="0"
                             value={row.rokomari || ''}
                             onChange={(e) => handleSheetCellChange(b.id, 'rokomari', parseInt(e.target.value) || 0)}
-                            className="w-full text-center py-1 font-mono text-xs border border-slate-200 rounded focus:border-sky-500 focus:bg-white"
+                            className="w-full text-center py-1 font-mono text-xs border border-zinc-200 rounded focus:border-zinc-900 focus:bg-white"
                             placeholder="0"
                           />
                         </td>
 
                         {/* Wafilife */}
-                        <td className="py-1 px-1 bg-sky-50/30">
+                        <td className="py-1 px-1">
                           <input
                             type="number"
                             min="0"
                             value={row.wafilife || ''}
                             onChange={(e) => handleSheetCellChange(b.id, 'wafilife', parseInt(e.target.value) || 0)}
-                            className="w-full text-center py-1 font-mono text-xs border border-slate-200 rounded focus:border-sky-500 focus:bg-white"
+                            className="w-full text-center py-1 font-mono text-xs border border-zinc-200 rounded focus:border-zinc-900 focus:bg-white"
                             placeholder="0"
                           />
                         </td>
 
                         {/* Others Online */}
-                        <td className="py-1 px-1 bg-sky-50/30">
+                        <td className="py-1 px-1">
                           <input
                             type="number"
                             min="0"
                             value={row.othersOnline || ''}
                             onChange={(e) => handleSheetCellChange(b.id, 'othersOnline', parseInt(e.target.value) || 0)}
-                            className="w-full text-center py-1 font-mono text-xs border border-slate-200 rounded focus:border-sky-500 focus:bg-white"
+                            className="w-full text-center py-1 font-mono text-xs border border-zinc-200 rounded focus:border-zinc-900 focus:bg-white"
                             placeholder="0"
                           />
                         </td>
 
                         {/* HO Offline */}
-                        <td className="py-1 px-1 bg-purple-50/30">
+                        <td className="py-1 px-1">
                           <input
                             type="number"
                             min="0"
                             value={row.headOfficeOffline || ''}
                             onChange={(e) => handleSheetCellChange(b.id, 'headOfficeOffline', parseInt(e.target.value) || 0)}
-                            className="w-full text-center py-1 font-mono text-xs border border-slate-200 rounded focus:border-purple-500 focus:bg-white"
+                            className="w-full text-center py-1 font-mono text-xs border border-zinc-200 rounded focus:border-zinc-900 focus:bg-white"
                             placeholder="0"
                           />
                         </td>
 
                         {/* Nilkhet */}
-                        <td className="py-1 px-1 bg-purple-50/30">
+                        <td className="py-1 px-1">
                           <input
                             type="number"
                             min="0"
                             value={row.nilkhet || ''}
                             onChange={(e) => handleSheetCellChange(b.id, 'nilkhet', parseInt(e.target.value) || 0)}
-                            className="w-full text-center py-1 font-mono text-xs border border-slate-200 rounded focus:border-purple-500 focus:bg-white"
+                            className="w-full text-center py-1 font-mono text-xs border border-zinc-200 rounded focus:border-zinc-900 focus:bg-white"
                             placeholder="0"
                           />
                         </td>
 
                         {/* Sumona */}
-                        <td className="py-1 px-1 bg-purple-50/30">
+                        <td className="py-1 px-1">
                           <input
                             type="number"
                             min="0"
                             value={row.sumona || ''}
                             onChange={(e) => handleSheetCellChange(b.id, 'sumona', parseInt(e.target.value) || 0)}
-                            className="w-full text-center py-1 font-mono text-xs border border-slate-200 rounded focus:border-purple-500 focus:bg-white"
+                            className="w-full text-center py-1 font-mono text-xs border border-zinc-200 rounded focus:border-zinc-900 focus:bg-white"
                             placeholder="0"
                           />
                         </td>
 
                         {/* Promise */}
-                        <td className="py-1 px-1 bg-purple-50/30">
+                        <td className="py-1 px-1">
                           <input
                             type="number"
                             min="0"
                             value={row.promise || ''}
                             onChange={(e) => handleSheetCellChange(b.id, 'promise', parseInt(e.target.value) || 0)}
-                            className="w-full text-center py-1 font-mono text-xs border border-slate-200 rounded focus:border-purple-500 focus:bg-white"
+                            className="w-full text-center py-1 font-mono text-xs border border-zinc-200 rounded focus:border-zinc-900 focus:bg-white"
                             placeholder="0"
                           />
                         </td>
 
                         {/* Joystar */}
-                        <td className="py-1 px-1 bg-purple-50/30">
+                        <td className="py-1 px-1">
                           <input
                             type="number"
                             min="0"
                             value={row.joystar || ''}
                             onChange={(e) => handleSheetCellChange(b.id, 'joystar', parseInt(e.target.value) || 0)}
-                            className="w-full text-center py-1 font-mono text-xs border border-slate-200 rounded focus:border-purple-500 focus:bg-white"
+                            className="w-full text-center py-1 font-mono text-xs border border-zinc-200 rounded focus:border-zinc-900 focus:bg-white"
                             placeholder="0"
                           />
                         </td>
 
                         {/* Returns */}
-                        <td className="py-1 px-1 bg-rose-50/40">
+                        <td className="py-1 px-1">
                           <input
                             type="number"
                             min="0"
                             value={row.returns || ''}
                             onChange={(e) => handleSheetCellChange(b.id, 'returns', parseInt(e.target.value) || 0)}
-                            className="w-full text-center py-1 font-mono text-xs border border-slate-200 rounded focus:border-rose-500 focus:bg-white"
+                            className="w-full text-center py-1 font-mono text-xs border border-zinc-200 rounded focus:border-zinc-900 focus:bg-white"
                             placeholder="0"
                           />
                         </td>
 
                         {/* Row Total */}
-                        <td className="py-2 px-3 text-center font-bold text-blue-700 bg-blue-50/50">
+                        <td className="py-2 px-3 text-center font-bold text-zinc-900 bg-zinc-100">
                           {rowTotal > 0 ? `${rowTotal}টি` : '-'}
                         </td>
                       </tr>
@@ -739,10 +737,10 @@ export const QuickDataEntry: React.FC<QuickDataEntryProps> = ({
           <div className="flex justify-end pt-2">
             <button
               onClick={handleSaveSheet}
-              className="inline-flex items-center gap-2 px-6 py-2.5 text-sm font-bold text-white bg-rose-700 hover:bg-rose-800 rounded-xl shadow-xs transition-colors"
+              className="inline-flex items-center gap-2 px-6 py-2.5 text-xs font-bold text-white bg-zinc-900 hover:bg-black rounded-xl shadow-xs transition-colors"
             >
               <Save className="w-4 h-4" />
-              <span>দিন {sheetDay}-এ সব বইয়ের ডাটা সেভ করুন</span>
+              <span>{sheetDay} তারিখে সব বইয়ের ডাটা সেভ করুন</span>
             </button>
           </div>
 

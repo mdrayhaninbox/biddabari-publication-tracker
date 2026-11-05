@@ -14,7 +14,8 @@ import {
   Store,
   CheckCircle2,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Boxes
 } from 'lucide-react';
 import { BookRecord } from '../types/book';
 import { 
@@ -80,158 +81,170 @@ export const PeriodViewSystem: React.FC<PeriodViewSystemProps> = ({
   return (
     <div className="space-y-6">
       
-      {/* View Period Selector Header */}
-      <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-xs flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      {/* View Period Selector Header (Black & White) */}
+      <div className="bg-white p-4 sm:p-5 rounded-2xl border border-zinc-200 shadow-xs flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-            <span>পিরিয়ড ভিত্তিক ডাটা ভিউ (Data View System)</span>
+          <h2 className="text-lg font-bold text-zinc-900 flex items-center gap-2">
+            <span>তারিখ ভিত্তিক রিপোর্ট ও বিশ্লেষণ</span>
           </h2>
-          <p className="text-xs text-slate-500 mt-0.5">
-            দৈনিক, সাপ্তাহিক ও মাসিক ভিত্তিতে সেলস, আয় ও প্রেস হিসেব বিশ্লেষণ করুন
+          <p className="text-xs text-zinc-500 mt-0.5">
+            ১ থেকে ৩১ তারিখের দৈনিক বিক্রয়, সাপ্তাহিক অগ্রগতি ও পুরো মাসের হিসাব
           </p>
         </div>
 
-        {/* 3-Way Pill Switcher */}
-        <div className="flex bg-slate-100 p-1 rounded-xl self-start md:self-auto border border-slate-200">
+        {/* Monochromatic Pill Switcher */}
+        <div className="flex bg-zinc-100 p-1 rounded-xl self-start md:self-auto border border-zinc-200">
           <button
             onClick={() => setPeriod('daily')}
             className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold transition-all ${
               period === 'daily'
-                ? 'bg-rose-700 text-white shadow-xs'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
+                ? 'bg-zinc-900 text-white shadow-xs'
+                : 'text-zinc-600 hover:text-zinc-900 hover:bg-zinc-200/60'
             }`}
           >
             <Calendar className="w-3.5 h-3.5" />
-            <span>📅 দৈনিক ভিউ (Daily)</span>
+            <span>দৈনিক তারিখ ভিউ (Daily)</span>
           </button>
 
           <button
             onClick={() => setPeriod('weekly')}
             className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold transition-all ${
               period === 'weekly'
-                ? 'bg-rose-700 text-white shadow-xs'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
+                ? 'bg-zinc-900 text-white shadow-xs'
+                : 'text-zinc-600 hover:text-zinc-900 hover:bg-zinc-200/60'
             }`}
           >
             <CalendarDays className="w-3.5 h-3.5" />
-            <span>📆 সাপ্তাহিক ভিউ (Weekly)</span>
+            <span>সাপ্তাহিক ভিউ (Weekly)</span>
           </button>
 
           <button
             onClick={() => setPeriod('monthly')}
             className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold transition-all ${
               period === 'monthly'
-                ? 'bg-rose-700 text-white shadow-xs'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
+                ? 'bg-zinc-900 text-white shadow-xs'
+                : 'text-zinc-600 hover:text-zinc-900 hover:bg-zinc-200/60'
             }`}
           >
             <CalendarRange className="w-3.5 h-3.5" />
-            <span>🗓️ মাসিক ভিউ (Monthly)</span>
+            <span>মাসিক ভিউ (Monthly)</span>
           </button>
         </div>
       </div>
 
       {/* ======================================================== */}
-      {/* 1. DAILY VIEW (দৈনিক ভিউ) */}
+      {/* 1. DAILY VIEW (দৈনিক তারিখ ভিউ) */}
       {/* ======================================================== */}
       {period === 'daily' && (
         <div className="space-y-5 animate-in fade-in duration-200">
           
-          {/* Day Navigation & Selector Bar */}
-          <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs space-y-3">
-            <div className="flex items-center justify-between">
+          {/* Day / Date Navigation & Selector Bar */}
+          <div className="bg-white p-4 rounded-2xl border border-zinc-200 shadow-xs space-y-3">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <div className="flex items-center gap-2">
                 <button
                   disabled={selectedDay <= 1}
                   onClick={() => setSelectedDay(d => Math.max(1, d - 1))}
-                  className="p-1.5 rounded-lg border border-slate-200 hover:bg-slate-100 disabled:opacity-40 disabled:hover:bg-transparent"
+                  className="p-1.5 rounded-lg border border-zinc-200 hover:bg-zinc-100 disabled:opacity-40 disabled:hover:bg-transparent transition-colors"
+                  title="পূর্ববর্তী তারিখ"
                 >
-                  <ChevronLeft className="w-4 h-4" />
+                  <ChevronLeft className="w-4 h-4 text-zinc-700" />
                 </button>
-                <span className="font-bold text-slate-800 text-sm">
-                  দিন {selectedDay} ({selectedDay} তারিখের সার্বিক প্রতিবেদন)
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className="font-bold text-zinc-900 text-base">
+                    {selectedDay} তারিখের প্রতিবেদন
+                  </span>
+                  <span className="text-[11px] text-zinc-500 font-mono">
+                    (মাসের {selectedDay}তম দিন)
+                  </span>
+                </div>
                 <button
                   disabled={selectedDay >= 31}
                   onClick={() => setSelectedDay(d => Math.min(31, d + 1))}
-                  className="p-1.5 rounded-lg border border-slate-200 hover:bg-slate-100 disabled:opacity-40 disabled:hover:bg-transparent"
+                  className="p-1.5 rounded-lg border border-zinc-200 hover:bg-zinc-100 disabled:opacity-40 disabled:hover:bg-transparent transition-colors"
+                  title="পরবর্তী তারিখ"
                 >
-                  <ChevronRight className="w-4 h-4" />
+                  <ChevronRight className="w-4 h-4 text-zinc-700" />
                 </button>
               </div>
 
               <button
                 onClick={() => onOpenDailyEntryForDay(selectedDay)}
-                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold text-rose-700 bg-rose-50 hover:bg-rose-100 rounded-lg transition-colors border border-rose-200"
+                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold text-zinc-900 bg-zinc-100 hover:bg-zinc-200 rounded-lg transition-colors border border-zinc-300 self-start sm:self-auto"
               >
                 <CalendarPlus className="w-3.5 h-3.5" />
-                <span>দিন {selectedDay}-এর এন্ট্রি দিন</span>
+                <span>{selectedDay} তারিখের ডাটা এন্ট্রি / এডিট করুন</span>
               </button>
             </div>
 
-            {/* Quick 31 Day Buttons Row */}
-            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 pt-1">
-              {Array.from({ length: 31 }, (_, i) => i + 1).map(day => {
-                const daySales = calculateDayBreakdown(books, day).totalSold;
-                const isSelected = selectedDay === day;
-                return (
-                  <button
-                    key={day}
-                    onClick={() => setSelectedDay(day)}
-                    className={`flex flex-col items-center justify-center min-w-[44px] py-1.5 px-1 rounded-xl text-xs font-mono transition-all ${
-                      isSelected
-                        ? 'bg-rose-700 text-white font-bold shadow-xs scale-105'
-                        : daySales > 0
-                        ? 'bg-rose-50 text-rose-800 border border-rose-200 hover:bg-rose-100'
-                        : 'bg-slate-50 text-slate-500 border border-slate-200 hover:bg-slate-100'
-                    }`}
-                  >
-                    <span className="text-[11px] font-bold">দিন {day}</span>
-                    <span className="text-[9px] opacity-80">{daySales > 0 ? `${daySales}টি` : '০'}</span>
-                  </button>
-                );
-              })}
+            {/* Clean Monochromatic Horizontal Date Pills (1 to 31) */}
+            <div>
+              <div className="text-[11px] font-semibold text-zinc-500 mb-1.5">
+                📅 ক্যালেন্ডার তারিখ নির্বাচন করুন (১লা থেকে ৩১শে তারিখ):
+              </div>
+              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 pt-0.5">
+                {Array.from({ length: 31 }, (_, i) => i + 1).map(dateNum => {
+                  const daySales = calculateDayBreakdown(books, dateNum).totalSold;
+                  const isSelected = selectedDay === dateNum;
+                  return (
+                    <button
+                      key={dateNum}
+                      onClick={() => setSelectedDay(dateNum)}
+                      className={`flex flex-col items-center justify-center min-w-[48px] py-2 px-1 rounded-xl text-xs font-mono transition-all border ${
+                        isSelected
+                          ? 'bg-zinc-900 text-white font-bold border-zinc-900 shadow-sm scale-105'
+                          : daySales > 0
+                          ? 'bg-zinc-100 text-zinc-900 border-zinc-300 hover:bg-zinc-200'
+                          : 'bg-white text-zinc-500 border-zinc-200 hover:bg-zinc-50'
+                      }`}
+                    >
+                      <span className="text-[11px] font-bold">{dateNum} তাং</span>
+                      <span className="text-[9px] opacity-75">{daySales > 0 ? `${daySales}টি` : '—'}</span>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           </div>
 
-          {/* Day KPI Cards */}
+          {/* Selected Date Metric Cards (Clean Black & White) */}
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-            <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-xs">
-              <span className="text-[11px] text-slate-500 block">দিন {selectedDay}-এ বিক্রি</span>
-              <span className="text-xl font-bold text-slate-900">{formatNumber(dayData.totalSold)} কপি</span>
-              <span className="text-[10px] text-blue-600 block mt-0.5 font-medium">
-                অনলাইন {dayData.onlineSold} • অফলাইন {dayData.offlineSold}
+            <div className="bg-white p-3.5 rounded-xl border border-zinc-200 shadow-xs">
+              <span className="text-[11px] text-zinc-500 block font-medium">{selectedDay} তারিখে মোট বিক্রি</span>
+              <span className="text-xl font-bold text-zinc-900">{formatNumber(dayData.totalSold)} কপি</span>
+              <span className="text-[10px] text-zinc-600 block mt-0.5">
+                অনলাইন: {dayData.onlineSold} • অফলাইন: {dayData.offlineSold}
               </span>
             </div>
 
-            <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-xs">
-              <span className="text-[11px] text-slate-500 block">দিন {selectedDay}-এ রাজস্ব</span>
-              <span className="text-lg font-bold text-slate-900">{formatBDT(dayData.revenue)}</span>
-              <span className="text-[10px] text-slate-400 block mt-0.5">অর্জিত মোট আয়</span>
+            <div className="bg-white p-3.5 rounded-xl border border-zinc-200 shadow-xs">
+              <span className="text-[11px] text-zinc-500 block font-medium">{selectedDay} তারিখের রাজস্ব</span>
+              <span className="text-lg font-bold text-zinc-900">{formatBDT(dayData.revenue)}</span>
+              <span className="text-[10px] text-zinc-400 block mt-0.5">অর্জিত বিক্রয় মূল্য</span>
             </div>
 
-            <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-xs">
-              <span className="text-[11px] text-slate-500 block">দিন {selectedDay}-এ নিট লাভ</span>
-              <span className="text-lg font-bold text-emerald-700">+{formatBDT(dayData.profit)}</span>
-              <span className="text-[10px] text-emerald-600 block mt-0.5">খরচ বাদে লাভ</span>
+            <div className="bg-white p-3.5 rounded-xl border border-zinc-200 shadow-xs">
+              <span className="text-[11px] text-zinc-500 block font-medium">{selectedDay} তারিখের নিট লাভ</span>
+              <span className="text-lg font-bold text-zinc-900">+{formatBDT(dayData.profit)}</span>
+              <span className="text-[10px] text-zinc-500 block mt-0.5">খরচ বাদে মুনাফা</span>
             </div>
 
-            <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-xs">
-              <span className="text-[11px] text-slate-500 block">প্রেস থেকে প্রাপ্ত চালান</span>
-              <span className="text-xl font-bold text-amber-800">{formatNumber(dayData.pressReceived)} কপি</span>
-              <span className="text-[10px] text-amber-700 block mt-0.5">হেড অফিসে এসেছে</span>
+            <div className="bg-white p-3.5 rounded-xl border border-zinc-200 shadow-xs">
+              <span className="text-[11px] text-zinc-500 block font-medium">প্রেস থেকে প্রাপ্ত চালান</span>
+              <span className="text-xl font-bold text-zinc-900">{formatNumber(dayData.pressReceived)} কপি</span>
+              <span className="text-[10px] text-zinc-500 block mt-0.5">হেড অফিসে জমা হয়েছে</span>
             </div>
 
-            <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-xs">
-              <span className="text-[11px] text-slate-500 block">আজকের ফেরত (Return)</span>
-              <span className="text-xl font-bold text-rose-700">{formatNumber(dayData.returns)} কপি</span>
-              <span className="text-[10px] text-rose-600 block mt-0.5">স্টকে পুনরায় যুক্ত</span>
+            <div className="bg-white p-3.5 rounded-xl border border-zinc-200 shadow-xs">
+              <span className="text-[11px] text-zinc-500 block font-medium">আজকের ফেরত (Return)</span>
+              <span className="text-xl font-bold text-zinc-900">{formatNumber(dayData.returns)} কপি</span>
+              <span className="text-[10px] text-zinc-500 block mt-0.5">স্টকে পুনরায় যুক্ত</span>
             </div>
 
-            <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-xs flex flex-col justify-center">
+            <div className="bg-white p-3.5 rounded-xl border border-zinc-200 shadow-xs flex flex-col justify-center">
               <button
                 onClick={() => onOpenDailyEntryForDay(selectedDay)}
-                className="w-full py-2 bg-rose-700 hover:bg-rose-800 text-white rounded-lg text-xs font-semibold shadow-xs flex items-center justify-center gap-1 transition-colors"
+                className="w-full py-2 bg-zinc-900 hover:bg-black text-white rounded-lg text-xs font-bold shadow-xs flex items-center justify-center gap-1 transition-colors"
               >
                 <CalendarPlus className="w-3.5 h-3.5" />
                 <span>এন্ট্রি সম্পাদন</span>
@@ -239,104 +252,116 @@ export const PeriodViewSystem: React.FC<PeriodViewSystemProps> = ({
             </div>
           </div>
 
-          {/* Selected Day Channel Breakdown */}
+          {/* Selected Date Channel Deliveries */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             
-            {/* Online Channels on this day */}
-            <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
-              <h4 className="text-xs font-bold text-slate-700 mb-3 flex items-center gap-1.5 pb-2 border-b border-slate-100">
-                <Globe className="w-4 h-4 text-sky-600" />
-                <span>দিন {selectedDay}: অনলাইন চ্যানেল সেলস (মোট {dayData.onlineSold} কপি)</span>
-              </h4>
+            {/* Online Channels on this date */}
+            <div className="bg-white p-4 rounded-xl border border-zinc-200 shadow-xs">
+              <div className="flex items-center justify-between mb-3 pb-2 border-b border-zinc-100">
+                <span className="text-xs font-bold text-zinc-900 flex items-center gap-1.5">
+                  <Globe className="w-4 h-4 text-zinc-700" />
+                  <span>{selectedDay} তারিখ: অনলাইন প্ল্যাটফর্ম বিক্রয়</span>
+                </span>
+                <span className="text-xs font-bold text-zinc-900 bg-zinc-100 px-2 py-0.5 rounded">
+                  মোট: {dayData.onlineSold} কপি
+                </span>
+              </div>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center text-xs">
-                <div className="p-2 bg-sky-50 rounded-lg">
-                  <span className="text-[10px] text-sky-800 block">বইবাড়ি</span>
-                  <span className="text-sm font-bold text-slate-900">{dayData.channels.boibari}</span>
+                <div className="p-2.5 bg-zinc-50 rounded-lg border border-zinc-200">
+                  <span className="text-[10px] text-zinc-500 block">বইবাড়ি</span>
+                  <span className="text-sm font-bold text-zinc-900">{dayData.channels.boibari}</span>
                 </div>
-                <div className="p-2 bg-amber-50 rounded-lg">
-                  <span className="text-[10px] text-amber-800 block">রকমারি</span>
-                  <span className="text-sm font-bold text-slate-900">{dayData.channels.rokomari}</span>
+                <div className="p-2.5 bg-zinc-50 rounded-lg border border-zinc-200">
+                  <span className="text-[10px] text-zinc-500 block">রকমারি</span>
+                  <span className="text-sm font-bold text-zinc-900">{dayData.channels.rokomari}</span>
                 </div>
-                <div className="p-2 bg-emerald-50 rounded-lg">
-                  <span className="text-[10px] text-emerald-800 block">ওয়াফিলাইফ</span>
-                  <span className="text-sm font-bold text-slate-900">{dayData.channels.wafilife}</span>
+                <div className="p-2.5 bg-zinc-50 rounded-lg border border-zinc-200">
+                  <span className="text-[10px] text-zinc-500 block">ওয়াফিলাইফ</span>
+                  <span className="text-sm font-bold text-zinc-900">{dayData.channels.wafilife}</span>
                 </div>
-                <div className="p-2 bg-indigo-50 rounded-lg">
-                  <span className="text-[10px] text-indigo-800 block">অন্যান্য অনলাইন</span>
-                  <span className="text-sm font-bold text-slate-900">{dayData.channels.othersOnline}</span>
+                <div className="p-2.5 bg-zinc-50 rounded-lg border border-zinc-200">
+                  <span className="text-[10px] text-zinc-500 block">অন্যান্য অনলাইন</span>
+                  <span className="text-sm font-bold text-zinc-900">{dayData.channels.othersOnline}</span>
                 </div>
               </div>
             </div>
 
-            {/* Offline Channels on this day */}
-            <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
-              <h4 className="text-xs font-bold text-slate-700 mb-3 flex items-center gap-1.5 pb-2 border-b border-slate-100">
-                <Store className="w-4 h-4 text-purple-600" />
-                <span>দিন {selectedDay}: অফলাইন ও লাইব্রেরি সেলস (মোট {dayData.offlineSold} কপি)</span>
-              </h4>
+            {/* Offline Channels on this date */}
+            <div className="bg-white p-4 rounded-xl border border-zinc-200 shadow-xs">
+              <div className="flex items-center justify-between mb-3 pb-2 border-b border-zinc-100">
+                <span className="text-xs font-bold text-zinc-900 flex items-center gap-1.5">
+                  <Store className="w-4 h-4 text-zinc-700" />
+                  <span>{selectedDay} তারিখ: অফলাইন ও লাইব্রেরি ডেলিভারি</span>
+                </span>
+                <span className="text-xs font-bold text-zinc-900 bg-zinc-100 px-2 py-0.5 rounded">
+                  মোট: {dayData.offlineSold} কপি
+                </span>
+              </div>
               <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 text-center text-xs">
-                <div className="p-2 bg-purple-50 rounded-lg">
-                  <span className="text-[10px] text-purple-800 block">হেড অফিস</span>
-                  <span className="text-sm font-bold text-slate-900">{dayData.channels.headOfficeOffline}</span>
+                <div className="p-2.5 bg-zinc-50 rounded-lg border border-zinc-200">
+                  <span className="text-[10px] text-zinc-500 block">হেড অফিস</span>
+                  <span className="text-sm font-bold text-zinc-900">{dayData.channels.headOfficeOffline}</span>
                 </div>
-                <div className="p-2 bg-purple-50 rounded-lg">
-                  <span className="text-[10px] text-purple-800 block">নীলক্ষেত</span>
-                  <span className="text-sm font-bold text-slate-900">{dayData.channels.nilkhet}</span>
+                <div className="p-2.5 bg-zinc-50 rounded-lg border border-zinc-200">
+                  <span className="text-[10px] text-zinc-500 block">নীলক্ষেত</span>
+                  <span className="text-sm font-bold text-zinc-900">{dayData.channels.nilkhet}</span>
                 </div>
-                <div className="p-2 bg-blue-50 rounded-lg">
-                  <span className="text-[10px] text-blue-800 block">সুমনা</span>
-                  <span className="text-sm font-bold text-slate-900">{dayData.channels.sumona}</span>
+                <div className="p-2.5 bg-zinc-50 rounded-lg border border-zinc-200">
+                  <span className="text-[10px] text-zinc-500 block">সুমনা</span>
+                  <span className="text-sm font-bold text-zinc-900">{dayData.channels.sumona}</span>
                 </div>
-                <div className="p-2 bg-blue-50 rounded-lg">
-                  <span className="text-[10px] text-blue-800 block">প্রমিজ</span>
-                  <span className="text-sm font-bold text-slate-900">{dayData.channels.promise}</span>
+                <div className="p-2.5 bg-zinc-50 rounded-lg border border-zinc-200">
+                  <span className="text-[10px] text-zinc-500 block">প্রমিজ</span>
+                  <span className="text-sm font-bold text-zinc-900">{dayData.channels.promise}</span>
                 </div>
-                <div className="p-2 bg-blue-50 rounded-lg">
-                  <span className="text-[10px] text-blue-800 block">জয়স্টার</span>
-                  <span className="text-sm font-bold text-slate-900">{dayData.channels.joystar}</span>
+                <div className="p-2.5 bg-zinc-50 rounded-lg border border-zinc-200">
+                  <span className="text-[10px] text-zinc-500 block">জয়স্টার</span>
+                  <span className="text-sm font-bold text-zinc-900">{dayData.channels.joystar}</span>
                 </div>
               </div>
             </div>
 
           </div>
 
-          {/* Book-by-Book breakdown for selected day */}
-          <div className="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
-            <div className="p-3.5 border-b border-slate-100 flex items-center justify-between">
-              <h4 className="text-xs font-bold text-slate-800">
-                দিন {selectedDay}-এ বই ভিত্তিক বিক্রয় খতিয়ান
+          {/* Book-by-Book breakdown for selected date */}
+          <div className="bg-white rounded-xl border border-zinc-200 shadow-xs overflow-hidden">
+            <div className="p-3.5 border-b border-zinc-100 flex items-center justify-between">
+              <h4 className="text-xs font-bold text-zinc-900">
+                {selectedDay} তারিখে বই ভিত্তিক বিক্রয় বিবরণী
               </h4>
-              <span className="text-[11px] text-slate-500">বই সংখ্যা: {dayData.bookBreakdown.length}</span>
+              <span className="text-[11px] text-zinc-500 font-medium">
+                {dayData.bookBreakdown.filter(x => x.sold > 0).length} টি বই বিক্রি হয়েছে
+              </span>
             </div>
             <table className="w-full text-left border-collapse text-xs">
               <thead>
-                <tr className="bg-slate-50 text-slate-600 font-semibold border-b border-slate-200">
+                <tr className="bg-zinc-100 text-zinc-700 font-semibold border-b border-zinc-200">
                   <th className="py-2.5 px-3">বইয়ের নাম</th>
                   <th className="py-2.5 px-3 text-center">আজকের বিক্রি</th>
                   <th className="py-2.5 px-3 text-right">আজকের রাজস্ব</th>
-                  <th className="py-2.5 px-3 text-right text-emerald-800">আজকের লাভ</th>
+                  <th className="py-2.5 px-3 text-right">আজকের নিট লাভ</th>
                   <th className="py-2.5 px-3 text-center">অ্যাকশন</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-zinc-100">
                 {dayData.bookBreakdown.map((item, idx) => (
-                  <tr key={item.bookId} className="hover:bg-slate-50">
-                    <td className="py-2.5 px-3 font-semibold text-slate-900">
+                  <tr key={item.bookId} className="hover:bg-zinc-50 transition-colors">
+                    <td className="py-2.5 px-3 font-semibold text-zinc-900">
                       {idx + 1}. {item.bookName}
                     </td>
-                    <td className="py-2.5 px-3 text-center font-bold text-blue-700">
+                    <td className="py-2.5 px-3 text-center font-bold text-zinc-900">
                       {item.sold > 0 ? `${formatNumber(item.sold)} কপি` : '-'}
                     </td>
-                    <td className="py-2.5 px-3 text-right font-medium text-slate-800">
+                    <td className="py-2.5 px-3 text-right font-medium text-zinc-800">
                       {item.revenue > 0 ? formatBDT(item.revenue) : '-'}
                     </td>
-                    <td className="py-2.5 px-3 text-right font-bold text-emerald-700">
+                    <td className="py-2.5 px-3 text-right font-bold text-zinc-900">
                       {item.profit > 0 ? `+${formatBDT(item.profit)}` : '-'}
                     </td>
                     <td className="py-2.5 px-3 text-center">
                       <button
                         onClick={() => onOpenDailyEntryForBookAndDay(item.bookId, selectedDay)}
-                        className="text-[11px] text-rose-700 hover:text-rose-900 font-medium px-2 py-1 bg-rose-50 hover:bg-rose-100 rounded"
+                        className="text-[11px] text-zinc-800 hover:text-black font-semibold px-2 py-1 bg-zinc-100 hover:bg-zinc-200 rounded border border-zinc-200"
                       >
                         এন্ট্রি সম্পাদন
                       </button>
@@ -351,12 +376,12 @@ export const PeriodViewSystem: React.FC<PeriodViewSystemProps> = ({
       )}
 
       {/* ======================================================== */}
-      {/* 2. WEEKLY VIEW (সাপ্তাহিক ভিউ) */}
+      {/* 2. WEEKLY VIEW (সাপ্তাহিক ভিউ - ১ থেকে ৩১ তারিখের ৫ সপ্তাহ) */}
       {/* ======================================================== */}
       {period === 'weekly' && (
         <div className="space-y-5 animate-in fade-in duration-200">
           
-          {/* Week Selector Cards Grid (Weeks 1 to 5) */}
+          {/* Week Selector Cards Grid (Weeks 1 to 5 with dates) */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
             {weekDataList.map(w => {
               const isSelected = selectedWeek === w.weekNumber;
@@ -366,33 +391,30 @@ export const PeriodViewSystem: React.FC<PeriodViewSystemProps> = ({
                   onClick={() => setSelectedWeek(w.weekNumber)}
                   className={`p-4 rounded-xl border cursor-pointer transition-all ${
                     isSelected
-                      ? 'bg-rose-50/70 border-rose-500 ring-2 ring-rose-500 shadow-sm'
-                      : 'bg-white border-slate-200 hover:border-slate-300 shadow-xs'
+                      ? 'bg-zinc-900 text-white border-zinc-900 shadow-md'
+                      : 'bg-white text-zinc-900 border-zinc-200 hover:border-zinc-400 shadow-xs'
                   }`}
                 >
-                  <div className="flex items-center justify-between text-xs font-semibold mb-2">
-                    <span className={isSelected ? 'text-rose-900 font-bold' : 'text-slate-800'}>
-                      {w.name}
-                    </span>
-                    {isSelected && <CheckCircle2 className="w-4 h-4 text-rose-700" />}
+                  <div className="flex items-center justify-between text-xs font-bold mb-1">
+                    <span>{w.name.split(' (')[0]}</span>
+                    {isSelected && <CheckCircle2 className="w-4 h-4 text-white" />}
+                  </div>
+                  <div className={`text-[11px] mb-2 font-mono ${isSelected ? 'text-zinc-300' : 'text-zinc-500'}`}>
+                    {w.startDay} থেকে {w.endDay} তারিখ
                   </div>
 
-                  <div className="space-y-1">
+                  <div className="space-y-1.5 pt-1 border-t border-zinc-200/40">
                     <div className="flex justify-between text-xs">
-                      <span className="text-slate-500">মোট বিক্রি:</span>
-                      <span className="font-bold text-slate-900">{formatNumber(w.totalSold)} কপি</span>
+                      <span className={isSelected ? 'text-zinc-300' : 'text-zinc-500'}>মোট বিক্রি:</span>
+                      <span className="font-bold">{formatNumber(w.totalSold)} কপি</span>
                     </div>
                     <div className="flex justify-between text-xs">
-                      <span className="text-slate-500">রাজস্ব:</span>
-                      <span className="font-semibold text-slate-800">{formatBDT(w.revenue)}</span>
+                      <span className={isSelected ? 'text-zinc-300' : 'text-zinc-500'}>রাজস্ব:</span>
+                      <span className="font-semibold">{formatBDT(w.revenue)}</span>
                     </div>
                     <div className="flex justify-between text-xs">
-                      <span className="text-slate-500">নিট লাভ:</span>
-                      <span className="font-bold text-emerald-700">+{formatBDT(w.profit)}</span>
-                    </div>
-                    <div className="pt-2 border-t border-slate-100 text-[10px] text-slate-500 flex justify-between">
-                      <span>সর্বোচ্চ বিক্রি:</span>
-                      <span className="font-medium text-rose-700">দিন {w.bestDay.day} ({w.bestDay.sold}টি)</span>
+                      <span className={isSelected ? 'text-zinc-300' : 'text-zinc-500'}>নিট লাভ:</span>
+                      <span className="font-bold">+{formatBDT(w.profit)}</span>
                     </div>
                   </div>
                 </div>
@@ -401,17 +423,17 @@ export const PeriodViewSystem: React.FC<PeriodViewSystemProps> = ({
           </div>
 
           {/* Selected Week Detailed Breakdown */}
-          <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+          <div className="bg-white p-5 rounded-2xl border border-zinc-200 shadow-xs space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between pb-3 border-b border-zinc-100 gap-2">
               <div>
-                <h3 className="font-bold text-slate-800 text-base">
-                  {currentWeekData.name} - এর বিস্তারিত দৈনিক অগ্রগতি
+                <h3 className="font-bold text-zinc-900 text-base">
+                  {currentWeekData.name} ({currentWeekData.startDay} থেকে {currentWeekData.endDay} তারিখের ফলাফল)
                 </h3>
-                <p className="text-xs text-slate-500">
-                  দিন {currentWeekData.startDay} থেকে দিন {currentWeekData.endDay} পর্যন্ত প্রতিদিনের ফলাফল
+                <p className="text-xs text-zinc-500">
+                  এই সপ্তাহের প্রতিদিনের অনলাইন ও অফলাইন চালানের বিশদ বিবরণ
                 </p>
               </div>
-              <span className="text-xs font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-full">
+              <span className="text-xs font-bold text-zinc-900 bg-zinc-100 border border-zinc-300 px-3 py-1 rounded-full self-start sm:self-auto">
                 সাপ্তাহিক নিট লাভ: {formatBDT(currentWeekData.profit)}
               </span>
             </div>
@@ -420,52 +442,52 @@ export const PeriodViewSystem: React.FC<PeriodViewSystemProps> = ({
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse text-xs">
                 <thead>
-                  <tr className="bg-slate-50 text-slate-700 font-semibold border-b border-slate-200">
-                    <th className="py-2.5 px-3">তারিখ / দিন</th>
+                  <tr className="bg-zinc-100 text-zinc-700 font-semibold border-b border-zinc-200">
+                    <th className="py-2.5 px-3">তারিখ</th>
                     <th className="py-2.5 px-3 text-center">অনলাইন বিক্রি</th>
                     <th className="py-2.5 px-3 text-center">অফলাইন বিক্রি</th>
                     <th className="py-2.5 px-3 text-center font-bold">মোট বিক্রি</th>
                     <th className="py-2.5 px-3 text-center">প্রেস চালান</th>
                     <th className="py-2.5 px-3 text-center">রিটার্ন</th>
                     <th className="py-2.5 px-3 text-right">রাজস্ব</th>
-                    <th className="py-2.5 px-3 text-right font-bold text-emerald-800">নিট লাভ</th>
+                    <th className="py-2.5 px-3 text-right font-bold text-zinc-900">নিট লাভ</th>
                     <th className="py-2.5 px-3 text-center">অ্যাকশন</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100">
+                <tbody className="divide-y divide-zinc-100">
                   {currentWeekData.dailyTotals.map(({ day }) => {
                     const dayItem = calculateDayBreakdown(books, day);
                     const isBestDay = day === currentWeekData.bestDay.day && dayItem.totalSold > 0;
 
                     return (
-                      <tr key={day} className={`hover:bg-slate-50 ${isBestDay ? 'bg-amber-50/50' : ''}`}>
-                        <td className="py-2.5 px-3 font-semibold text-slate-900 flex items-center gap-1.5">
-                          <span>দিন {day}</span>
+                      <tr key={day} className={`hover:bg-zinc-50 transition-colors ${isBestDay ? 'bg-zinc-100/60' : ''}`}>
+                        <td className="py-2.5 px-3 font-semibold text-zinc-900 flex items-center gap-1.5">
+                          <span>{day} তারিখ</span>
                           {isBestDay && (
-                            <span className="text-[9px] bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded font-bold">
+                            <span className="text-[9px] bg-zinc-900 text-white px-1.5 py-0.5 rounded font-bold">
                               সপ্তাহের সেরা
                             </span>
                           )}
                         </td>
-                        <td className="py-2.5 px-3 text-center text-sky-700 font-medium">
+                        <td className="py-2.5 px-3 text-center font-medium text-zinc-800">
                           {dayItem.onlineSold > 0 ? formatNumber(dayItem.onlineSold) : '-'}
                         </td>
-                        <td className="py-2.5 px-3 text-center text-purple-700 font-medium">
+                        <td className="py-2.5 px-3 text-center font-medium text-zinc-800">
                           {dayItem.offlineSold > 0 ? formatNumber(dayItem.offlineSold) : '-'}
                         </td>
-                        <td className="py-2.5 px-3 text-center font-bold text-blue-700">
+                        <td className="py-2.5 px-3 text-center font-bold text-zinc-900">
                           {dayItem.totalSold > 0 ? `${formatNumber(dayItem.totalSold)} কপি` : '-'}
                         </td>
-                        <td className="py-2.5 px-3 text-center text-amber-800 font-medium">
+                        <td className="py-2.5 px-3 text-center font-medium text-zinc-700">
                           {dayItem.pressReceived > 0 ? formatNumber(dayItem.pressReceived) : '-'}
                         </td>
-                        <td className="py-2.5 px-3 text-center text-rose-700 font-medium">
+                        <td className="py-2.5 px-3 text-center font-medium text-zinc-700">
                           {dayItem.returns > 0 ? formatNumber(dayItem.returns) : '-'}
                         </td>
-                        <td className="py-2.5 px-3 text-right font-medium text-slate-800">
+                        <td className="py-2.5 px-3 text-right font-medium text-zinc-800">
                           {dayItem.revenue > 0 ? formatBDT(dayItem.revenue) : '-'}
                         </td>
-                        <td className="py-2.5 px-3 text-right font-bold text-emerald-700">
+                        <td className="py-2.5 px-3 text-right font-bold text-zinc-900">
                           {dayItem.profit > 0 ? `+${formatBDT(dayItem.profit)}` : '-'}
                         </td>
                         <td className="py-2.5 px-3 text-center">
@@ -474,7 +496,7 @@ export const PeriodViewSystem: React.FC<PeriodViewSystemProps> = ({
                               setSelectedDay(day);
                               setPeriod('daily');
                             }}
-                            className="text-[11px] text-slate-600 hover:text-slate-900 px-2 py-0.5 bg-slate-100 hover:bg-slate-200 rounded"
+                            className="text-[11px] text-zinc-800 hover:text-black font-semibold px-2 py-0.5 bg-zinc-100 hover:bg-zinc-200 rounded border border-zinc-200"
                           >
                             দৈনিক ভিউ
                           </button>
@@ -483,15 +505,15 @@ export const PeriodViewSystem: React.FC<PeriodViewSystemProps> = ({
                     );
                   })}
                   {/* Week Total Row */}
-                  <tr className="bg-slate-100 font-bold text-slate-900 border-t-2 border-slate-300">
+                  <tr className="bg-zinc-100 font-bold text-zinc-900 border-t-2 border-zinc-300">
                     <td className="py-2.5 px-3">{currentWeekData.name} মোট যোগফল:</td>
-                    <td className="py-2.5 px-3 text-center text-sky-800">{formatNumber(currentWeekData.onlineSold)}</td>
-                    <td className="py-2.5 px-3 text-center text-purple-800">{formatNumber(currentWeekData.offlineSold)}</td>
-                    <td className="py-2.5 px-3 text-center text-blue-800 font-black">{formatNumber(currentWeekData.totalSold)} কপি</td>
-                    <td className="py-2.5 px-3 text-center text-amber-800">{formatNumber(currentWeekData.pressReceived)}</td>
-                    <td className="py-2.5 px-3 text-center text-rose-800">{formatNumber(currentWeekData.returns)}</td>
+                    <td className="py-2.5 px-3 text-center">{formatNumber(currentWeekData.onlineSold)}</td>
+                    <td className="py-2.5 px-3 text-center">{formatNumber(currentWeekData.offlineSold)}</td>
+                    <td className="py-2.5 px-3 text-center font-black">{formatNumber(currentWeekData.totalSold)} কপি</td>
+                    <td className="py-2.5 px-3 text-center">{formatNumber(currentWeekData.pressReceived)}</td>
+                    <td className="py-2.5 px-3 text-center">{formatNumber(currentWeekData.returns)}</td>
                     <td className="py-2.5 px-3 text-right">{formatBDT(currentWeekData.revenue)}</td>
-                    <td className="py-2.5 px-3 text-right text-emerald-800 font-black">{formatBDT(currentWeekData.profit)}</td>
+                    <td className="py-2.5 px-3 text-right font-black">{formatBDT(currentWeekData.profit)}</td>
                     <td></td>
                   </tr>
                 </tbody>
@@ -503,85 +525,85 @@ export const PeriodViewSystem: React.FC<PeriodViewSystemProps> = ({
       )}
 
       {/* ======================================================== */}
-      {/* 3. MONTHLY VIEW (মাসিক ভিউ) */}
+      {/* 3. MONTHLY VIEW (মাসিক ভিউ - ১ থেকে ৩১ তারিখ পর্যন্ত) */}
       {/* ======================================================== */}
       {period === 'monthly' && (
         <div className="space-y-5 animate-in fade-in duration-200">
           
           {/* Monthly KPI Overview */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs">
-              <span className="text-xs font-semibold text-slate-500 block">মাসিক সর্বমোট বিক্রয়</span>
-              <span className="text-2xl font-black text-slate-900 mt-1 block">
+            <div className="bg-white p-5 rounded-2xl border border-zinc-200 shadow-xs">
+              <span className="text-xs font-semibold text-zinc-500 block">মাসিক সর্বমোট বিক্রয়</span>
+              <span className="text-2xl font-black text-zinc-900 mt-1 block">
                 {formatNumber(monthTotals.totalSold)} কপি
               </span>
-              <div className="mt-2 text-xs text-blue-700 font-medium">
+              <div className="mt-2 text-xs text-zinc-600 font-medium">
                 অনলাইন {formatNumber(monthTotals.onlineSold)} • অফলাইন {formatNumber(monthTotals.offlineSold)}
               </div>
             </div>
 
-            <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs">
-              <span className="text-xs font-semibold text-slate-500 block">মাসিক সর্বমোট রাজস্ব</span>
-              <span className="text-2xl font-black text-slate-900 mt-1 block">
+            <div className="bg-white p-5 rounded-2xl border border-zinc-200 shadow-xs">
+              <span className="text-xs font-semibold text-zinc-500 block">মাসিক সর্বমোট রাজস্ব</span>
+              <span className="text-2xl font-black text-zinc-900 mt-1 block">
                 {formatBDT(monthTotals.revenue)}
               </span>
-              <div className="mt-2 text-xs text-slate-500 font-medium">
+              <div className="mt-2 text-xs text-zinc-500 font-medium">
                 অনলাইন ও অফলাইন সম্মিলিত আয়
               </div>
             </div>
 
-            <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs">
-              <span className="text-xs font-semibold text-slate-500 block">মাসিক সর্বমোট নিট লাভ</span>
-              <span className="text-2xl font-black text-emerald-700 mt-1 block">
+            <div className="bg-white p-5 rounded-2xl border border-zinc-200 shadow-xs">
+              <span className="text-xs font-semibold text-zinc-500 block">মাসিক সর্বমোট নিট লাভ</span>
+              <span className="text-2xl font-black text-zinc-900 mt-1 block">
                 +{formatBDT(monthTotals.profit)}
               </span>
-              <div className="mt-2 text-xs text-emerald-600 font-medium">
+              <div className="mt-2 text-xs text-zinc-500 font-medium">
                 প্রডাকশন ও বিজ্ঞাপন বাদে আয়
               </div>
             </div>
 
-            <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs">
-              <span className="text-xs font-semibold text-slate-500 block">মাস শেষে হেড অফিস স্টক</span>
-              <span className="text-2xl font-black text-rose-700 mt-1 block">
+            <div className="bg-white p-5 rounded-2xl border border-zinc-200 shadow-xs">
+              <span className="text-xs font-semibold text-zinc-500 block">মাস শেষে হেড অফিস স্টক</span>
+              <span className="text-2xl font-black text-zinc-900 mt-1 block">
                 {formatNumber(monthTotals.hoStock)} কপি
               </span>
-              <div className="mt-2 text-xs text-amber-700 font-medium">
+              <div className="mt-2 text-xs text-zinc-500 font-medium">
                 ফরিদ ভাই প্রেসে স্টক: {formatNumber(monthTotals.pressStock)} কপি
               </div>
             </div>
           </div>
 
           {/* Monthly Weekly Progression Comparison */}
-          <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs">
-            <h3 className="font-bold text-slate-800 text-base mb-1">
-              মাসিক সপ্তাহের তুলনা (Week 1 vs 2 vs 3 vs 4 vs 5)
+          <div className="bg-white p-5 rounded-2xl border border-zinc-200 shadow-xs">
+            <h3 className="font-bold text-zinc-900 text-base mb-1">
+              পুরো মাসের সপ্তাহের তুলনা (Week 1 vs 2 vs 3 vs 4 vs 5)
             </h3>
-            <p className="text-xs text-slate-500 mb-4">প্রতি সপ্তাহের সেলস ও লাভের তুলনামূলক অগ্রগতি</p>
+            <p className="text-xs text-zinc-500 mb-4">১ থেকে ৩১ তারিখের ৫টি সপ্তাহের সেলস ও লাভের তুলনামূলক অগ্রগতি</p>
 
             <div className="grid grid-cols-1 sm:grid-cols-5 gap-3">
-              {weekDataList.map((w, i) => {
+              {weekDataList.map((w) => {
                 const maxSold = Math.max(...weekDataList.map(x => x.totalSold), 1);
-                const heightPct = Math.max((w.totalSold / maxSold) * 100, 6);
+                const heightPct = Math.max((w.totalSold / maxSold) * 100, 8);
 
                 return (
-                  <div key={w.weekNumber} className="bg-slate-50 p-3 rounded-xl border border-slate-200 flex flex-col justify-between">
+                  <div key={w.weekNumber} className="bg-zinc-50 p-4 rounded-xl border border-zinc-200 flex flex-col justify-between">
                     <div>
-                      <span className="font-bold text-xs text-slate-800 block">সপ্তাহ {w.weekNumber}</span>
-                      <span className="text-[10px] text-slate-400 block mb-2">দিন {w.startDay}-{w.endDay}</span>
+                      <span className="font-bold text-xs text-zinc-900 block">{w.name.split(' (')[0]}</span>
+                      <span className="text-[10px] text-zinc-500 block mb-2">{w.startDay} - {w.endDay} তারিখ</span>
                     </div>
 
-                    <div className="h-20 flex items-end justify-center py-2">
+                    <div className="h-24 flex items-end justify-center py-2">
                       <div
-                        className="w-12 bg-rose-700 rounded-t-lg transition-all flex items-center justify-center text-white text-[10px] font-bold"
+                        className="w-12 bg-zinc-900 rounded-t-lg transition-all flex items-center justify-center text-white text-[10px] font-bold"
                         style={{ height: `${heightPct}%` }}
                       >
                         {w.totalSold > 0 ? w.totalSold : ''}
                       </div>
                     </div>
 
-                    <div className="pt-2 border-t border-slate-200 text-center">
-                      <span className="text-xs font-bold text-emerald-700 block">+{formatBDT(w.profit)}</span>
-                      <span className="text-[10px] text-slate-500">নিট লাভ</span>
+                    <div className="pt-2 border-t border-zinc-200 text-center">
+                      <span className="text-xs font-bold text-zinc-900 block">+{formatBDT(w.profit)}</span>
+                      <span className="text-[10px] text-zinc-500">নিট লাভ</span>
                     </div>
                   </div>
                 );
