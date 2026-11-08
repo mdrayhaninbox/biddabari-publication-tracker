@@ -12,7 +12,8 @@ import {
   CalendarRange,
   ChevronLeft,
   ChevronRight,
-  Calendar
+  Calendar,
+  Receipt
 } from 'lucide-react';
 import { ActiveTab } from '../types/book';
 import { 
@@ -222,10 +223,10 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
 
         {/* Navigation Tabs (Full Width Responsive Grid - Never Overflows or Scrolls) */}
-        <nav className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-1.5 mt-3 border-t border-zinc-100 pt-2.5">
+        <nav className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-1.5 mt-3 border-t border-zinc-100 pt-2.5">
           <button
             onClick={() => setActiveTab('dashboard')}
-            className={`flex items-center justify-center gap-1.5 px-2.5 py-2 rounded-xl text-xs font-bold transition-all text-center ${
+            className={`flex items-center justify-center gap-1.5 px-2 py-2 rounded-xl text-xs font-bold transition-all text-center ${
               activeTab === 'dashboard'
                 ? 'bg-zinc-900 text-white shadow-xs'
                 : 'bg-zinc-50 text-zinc-700 hover:bg-zinc-100 hover:text-zinc-900 border border-zinc-200/60'
@@ -237,14 +238,26 @@ export const Header: React.FC<HeaderProps> = ({
 
           <button
             onClick={() => setActiveTab('period')}
-            className={`flex items-center justify-center gap-1.5 px-2.5 py-2 rounded-xl text-xs font-bold transition-all text-center ${
+            className={`flex items-center justify-center gap-1.5 px-2 py-2 rounded-xl text-xs font-bold transition-all text-center ${
               activeTab === 'period'
                 ? 'bg-zinc-900 text-white shadow-xs'
                 : 'bg-zinc-50 text-zinc-700 hover:bg-zinc-100 hover:text-zinc-900 border border-zinc-200/60'
             }`}
           >
             <CalendarRange className="w-3.5 h-3.5 shrink-0" />
-            <span className="truncate">তারিখভিত্তিক ভিউ</span>
+            <span className="truncate">তারিখ ও পিরিয়ড</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('accounts')}
+            className={`flex items-center justify-center gap-1.5 px-2 py-2 rounded-xl text-xs font-bold transition-all text-center ${
+              activeTab === 'accounts'
+                ? 'bg-zinc-900 text-white shadow-xs'
+                : 'bg-zinc-50 text-zinc-700 hover:bg-zinc-100 hover:text-zinc-900 border border-zinc-200/60'
+            }`}
+          >
+            <Receipt className="w-3.5 h-3.5 shrink-0" />
+            <span className="truncate">প্রেস ও ডিউ হিসাব</span>
           </button>
 
           <button

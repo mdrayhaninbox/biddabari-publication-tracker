@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { BookRecord, ActiveTab } from './types/book';
+import { BookRecord, ActiveTab, PressPaymentRecord, ChannelCollectionRecord } from './types/book';
 import { INITIAL_BOOKS } from './data/initialBooks';
+import { INITIAL_PRESS_PAYMENTS, INITIAL_CHANNEL_COLLECTIONS } from './data/initialAccountsData';
 import { Header } from './components/Header';
 import { Dashboard } from './components/Dashboard';
 import { BooksTable } from './components/BooksTable';
@@ -11,6 +12,9 @@ import { ExcelSyncModal } from './components/ExcelSyncModal';
 import { PrintableReport } from './components/PrintableReport';
 import { PeriodViewSystem } from './components/PeriodViewSystem';
 import { QuickDataEntry } from './components/QuickDataEntry';
+import { AccountsDueLedger } from './components/AccountsDueLedger';
+import { AddPressPaymentModal } from './components/AddPressPaymentModal';
+import { AddChannelCollectionModal } from './components/AddChannelCollectionModal';
 import { exportBooksToExcel } from './utils/excelHandler';
 import { 
   getDaysInMonth, 
@@ -22,6 +26,8 @@ const LEGACY_STORAGE_KEY = 'biddabari_books_data_v1';
 const ZOOM_STORAGE_KEY = 'biddabari_ui_zoom_v1';
 const MONTH_STORAGE_KEY = 'biddabari_selected_month_v1';
 const YEAR_STORAGE_KEY = 'biddabari_selected_year_v1';
+const PRESS_PAYMENTS_STORAGE_KEY = 'biddabari_press_payments_v1';
+const CHANNEL_COLLECTIONS_STORAGE_KEY = 'biddabari_channel_collections_v1';
 
 const getMonthlyStorageKey = (year: number, month: number) => 
   `biddabari_books_data_v2_${year}-${String(month).padStart(2, '0')}`;
@@ -119,6 +125,34 @@ export const App: React.FC = () => {
     return loadBooksForPeriod(selectedYear, selectedMonth);
   });
 
+  // State: Press Payments Ledger
+  const [pressPayments, setPressPayments] = useState<PressPaymentRecord[]>(() => {
+    try {
+      const saved = localStorage.getItem(PRESS_PAYMENTS_STORAGE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch (e) {
+      console.error(e);
+    }
+    return INITIAL_PRESS_PAYMENTS;
+  });
+
+  // State: Channel Collections Ledger
+  const [channelCollections, setChannelCollections] = useState<ChannelCollectionRecord[]>(() => {
+    try {
+      const saved = localStorage.getItem(CHANNEL_COLLECTIONS_STORAGE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch (e) {
+      console.error(e);
+    }
+    return INITIAL_CHANNEL_COLLECTIONS;
+  });
+
   const [activeTab, setActiveTab] = useState<ActiveTab>('dashboard');
   const [selectedMatrixBookId, setSelectedMatrixBookId] = useState<string>(books[0]?.id || 'book-1');
 
@@ -134,6 +168,11 @@ export const App: React.FC = () => {
   const [modalBookId, setModalBookId] = useState<string>(books[0]?.id || 'book-1');
 
   const [isExcelSyncOpen, setIsExcelSyncOpen] = useState(false);
+
+  // Accounts Modals
+  const [isPressPaymentModalOpen, setIsPressPaymentModalOpen] = useState(false);
+  const [isChannelCollectionModalOpen, setIsChannelCollectionModalOpen] = useState(false);
+  const [selectedChannelForCollection, setSelectedChannelForCollection] = useState<string | undefined>(undefined);
 
   // Auto-save month & year selection
   useEffect(() => {
@@ -155,9 +194,26 @@ export const App: React.FC = () => {
     }
   }, [books, selectedYear, selectedMonth]);
 
+  // Auto-save Press Payments
+  useEffect(() => {
+    try {
+      localStorage.setItem(PRESS_PAYMENTS_STORAGE_KEY, JSON.stringify(pressPayments));
+    } catch (e) {
+      console.error(e);
+    }
+  }, [pressPayments]);
+
+  // Auto-save Channel Collections
+  useEffect(() => {
+    try {
+      localStorage.setItem(CHANNEL_COLLECTIONS_STORAGE_KEY, JSON.stringify(channelCollections));
+    } catch (e) {
+      console.error(e);
+    }
+  }, [channelCollections]);
+
   // Switch month and year safely
   const handleSelectPeriod = (newMonth: number, newYear: number) => {
-    // 1. Save current month's latest state
     try {
       const currentKey = getMonthlyStorageKey(selectedYear, selectedMonth);
       localStorage.setItem(currentKey, JSON.stringify(books));
@@ -165,13 +221,11 @@ export const App: React.FC = () => {
       console.error(e);
     }
 
-    // 2. Load target period data
     const newBooks = loadBooksForPeriod(newYear, newMonth);
     setSelectedMonth(newMonth);
     setSelectedYear(newYear);
     setBooks(newBooks);
 
-    // 3. Ensure entry selected day does not overflow target month's days
     const maxDays = getDaysInMonth(newYear, newMonth);
     setEntrySelectedDay(prev => Math.min(prev, maxDays));
   };
@@ -312,21 +366,37 @@ export const App: React.FC = () => {
     }
   };
 
-  // Handle restoring initial Excel data for the current month
-  const handleResetData = () => {
-    const periodName = formatMonthYearBengali(selectedMonth, selectedYear);
-    if (
-      window.confirm(
-        `আপনি কি ${periodName} মাসের হিসাব রিসেট করে ডিফল্ট খতিয়ানে ফিরে যেতে চান?`
-      )
-    ) {
-      const fresh = (selectedYear === 2026 && selectedMonth === 11)
-        ? INITIAL_BOOKS
-        : createFreshMonthBooks(INITIAL_BOOKS);
-      setBooks(fresh);
-      const key = getMonthlyStorageKey(selectedYear, selectedMonth);
-      localStorage.setItem(key, JSON.stringify(fresh));
-    }
+  // Press Payment Actions
+  const handleAddPressPayment = (payment: Omit<PressPaymentRecord, 'id' | 'createdAt'>) => {
+    const newRecord: PressPaymentRecord = {
+      ...payment,
+      id: `pay-${Date.now()}`,
+      createdAt: new Date().toISOString(),
+    };
+    setPressPayments(prev => [newRecord, ...prev]);
+  };
+
+  const handleDeletePressPayment = (id: string) => {
+    setPressPayments(prev => prev.filter(p => p.id !== id));
+  };
+
+  // Channel Collection Actions
+  const handleAddChannelCollection = (collection: Omit<ChannelCollectionRecord, 'id' | 'createdAt'>) => {
+    const newRecord: ChannelCollectionRecord = {
+      ...collection,
+      id: `col-${Date.now()}`,
+      createdAt: new Date().toISOString(),
+    };
+    setChannelCollections(prev => [newRecord, ...prev]);
+  };
+
+  const handleDeleteChannelCollection = (id: string) => {
+    setChannelCollections(prev => prev.filter(c => c.id !== id));
+  };
+
+  const handleOpenAddChannelCollection = (channelKey?: string) => {
+    setSelectedChannelForCollection(channelKey);
+    setIsChannelCollectionModalOpen(true);
   };
 
   // Open triggers
@@ -373,7 +443,6 @@ export const App: React.FC = () => {
         }}
         onExportExcel={() => exportBooksToExcel(books, selectedMonth, selectedYear)}
         onOpenImport={() => setIsExcelSyncOpen(true)}
-        onResetData={handleResetData}
         onPrint={() => setActiveTab('reports')}
         bookCount={books.length}
         zoom={uiZoom}
@@ -400,7 +469,7 @@ export const App: React.FC = () => {
           />
         )}
 
-        {/* 2. Daily / Weekly / Monthly Period View System */}
+        {/* 2. Daily / Weekly / Monthly / 3-Month / 6-Month / Yearly / Custom Period View */}
         {activeTab === 'period' && (
           <PeriodViewSystem
             books={books}
@@ -409,10 +478,27 @@ export const App: React.FC = () => {
             selectedMonth={selectedMonth}
             selectedYear={selectedYear}
             daysInMonth={daysInMonth}
+            pressPayments={pressPayments}
+            channelCollections={channelCollections}
           />
         )}
 
-        {/* 3. Simple Data Input System */}
+        {/* 3. Accounts & Due Ledger (প্রেস হিসাব ও অনলাইন-অফলাইন ডিউ খতিয়ান) */}
+        {activeTab === 'accounts' && (
+          <AccountsDueLedger
+            books={books}
+            pressPayments={pressPayments}
+            channelCollections={channelCollections}
+            onAddPressPayment={() => setIsPressPaymentModalOpen(true)}
+            onDeletePressPayment={handleDeletePressPayment}
+            onAddChannelCollection={handleOpenAddChannelCollection}
+            onDeleteChannelCollection={handleDeleteChannelCollection}
+            selectedMonth={selectedMonth}
+            selectedYear={selectedYear}
+          />
+        )}
+
+        {/* 4. Simple Data Input System */}
         {activeTab === 'entry' && (
           <QuickDataEntry
             books={books}
@@ -425,7 +511,7 @@ export const App: React.FC = () => {
           />
         )}
 
-        {/* 4. Books Master Table */}
+        {/* 5. Books Master Table */}
         {activeTab === 'books' && (
           <BooksTable
             books={books}
@@ -440,7 +526,7 @@ export const App: React.FC = () => {
           />
         )}
 
-        {/* 5. 31-Day Matrix View */}
+        {/* 6. 31-Day Matrix View */}
         {activeTab === 'matrix' && (
           <BookDetailMatrix
             books={books}
@@ -454,13 +540,15 @@ export const App: React.FC = () => {
           />
         )}
 
-        {/* 6. Executive Reports & Print */}
+        {/* 7. Executive Reports & Print */}
         {activeTab === 'reports' && (
           <PrintableReport 
             books={books} 
             selectedMonth={selectedMonth}
             selectedYear={selectedYear}
             daysInMonth={daysInMonth}
+            pressPayments={pressPayments}
+            channelCollections={channelCollections}
           />
         )}
       </main>
@@ -472,7 +560,7 @@ export const App: React.FC = () => {
             © {selectedYear} <b>বিদ্যাবাড়ি পাবলিকেশন (Biddabari Publication)</b>. সর্বস্বত্ব সংরক্ষিত। ({formatMonthYearBengali(selectedMonth, selectedYear)})
           </div>
           <div className="flex items-center gap-3">
-            <span>মাসভিত্তিক অটো-সিঙ্ক ও স্টোরেজ সক্রিয়</span>
+            <span>প্রেস পেমেন্ট ও চ্যানেল ডিউ ট্র্যাকিং সক্রিয়</span>
             <span>•</span>
             <button
               onClick={() => exportBooksToExcel(books, selectedMonth, selectedYear)}
@@ -520,6 +608,22 @@ export const App: React.FC = () => {
         onClose={() => setIsExcelSyncOpen(false)}
         books={books}
         onImportSuccess={(newBooks) => setBooks(newBooks)}
+      />
+
+      {/* Press Payment Voucher Modal */}
+      <AddPressPaymentModal
+        isOpen={isPressPaymentModalOpen}
+        onClose={() => setIsPressPaymentModalOpen(false)}
+        books={books}
+        onSavePayment={handleAddPressPayment}
+      />
+
+      {/* Channel Collection Receipt Modal */}
+      <AddChannelCollectionModal
+        isOpen={isChannelCollectionModalOpen}
+        onClose={() => setIsChannelCollectionModalOpen(false)}
+        onSaveCollection={handleAddChannelCollection}
+        initialChannelKey={selectedChannelForCollection}
       />
 
     </div>

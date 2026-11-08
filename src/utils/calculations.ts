@@ -1,4 +1,4 @@
-import { BookRecord, DailyChannelSales } from '../types/book';
+import { BookRecord, DailyChannelSales, PressPaymentRecord, ChannelCollectionRecord, SALES_CHANNELS } from '../types/book';
 
 export function sumDaily(salesMap: DailyChannelSales = {}): number {
   if (!salesMap) return 0;
@@ -416,4 +416,238 @@ export function createFreshMonthBooks(catalog: BookRecord[]): BookRecord[] {
     updatedAt: new Date().toISOString(),
   }));
 }
+
+// -------------------------------------------------------------
+// Press Financials & Balance Calculation
+// -------------------------------------------------------------
+
+export interface PressBookAccount {
+  bookId: string;
+  sl: number;
+  bookName: string;
+  orderQuantity: number;
+  makingCost: number;
+  totalOrderBill: number;
+  receivedCopies: number;
+  receivedBill: number;
+  totalPaid: number;
+  dueOnOrder: number;
+  dueOnReceived: number;
+  isAdvance: boolean;
+  statusText: string;
+}
+
+export interface PressAccountsSummary {
+  totalOrderBill: number;
+  totalReceivedBill: number;
+  totalPaidToPress: number;
+  netDueOnOrder: number;
+  netDueOnReceived: number;
+  bookAccounts: PressBookAccount[];
+  unallocatedPayments: number;
+}
+
+export function calculatePressAccounts(
+  books: BookRecord[],
+  pressPayments: PressPaymentRecord[]
+): PressAccountsSummary {
+  let totalOrderBill = 0;
+  let totalReceivedBill = 0;
+  let totalPaidToPress = 0;
+
+  const totalPaymentsSum = pressPayments.reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
+  totalPaidToPress = totalPaymentsSum;
+
+  const bookAccounts: PressBookAccount[] = books.map(book => {
+    const orderQuantity = Number(book.totalOrderFaridBhai) || 0;
+    const makingCost = Number(book.makingCost) || 0;
+    const bOrderBill = orderQuantity * makingCost;
+
+    const receivedHO = sumDaily(book.pressDailyReceipts);
+    const sumona = sumDaily(book.sumonaLibrary);
+    const promise = sumDaily(book.promiseLibrary);
+    const joystar = sumDaily(book.joystarLibrary);
+    const receivedCopies = receivedHO + sumona + promise + joystar;
+    const bReceivedBill = receivedCopies * makingCost;
+
+    // Payments specifically assigned to this book
+    const specificPaid = pressPayments
+      .filter(p => p.bookId === book.id)
+      .reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
+
+    // If only 1 book exists in system, all payments map to it
+    const assignedPaid = books.length === 1 ? totalPaymentsSum : specificPaid;
+
+    const dueOnOrder = bOrderBill - assignedPaid;
+    const dueOnReceived = bReceivedBill - assignedPaid;
+    const isAdvance = assignedPaid > bOrderBill;
+
+    let statusText = 'পরিশোধিত';
+    if (assignedPaid > bOrderBill) {
+      statusText = `আমরা অগ্রিম পাবো (৳${formatNumber(assignedPaid - bOrderBill)})`;
+    } else if (dueOnOrder > 0) {
+      statusText = `প্রেস পাবে (৳${formatNumber(dueOnOrder)})`;
+    }
+
+    totalOrderBill += bOrderBill;
+    totalReceivedBill += bReceivedBill;
+
+    return {
+      bookId: book.id,
+      sl: book.sl,
+      bookName: book.bookName,
+      orderQuantity,
+      makingCost,
+      totalOrderBill: bOrderBill,
+      receivedCopies,
+      receivedBill: bReceivedBill,
+      totalPaid: assignedPaid,
+      dueOnOrder,
+      dueOnReceived,
+      isAdvance,
+      statusText,
+    };
+  });
+
+  const specificAssignedTotal = bookAccounts.reduce((sum, b) => sum + b.totalPaid, 0);
+  const unallocatedPayments = Math.max(0, totalPaymentsSum - specificAssignedTotal);
+
+  return {
+    totalOrderBill,
+    totalReceivedBill,
+    totalPaidToPress,
+    netDueOnOrder: totalOrderBill - totalPaidToPress,
+    netDueOnReceived: totalReceivedBill - totalPaidToPress,
+    bookAccounts,
+    unallocatedPayments,
+  };
+}
+
+// -------------------------------------------------------------
+// Online & Offline Channel Due / Collection Calculation
+// -------------------------------------------------------------
+
+export interface ChannelDueAccount {
+  key: string;
+  name: string;
+  type: 'online' | 'offline';
+  category: string;
+  totalCopies: number;
+  totalBilled: number;
+  totalCollected: number;
+  dueAmount: number;
+  advanceAmount: number;
+  collectionRate: number; // percentage
+  statusText: string;
+}
+
+export interface ChannelAccountsSummary {
+  onlineBilled: number;
+  onlineCollected: number;
+  onlineDue: number;
+  offlineBilled: number;
+  offlineCollected: number;
+  offlineDue: number;
+  totalBilled: number;
+  totalCollected: number;
+  totalDue: number;
+  channels: ChannelDueAccount[];
+}
+
+export function calculateChannelDueAccounts(
+  books: BookRecord[],
+  channelCollections: ChannelCollectionRecord[]
+): ChannelAccountsSummary {
+  let onlineBilled = 0;
+  let onlineCollected = 0;
+  let offlineBilled = 0;
+  let offlineCollected = 0;
+
+  const channels: ChannelDueAccount[] = SALES_CHANNELS.map(ch => {
+    // Total copies sold across all books for this channel
+    let totalCopies = 0;
+    let totalBilled = 0;
+
+    books.forEach(b => {
+      const channelMap = (b as any)[ch.key] as DailyChannelSales || {};
+      const copies = sumDaily(channelMap);
+      totalCopies += copies;
+      totalBilled += copies * (Number(b.perBookAmount) || 0);
+    });
+
+    const totalCollected = channelCollections
+      .filter(c => c.channelKey === ch.key)
+      .reduce((sum, c) => sum + (Number(c.amount) || 0), 0);
+
+    const dueAmount = Math.max(0, totalBilled - totalCollected);
+    const advanceAmount = Math.max(0, totalCollected - totalBilled);
+    const collectionRate = totalBilled > 0 ? Math.min(100, (totalCollected / totalBilled) * 100) : 100;
+
+    let statusText = 'পরিশোধিত';
+    if (dueAmount > 0) {
+      statusText = `বকেয়া আছে (৳${formatNumber(dueAmount)})`;
+    } else if (advanceAmount > 0) {
+      statusText = `অতিরিক্ত জমা (৳${formatNumber(advanceAmount)})`;
+    }
+
+    if (ch.type === 'online') {
+      onlineBilled += totalBilled;
+      onlineCollected += totalCollected;
+    } else {
+      offlineBilled += totalBilled;
+      offlineCollected += totalCollected;
+    }
+
+    return {
+      key: ch.key,
+      name: ch.name,
+      type: ch.type,
+      category: ch.category,
+      totalCopies,
+      totalBilled,
+      totalCollected,
+      dueAmount,
+      advanceAmount,
+      collectionRate,
+      statusText,
+    };
+  });
+
+  return {
+    onlineBilled,
+    onlineCollected,
+    onlineDue: Math.max(0, onlineBilled - onlineCollected),
+    offlineBilled,
+    offlineCollected,
+    offlineDue: Math.max(0, offlineBilled - offlineCollected),
+    totalBilled: onlineBilled + offlineBilled,
+    totalCollected: onlineCollected + offlineCollected,
+    totalDue: Math.max(0, (onlineBilled + offlineBilled) - (onlineCollected + offlineCollected)),
+    channels,
+  };
+}
+
+// -------------------------------------------------------------
+// Multi-Period Definitions (Quarters, Half-Years)
+// -------------------------------------------------------------
+
+export interface PeriodOption {
+  key: string;
+  label: string;
+  startMonth: number;
+  endMonth: number;
+}
+
+export const QUARTER_OPTIONS: PeriodOption[] = [
+  { key: 'q1', label: '১ম কোয়ার্টার (Q1: জানুয়ারি - মার্চ)', startMonth: 1, endMonth: 3 },
+  { key: 'q2', label: '২য় কোয়ার্টার (Q2: এপ্রিল - জুন)', startMonth: 4, endMonth: 6 },
+  { key: 'q3', label: '৩য় কোয়ার্টার (Q3: জুলাই - সেপ্টেম্বর)', startMonth: 7, endMonth: 9 },
+  { key: 'q4', label: '৪র্থ কোয়ার্টার (Q4: অক্টোবর - ডিসেম্বর)', startMonth: 10, endMonth: 12 },
+];
+
+export const HALF_YEAR_OPTIONS: PeriodOption[] = [
+  { key: 'h1', label: '১ম ষাণ্মাসিক (H1: জানুয়ারি - জুন)', startMonth: 1, endMonth: 6 },
+  { key: 'h2', label: '২য় ষাণ্মাসিক (H2: জুলাই - ডিসেম্বর)', startMonth: 7, endMonth: 12 },
+];
+
 

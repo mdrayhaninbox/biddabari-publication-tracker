@@ -12,19 +12,32 @@ import {
   CalendarPlus,
   Globe,
   Store,
-  CheckCircle2,
-  ChevronLeft,
-  ChevronRight,
-  Boxes
+  CheckCircle2, 
+  ChevronLeft, 
+  ChevronRight, 
+  Boxes,
+  Clock,
+  Layers,
+  CreditCard,
+  HandCoins,
+  Filter
 } from 'lucide-react';
-import { BookRecord } from '../types/book';
+import { BookRecord, PressPaymentRecord, ChannelCollectionRecord } from '../types/book';
 import { 
   calculateDayBreakdown, 
   calculateWeekBreakdowns, 
   calculateBookMetrics, 
+  calculatePressAccounts,
+  calculateChannelDueAccounts,
   formatBDT, 
   formatNumber,
-  formatMonthYearBengali 
+  formatMonthYearBengali,
+  QUARTER_OPTIONS,
+  HALF_YEAR_OPTIONS,
+  createFreshMonthBooks,
+  getDaysInMonth,
+  BENGALI_MONTHS,
+  AVAILABLE_YEARS
 } from '../utils/calculations';
 
 interface PeriodViewSystemProps {
@@ -34,9 +47,11 @@ interface PeriodViewSystemProps {
   selectedMonth?: number;
   selectedYear?: number;
   daysInMonth?: number;
+  pressPayments?: PressPaymentRecord[];
+  channelCollections?: ChannelCollectionRecord[];
 }
 
-export type ViewPeriod = 'daily' | 'weekly' | 'monthly';
+export type ViewPeriod = 'daily' | 'weekly' | 'monthly' | 'quarterly' | 'half_yearly' | 'yearly' | 'custom';
 
 export const PeriodViewSystem: React.FC<PeriodViewSystemProps> = ({
   books,
@@ -45,10 +60,41 @@ export const PeriodViewSystem: React.FC<PeriodViewSystemProps> = ({
   selectedMonth = 11,
   selectedYear = 2026,
   daysInMonth = 30,
+  pressPayments = [],
+  channelCollections = [],
 }) => {
   const [period, setPeriod] = useState<ViewPeriod>('daily');
   const [selectedDay, setSelectedDay] = useState<number>(1);
   const [selectedWeek, setSelectedWeek] = useState<number>(1);
+
+  // Multi-period state
+  const [selectedQuarter, setSelectedQuarter] = useState<string>('q4');
+  const [selectedHalfYear, setSelectedHalfYear] = useState<string>('h2');
+  const [reportYear, setReportYear] = useState<number>(selectedYear);
+
+  // Custom date range state (default to current month dates)
+  const [customStartDate, setCustomStartDate] = useState<string>(
+    `${selectedYear}-${String(selectedMonth).padStart(2, '0')}-01`
+  );
+  const [customEndDate, setCustomEndDate] = useState<string>(
+    `${selectedYear}-${String(selectedMonth).padStart(2, '0')}-${String(daysInMonth).padStart(2, '0')}`
+  );
+
+  // Helper to load books for any specific month
+  const getBooksForMonth = (year: number, month: number): BookRecord[] => {
+    try {
+      const key = `biddabari_books_data_v2_${year}-${String(month).padStart(2, '0')}`;
+      const saved = localStorage.getItem(key);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch (e) {
+      // fallback
+    }
+    if (year === selectedYear && month === selectedMonth) return books;
+    return createFreshMonthBooks(books);
+  };
 
   // Day breakdown
   const dayData = calculateDayBreakdown(books, selectedDay);
@@ -85,67 +131,197 @@ export const PeriodViewSystem: React.FC<PeriodViewSystemProps> = ({
     }
   );
 
+  // -------------------------------------------------------------
+  // Aggregate Multi-Month / Custom Range Data
+  // -------------------------------------------------------------
+  const getAggregatedDataForMonths = (monthsList: { year: number; month: number }[]) => {
+    let totalSold = 0;
+    let onlineSold = 0;
+    let offlineSold = 0;
+    let revenue = 0;
+    let profit = 0;
+    let pressReceived = 0;
+    let returns = 0;
+
+    const channels = {
+      boibari: 0,
+      rokomari: 0,
+      wafilife: 0,
+      othersOnline: 0,
+      sumona: 0,
+      promise: 0,
+      joystar: 0,
+      nilkhet: 0,
+      hoOffline: 0,
+    };
+
+    const bookStatsMap: { [bookId: string]: { sl: number; name: string; sold: number; revenue: number; profit: number } } = {};
+
+    monthsList.forEach(({ year, month }) => {
+      const mBooks = getBooksForMonth(year, month);
+      mBooks.forEach(b => {
+        const m = calculateBookMetrics(b);
+        totalSold += m.totalSold;
+        onlineSold += m.totalOnlineSell;
+        offlineSold += m.totalOfflineSell;
+        revenue += m.totalRevenue;
+        profit += m.totalNetProfit;
+        pressReceived += m.faridBhaiToHeadOffice;
+        returns += m.totalReturns;
+
+        channels.boibari += m.boibariTotal;
+        channels.rokomari += m.rokomariTotal;
+        channels.wafilife += m.wafilifeTotal;
+        channels.othersOnline += m.othersOnlineTotal;
+        channels.sumona += m.sumonaTotal;
+        channels.promise += m.promiseTotal;
+        channels.joystar += m.joystarTotal;
+        channels.nilkhet += m.nilkhetTotal;
+        channels.hoOffline += m.headOfficeOfflineTotal;
+
+        if (!bookStatsMap[b.id]) {
+          bookStatsMap[b.id] = { sl: b.sl, name: b.bookName, sold: 0, revenue: 0, profit: 0 };
+        }
+        bookStatsMap[b.id].sold += m.totalSold;
+        bookStatsMap[b.id].revenue += m.totalRevenue;
+        bookStatsMap[b.id].profit += m.totalNetProfit;
+      });
+    });
+
+    return {
+      totalSold,
+      onlineSold,
+      offlineSold,
+      revenue,
+      profit,
+      pressReceived,
+      returns,
+      channels,
+      bookStats: Object.values(bookStatsMap),
+    };
+  };
+
+  // Quarterly aggregated data
+  const currentQuarterConfig = QUARTER_OPTIONS.find(q => q.key === selectedQuarter) || QUARTER_OPTIONS[3];
+  const quarterMonths: { year: number; month: number }[] = [];
+  for (let m = currentQuarterConfig.startMonth; m <= currentQuarterConfig.endMonth; m++) {
+    quarterMonths.push({ year: reportYear, month: m });
+  }
+  const quarterData = getAggregatedDataForMonths(quarterMonths);
+
+  // Half-Yearly aggregated data
+  const currentHalfConfig = HALF_YEAR_OPTIONS.find(h => h.key === selectedHalfYear) || HALF_YEAR_OPTIONS[1];
+  const halfYearMonths: { year: number; month: number }[] = [];
+  for (let m = currentHalfConfig.startMonth; m <= currentHalfConfig.endMonth; m++) {
+    halfYearMonths.push({ year: reportYear, month: m });
+  }
+  const halfYearData = getAggregatedDataForMonths(halfYearMonths);
+
+  // Yearly aggregated data (all 12 months)
+  const yearlyMonths = Array.from({ length: 12 }, (_, i) => ({ year: reportYear, month: i + 1 }));
+  const yearlyData = getAggregatedDataForMonths(yearlyMonths);
+
+  // Month-by-month sales progression for Yearly View
+  const yearlyMonthlyBreakdown = yearlyMonths.map(({ year, month }) => {
+    const mBooks = getBooksForMonth(year, month);
+    let sold = 0;
+    let rev = 0;
+    let prof = 0;
+    mBooks.forEach(b => {
+      const m = calculateBookMetrics(b);
+      sold += m.totalSold;
+      rev += m.totalRevenue;
+      prof += m.totalNetProfit;
+    });
+    const mInfo = BENGALI_MONTHS.find(x => x.value === month);
+    return {
+      month,
+      name: mInfo ? mInfo.name : `${month}ম মাস`,
+      shortName: mInfo ? mInfo.shortName : `${month}ম`,
+      sold,
+      revenue: rev,
+      profit: prof,
+    };
+  });
+
+  // Custom Date Range Data
+  const getCustomRangeData = () => {
+    const sDate = new Date(customStartDate);
+    const eDate = new Date(customEndDate);
+    if (isNaN(sDate.getTime()) || isNaN(eDate.getTime()) || sDate > eDate) {
+      return getAggregatedDataForMonths([{ year: selectedYear, month: selectedMonth }]);
+    }
+
+    // Determine involved months
+    const involvedMonths: { year: number; month: number }[] = [];
+    let cur = new Date(sDate.getFullYear(), sDate.getMonth(), 1);
+    const endLimit = new Date(eDate.getFullYear(), eDate.getMonth(), 1);
+
+    while (cur <= endLimit) {
+      involvedMonths.push({ year: cur.getFullYear(), month: cur.getMonth() + 1 });
+      cur.setMonth(cur.getMonth() + 1);
+    }
+
+    return getAggregatedDataForMonths(involvedMonths);
+  };
+  const customRangeData = getCustomRangeData();
+
+  // Active aggregated press and channel accounts
+  const pressAccounts = calculatePressAccounts(books, pressPayments);
+  const channelAccounts = calculateChannelDueAccounts(books, channelCollections);
+
   return (
     <div className="space-y-6">
       
-      {/* View Period Selector Header (Black & White) */}
-      <div className="bg-white p-4 sm:p-5 rounded-2xl border border-zinc-200 shadow-xs flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      {/* View Period Selector Header (Black & White Theme) */}
+      <div className="bg-white p-4 sm:p-5 rounded-2xl border border-zinc-200 shadow-xs flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
         <div>
           <h2 className="text-lg font-bold text-zinc-900 flex items-center gap-2">
-            <span>{formatMonthYearBengali(selectedMonth, selectedYear)} - তারিখ ভিত্তিক রিপোর্ট ও বিশ্লেষণ</span>
+            <span>পিরিয়ডিক রিপোর্ট ও আর্থিক বিশ্লেষণ</span>
           </h2>
           <p className="text-xs text-zinc-500 mt-0.5">
-            ১ থেকে {formatNumber(daysInMonth)} তারিখের দৈনিক বিক্রয়, সাপ্তাহিক অগ্রগতি ও পুরো মাসের হিসাব
+            দৈনিক, সাপ্তাহিক, মাসিক, ৩ মাস, ৬ মাস, বাৎসরিক ও নির্দিষ্ট তারিখ থেকে তারিখের রিপোর্ট
           </p>
         </div>
 
-        {/* Monochromatic Pill Switcher */}
-        <div className="flex bg-zinc-100 p-1 rounded-xl self-start md:self-auto border border-zinc-200">
-          <button
-            onClick={() => setPeriod('daily')}
-            className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold transition-all ${
-              period === 'daily'
-                ? 'bg-zinc-900 text-white shadow-xs'
-                : 'text-zinc-600 hover:text-zinc-900 hover:bg-zinc-200/60'
-            }`}
-          >
-            <Calendar className="w-3.5 h-3.5" />
-            <span>দৈনিক তারিখ ভিউ (Daily)</span>
-          </button>
-
-          <button
-            onClick={() => setPeriod('weekly')}
-            className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold transition-all ${
-              period === 'weekly'
-                ? 'bg-zinc-900 text-white shadow-xs'
-                : 'text-zinc-600 hover:text-zinc-900 hover:bg-zinc-200/60'
-            }`}
-          >
-            <CalendarDays className="w-3.5 h-3.5" />
-            <span>সাপ্তাহিক ভিউ (Weekly)</span>
-          </button>
-
-          <button
-            onClick={() => setPeriod('monthly')}
-            className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold transition-all ${
-              period === 'monthly'
-                ? 'bg-zinc-900 text-white shadow-xs'
-                : 'text-zinc-600 hover:text-zinc-900 hover:bg-zinc-200/60'
-            }`}
-          >
-            <CalendarRange className="w-3.5 h-3.5" />
-            <span>মাসিক ভিউ (Monthly)</span>
-          </button>
+        {/* Responsive Period Switcher Pills */}
+        <div className="flex flex-wrap bg-zinc-100 p-1 rounded-xl border border-zinc-200 gap-1">
+          {[
+            { key: 'daily', label: 'দৈনিক (Daily)', icon: Calendar },
+            { key: 'weekly', label: 'সাপ্তাহিক (Weekly)', icon: CalendarDays },
+            { key: 'monthly', label: 'মাসিক (Monthly)', icon: CalendarRange },
+            { key: 'quarterly', label: '৩ মাস (Quarterly)', icon: Layers },
+            { key: 'half_yearly', label: '৬ মাস (Half-Yearly)', icon: Clock },
+            { key: 'yearly', label: 'বাৎসরিক (Yearly)', icon: TrendingUp },
+            { key: 'custom', label: 'তারিখ রেঞ্জ (Custom)', icon: Filter },
+          ].map(tab => {
+            const Icon = tab.icon;
+            const isActive = period === tab.key;
+            return (
+              <button
+                key={tab.key}
+                onClick={() => setPeriod(tab.key as ViewPeriod)}
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                  isActive
+                    ? 'bg-zinc-900 text-white shadow-xs'
+                    : 'text-zinc-600 hover:text-zinc-900 hover:bg-zinc-200/60'
+                }`}
+              >
+                <Icon className="w-3.5 h-3.5" />
+                <span>{tab.label}</span>
+              </button>
+            );
+          })}
         </div>
       </div>
 
       {/* ======================================================== */}
-      {/* 1. DAILY VIEW (দৈনিক তারিখ ভিউ) */}
+      {/* 1. DAILY VIEW */}
       {/* ======================================================== */}
       {period === 'daily' && (
-        <div className="space-y-5 animate-in fade-in duration-200">
+        <div className="space-y-5 animate-in fade-in duration-150">
           
-          {/* Day / Date Navigation & Selector Bar */}
+          {/* Day / Date Navigation Bar */}
           <div className="bg-white p-4 rounded-2xl border border-zinc-200 shadow-xs space-y-3">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <div className="flex items-center gap-2">
@@ -184,7 +360,7 @@ export const PeriodViewSystem: React.FC<PeriodViewSystemProps> = ({
               </button>
             </div>
 
-            {/* Clean Monochromatic Horizontal Date Pills (1 to 31) */}
+            {/* Horizontal Date Pills */}
             <div>
               <div className="text-[11px] font-semibold text-zinc-500 mb-1.5">
                 📅 ক্যালেন্ডার তারিখ নির্বাচন করুন (১লা থেকে {formatNumber(daysInMonth)} তারিখ):
@@ -214,164 +390,78 @@ export const PeriodViewSystem: React.FC<PeriodViewSystemProps> = ({
             </div>
           </div>
 
-          {/* Selected Date Metric Cards (Clean Black & White) */}
+          {/* Selected Date Metric Cards */}
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
             <div className="bg-white p-3.5 rounded-xl border border-zinc-200 shadow-xs">
-              <span className="text-[11px] text-zinc-500 block font-medium">{selectedDay} তারিখে মোট বিক্রি</span>
+              <span className="text-[11px] text-zinc-500 block font-medium">{selectedDay} তারিখে বিক্রি</span>
               <span className="text-xl font-bold text-zinc-900">{formatNumber(dayData.totalSold)} কপি</span>
               <span className="text-[10px] text-zinc-600 block mt-0.5">
-                অনলাইন: {dayData.onlineSold} • অফলাইন: {dayData.offlineSold}
+                অনলাইন {dayData.onlineSold} • অফলাইন {dayData.offlineSold}
               </span>
             </div>
 
             <div className="bg-white p-3.5 rounded-xl border border-zinc-200 shadow-xs">
-              <span className="text-[11px] text-zinc-500 block font-medium">{selectedDay} তারিখের রাজস্ব</span>
-              <span className="text-lg font-bold text-zinc-900">{formatBDT(dayData.revenue)}</span>
-              <span className="text-[10px] text-zinc-400 block mt-0.5">অর্জিত বিক্রয় মূল্য</span>
+              <span className="text-[11px] text-zinc-500 block font-medium">আজকের রাজস্ব</span>
+              <span className="text-xl font-bold text-zinc-900">{formatBDT(dayData.revenue)}</span>
+              <span className="text-[10px] text-zinc-400 block mt-0.5">বিক্রয়মূল্য</span>
             </div>
 
             <div className="bg-white p-3.5 rounded-xl border border-zinc-200 shadow-xs">
-              <span className="text-[11px] text-zinc-500 block font-medium">{selectedDay} তারিখের নিট লাভ</span>
-              <span className="text-lg font-bold text-zinc-900">+{formatBDT(dayData.profit)}</span>
-              <span className="text-[10px] text-zinc-500 block mt-0.5">খরচ বাদে মুনাফা</span>
+              <span className="text-[11px] text-zinc-500 block font-medium">আজকের নিট লাভ</span>
+              <span className="text-xl font-bold text-zinc-900">+{formatBDT(dayData.profit)}</span>
+              <span className="text-[10px] text-zinc-400 block mt-0.5">উৎপাদন ও বিজ্ঞাপন বাদে</span>
             </div>
 
             <div className="bg-white p-3.5 rounded-xl border border-zinc-200 shadow-xs">
-              <span className="text-[11px] text-zinc-500 block font-medium">প্রেস থেকে প্রাপ্ত চালান</span>
+              <span className="text-[11px] text-zinc-500 block font-medium">প্রেস থেকে প্রাপ্ত</span>
               <span className="text-xl font-bold text-zinc-900">{formatNumber(dayData.pressReceived)} কপি</span>
-              <span className="text-[10px] text-zinc-500 block mt-0.5">হেড অফিসে জমা হয়েছে</span>
+              <span className="text-[10px] text-zinc-400 block mt-0.5">হেড অফিসে ডেলিভারি</span>
             </div>
 
             <div className="bg-white p-3.5 rounded-xl border border-zinc-200 shadow-xs">
-              <span className="text-[11px] text-zinc-500 block font-medium">আজকের ফেরত (Return)</span>
+              <span className="text-[11px] text-zinc-500 block font-medium">আজকের রিটার্ন</span>
               <span className="text-xl font-bold text-zinc-900">{formatNumber(dayData.returns)} কপি</span>
-              <span className="text-[10px] text-zinc-500 block mt-0.5">স্টকে পুনরায় যুক্ত</span>
+              <span className="text-[10px] text-zinc-400 block mt-0.5">স্টকে যুক্ত</span>
             </div>
 
-            <div className="bg-white p-3.5 rounded-xl border border-zinc-200 shadow-xs flex flex-col justify-center">
-              <button
-                onClick={() => onOpenDailyEntryForDay(selectedDay)}
-                className="w-full py-2 bg-zinc-900 hover:bg-black text-white rounded-lg text-xs font-bold shadow-xs flex items-center justify-center gap-1 transition-colors"
-              >
-                <CalendarPlus className="w-3.5 h-3.5" />
-                <span>এন্ট্রি সম্পাদন</span>
-              </button>
+            <div className="bg-white p-3.5 rounded-xl border border-zinc-200 shadow-xs">
+              <span className="text-[11px] text-zinc-500 block font-medium">অনলাইন চ্যানেল</span>
+              <span className="text-xl font-bold text-zinc-900 font-mono">{formatNumber(dayData.onlineSold)} কপি</span>
+              <span className="text-[10px] text-zinc-400 block mt-0.5">বইবাড়ি: {dayData.channels.boibari}</span>
             </div>
           </div>
 
-          {/* Selected Date Channel Deliveries */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            
-            {/* Online Channels on this date */}
-            <div className="bg-white p-4 rounded-xl border border-zinc-200 shadow-xs">
-              <div className="flex items-center justify-between mb-3 pb-2 border-b border-zinc-100">
-                <span className="text-xs font-bold text-zinc-900 flex items-center gap-1.5">
-                  <Globe className="w-4 h-4 text-zinc-700" />
-                  <span>{selectedDay} তারিখ: অনলাইন প্ল্যাটফর্ম বিক্রয়</span>
-                </span>
-                <span className="text-xs font-bold text-zinc-900 bg-zinc-100 px-2 py-0.5 rounded">
-                  মোট: {dayData.onlineSold} কপি
-                </span>
-              </div>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center text-xs">
-                <div className="p-2.5 bg-zinc-50 rounded-lg border border-zinc-200">
-                  <span className="text-[10px] text-zinc-500 block">বইবাড়ি</span>
-                  <span className="text-sm font-bold text-zinc-900">{dayData.channels.boibari}</span>
-                </div>
-                <div className="p-2.5 bg-zinc-50 rounded-lg border border-zinc-200">
-                  <span className="text-[10px] text-zinc-500 block">রকমারি</span>
-                  <span className="text-sm font-bold text-zinc-900">{dayData.channels.rokomari}</span>
-                </div>
-                <div className="p-2.5 bg-zinc-50 rounded-lg border border-zinc-200">
-                  <span className="text-[10px] text-zinc-500 block">ওয়াফিলাইফ</span>
-                  <span className="text-sm font-bold text-zinc-900">{dayData.channels.wafilife}</span>
-                </div>
-                <div className="p-2.5 bg-zinc-50 rounded-lg border border-zinc-200">
-                  <span className="text-[10px] text-zinc-500 block">অন্যান্য অনলাইন</span>
-                  <span className="text-sm font-bold text-zinc-900">{dayData.channels.othersOnline}</span>
-                </div>
-              </div>
+          {/* Book-by-Book breakdown for selected day */}
+          <div className="bg-white rounded-2xl border border-zinc-200 shadow-xs overflow-hidden">
+            <div className="p-4 border-b border-zinc-100 flex items-center justify-between">
+              <h3 className="font-bold text-zinc-900 text-sm">{selectedDay} তারিখের বইভিত্তিক বিক্রয় খতিয়ান</h3>
+              <span className="text-xs text-zinc-500">{dayData.bookBreakdown.length} টি বই</span>
             </div>
 
-            {/* Offline Channels on this date */}
-            <div className="bg-white p-4 rounded-xl border border-zinc-200 shadow-xs">
-              <div className="flex items-center justify-between mb-3 pb-2 border-b border-zinc-100">
-                <span className="text-xs font-bold text-zinc-900 flex items-center gap-1.5">
-                  <Store className="w-4 h-4 text-zinc-700" />
-                  <span>{selectedDay} তারিখ: অফলাইন ও লাইব্রেরি ডেলিভারি</span>
-                </span>
-                <span className="text-xs font-bold text-zinc-900 bg-zinc-100 px-2 py-0.5 rounded">
-                  মোট: {dayData.offlineSold} কপি
-                </span>
-              </div>
-              <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 text-center text-xs">
-                <div className="p-2.5 bg-zinc-50 rounded-lg border border-zinc-200">
-                  <span className="text-[10px] text-zinc-500 block">হেড অফিস</span>
-                  <span className="text-sm font-bold text-zinc-900">{dayData.channels.headOfficeOffline}</span>
-                </div>
-                <div className="p-2.5 bg-zinc-50 rounded-lg border border-zinc-200">
-                  <span className="text-[10px] text-zinc-500 block">নীলক্ষেত</span>
-                  <span className="text-sm font-bold text-zinc-900">{dayData.channels.nilkhet}</span>
-                </div>
-                <div className="p-2.5 bg-zinc-50 rounded-lg border border-zinc-200">
-                  <span className="text-[10px] text-zinc-500 block">সুমনা</span>
-                  <span className="text-sm font-bold text-zinc-900">{dayData.channels.sumona}</span>
-                </div>
-                <div className="p-2.5 bg-zinc-50 rounded-lg border border-zinc-200">
-                  <span className="text-[10px] text-zinc-500 block">প্রমিজ</span>
-                  <span className="text-sm font-bold text-zinc-900">{dayData.channels.promise}</span>
-                </div>
-                <div className="p-2.5 bg-zinc-50 rounded-lg border border-zinc-200">
-                  <span className="text-[10px] text-zinc-500 block">জয়স্টার</span>
-                  <span className="text-sm font-bold text-zinc-900">{dayData.channels.joystar}</span>
-                </div>
-              </div>
-            </div>
-
-          </div>
-
-          {/* Book-by-Book breakdown for selected date */}
-          <div className="bg-white rounded-xl border border-zinc-200 shadow-xs overflow-hidden">
-            <div className="p-3.5 border-b border-zinc-100 flex items-center justify-between">
-              <h4 className="text-xs font-bold text-zinc-900">
-                {selectedDay} তারিখে বই ভিত্তিক বিক্রয় বিবরণী
-              </h4>
-              <span className="text-[11px] text-zinc-500 font-medium">
-                {dayData.bookBreakdown.filter(x => x.sold > 0).length} টি বই বিক্রি হয়েছে
-              </span>
-            </div>
-            <div className="overflow-x-auto w-full">
-              <table className="w-full min-w-[550px] text-left border-collapse text-xs">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse text-xs">
                 <thead>
-                  <tr className="bg-zinc-100 text-zinc-700 font-semibold border-b border-zinc-200">
+                  <tr className="bg-zinc-50 text-zinc-800 font-semibold border-b border-zinc-200">
                     <th className="py-2.5 px-3">বইয়ের নাম</th>
-                    <th className="py-2.5 px-3 text-center">আজকের বিক্রি</th>
-                    <th className="py-2.5 px-3 text-right">আজকের রাজস্ব</th>
-                    <th className="py-2.5 px-3 text-right">আজকের নিট লাভ</th>
+                    <th className="py-2.5 px-3 text-center">বিক্রিত কপি</th>
+                    <th className="py-2.5 px-3 text-right">রাজস্ব (Revenue)</th>
+                    <th className="py-2.5 px-3 text-right">নিট লাভ (Profit)</th>
                     <th className="py-2.5 px-3 text-center">অ্যাকশন</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-zinc-100">
-                  {dayData.bookBreakdown.map((item, idx) => (
-                    <tr key={item.bookId} className="hover:bg-zinc-50 transition-colors">
-                      <td className="py-2.5 px-3 font-semibold text-zinc-900">
-                        {idx + 1}. {item.bookName}
-                      </td>
-                      <td className="py-2.5 px-3 text-center font-bold text-zinc-900">
-                        {item.sold > 0 ? `${formatNumber(item.sold)} কপি` : '-'}
-                      </td>
-                      <td className="py-2.5 px-3 text-right font-medium text-zinc-800">
-                        {item.revenue > 0 ? formatBDT(item.revenue) : '-'}
-                      </td>
-                      <td className="py-2.5 px-3 text-right font-bold text-zinc-900">
-                        {item.profit > 0 ? `+${formatBDT(item.profit)}` : '-'}
-                      </td>
-                      <td className="py-2.5 px-3 text-center">
+                  {dayData.bookBreakdown.map((item) => (
+                    <tr key={item.bookId} className="hover:bg-zinc-50/70 transition-colors">
+                      <td className="py-3 px-3 font-bold text-zinc-900">{item.bookName}</td>
+                      <td className="py-3 px-3 text-center font-mono font-bold">{formatNumber(item.sold)} কপি</td>
+                      <td className="py-3 px-3 text-right font-mono text-zinc-900">{formatBDT(item.revenue)}</td>
+                      <td className="py-3 px-3 text-right font-mono font-bold text-zinc-900">+{formatBDT(item.profit)}</td>
+                      <td className="py-3 px-3 text-center">
                         <button
                           onClick={() => onOpenDailyEntryForBookAndDay(item.bookId, selectedDay)}
-                          className="text-[11px] text-zinc-800 hover:text-black font-semibold px-2 py-1 bg-zinc-100 hover:bg-zinc-200 rounded border border-zinc-200"
+                          className="text-[11px] font-semibold text-zinc-800 hover:text-black bg-zinc-100 hover:bg-zinc-200 px-2.5 py-1 rounded-lg border border-zinc-200 transition-colors"
                         >
-                          এন্ট্রি সম্পাদন
+                          এডিট
                         </button>
                       </td>
                     </tr>
@@ -385,148 +475,73 @@ export const PeriodViewSystem: React.FC<PeriodViewSystemProps> = ({
       )}
 
       {/* ======================================================== */}
-      {/* 2. WEEKLY VIEW (সাপ্তাহিক ভিউ - ১ থেকে ৩১ তারিখের ৫ সপ্তাহ) */}
+      {/* 2. WEEKLY VIEW */}
       {/* ======================================================== */}
       {period === 'weekly' && (
-        <div className="space-y-5 animate-in fade-in duration-200">
+        <div className="space-y-5 animate-in fade-in duration-150">
           
-          {/* Week Selector Cards Grid (Weeks 1 to 5 with dates) */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
-            {weekDataList.map(w => {
-              const isSelected = selectedWeek === w.weekNumber;
-              return (
-                <div
-                  key={w.weekNumber}
-                  onClick={() => setSelectedWeek(w.weekNumber)}
-                  className={`p-4 rounded-xl border cursor-pointer transition-all ${
-                    isSelected
-                      ? 'bg-zinc-900 text-white border-zinc-900 shadow-md'
-                      : 'bg-white text-zinc-900 border-zinc-200 hover:border-zinc-400 shadow-xs'
-                  }`}
-                >
-                  <div className="flex items-center justify-between text-xs font-bold mb-1">
-                    <span>{w.name.split(' (')[0]}</span>
-                    {isSelected && <CheckCircle2 className="w-4 h-4 text-white" />}
-                  </div>
-                  <div className={`text-[11px] mb-2 font-mono ${isSelected ? 'text-zinc-300' : 'text-zinc-500'}`}>
-                    {w.startDay} থেকে {w.endDay} তারিখ
-                  </div>
-
-                  <div className="space-y-1.5 pt-1 border-t border-zinc-200/40">
-                    <div className="flex justify-between text-xs">
-                      <span className={isSelected ? 'text-zinc-300' : 'text-zinc-500'}>মোট বিক্রি:</span>
-                      <span className="font-bold">{formatNumber(w.totalSold)} কপি</span>
-                    </div>
-                    <div className="flex justify-between text-xs">
-                      <span className={isSelected ? 'text-zinc-300' : 'text-zinc-500'}>রাজস্ব:</span>
-                      <span className="font-semibold">{formatBDT(w.revenue)}</span>
-                    </div>
-                    <div className="flex justify-between text-xs">
-                      <span className={isSelected ? 'text-zinc-300' : 'text-zinc-500'}>নিট লাভ:</span>
-                      <span className="font-bold">+{formatBDT(w.profit)}</span>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Selected Week Detailed Breakdown */}
-          <div className="bg-white p-5 rounded-2xl border border-zinc-200 shadow-xs space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between pb-3 border-b border-zinc-100 gap-2">
-              <div>
-                <h3 className="font-bold text-zinc-900 text-base">
-                  {currentWeekData.name} ({currentWeekData.startDay} থেকে {currentWeekData.endDay} তারিখের ফলাফল)
-                </h3>
-                <p className="text-xs text-zinc-500">
-                  এই সপ্তাহের প্রতিদিনের অনলাইন ও অফলাইন চালানের বিশদ বিবরণ
-                </p>
+          {/* Week Selector Bar */}
+          <div className="bg-white p-4 rounded-2xl border border-zinc-200 shadow-xs flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-bold text-zinc-800">সপ্তাহ নির্বাচন:</span>
+              <div className="flex items-center gap-1.5">
+                {weekDataList.map((w) => (
+                  <button
+                    key={w.weekNumber}
+                    onClick={() => setSelectedWeek(w.weekNumber)}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all border ${
+                      selectedWeek === w.weekNumber
+                        ? 'bg-zinc-900 text-white border-zinc-900 shadow-xs'
+                        : 'bg-zinc-50 text-zinc-700 border-zinc-200 hover:bg-zinc-100'
+                    }`}
+                  >
+                    {w.name}
+                  </button>
+                ))}
               </div>
-              <span className="text-xs font-bold text-zinc-900 bg-zinc-100 border border-zinc-300 px-3 py-1 rounded-full self-start sm:self-auto">
-                সাপ্তাহিক নিট লাভ: {formatBDT(currentWeekData.profit)}
-              </span>
             </div>
 
-            {/* Daily breakdown table for the week */}
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse text-xs">
-                <thead>
-                  <tr className="bg-zinc-100 text-zinc-700 font-semibold border-b border-zinc-200">
-                    <th className="py-2.5 px-3">তারিখ</th>
-                    <th className="py-2.5 px-3 text-center">অনলাইন বিক্রি</th>
-                    <th className="py-2.5 px-3 text-center">অফলাইন বিক্রি</th>
-                    <th className="py-2.5 px-3 text-center font-bold">মোট বিক্রি</th>
-                    <th className="py-2.5 px-3 text-center">প্রেস চালান</th>
-                    <th className="py-2.5 px-3 text-center">রিটার্ন</th>
-                    <th className="py-2.5 px-3 text-right">রাজস্ব</th>
-                    <th className="py-2.5 px-3 text-right font-bold text-zinc-900">নিট লাভ</th>
-                    <th className="py-2.5 px-3 text-center">অ্যাকশন</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-zinc-100">
-                  {currentWeekData.dailyTotals.map(({ day }) => {
-                    const dayItem = calculateDayBreakdown(books, day);
-                    const isBestDay = day === currentWeekData.bestDay.day && dayItem.totalSold > 0;
+            <div className="text-xs font-mono text-zinc-500">
+              {currentWeekData.startDay} - {currentWeekData.endDay} {formatMonthYearBengali(selectedMonth, selectedYear)}
+            </div>
+          </div>
 
-                    return (
-                      <tr key={day} className={`hover:bg-zinc-50 transition-colors ${isBestDay ? 'bg-zinc-100/60' : ''}`}>
-                        <td className="py-2.5 px-3 font-semibold text-zinc-900 flex items-center gap-1.5">
-                          <span>{day} তারিখ</span>
-                          {isBestDay && (
-                            <span className="text-[9px] bg-zinc-900 text-white px-1.5 py-0.5 rounded font-bold">
-                              সপ্তাহের সেরা
-                            </span>
-                          )}
-                        </td>
-                        <td className="py-2.5 px-3 text-center font-medium text-zinc-800">
-                          {dayItem.onlineSold > 0 ? formatNumber(dayItem.onlineSold) : '-'}
-                        </td>
-                        <td className="py-2.5 px-3 text-center font-medium text-zinc-800">
-                          {dayItem.offlineSold > 0 ? formatNumber(dayItem.offlineSold) : '-'}
-                        </td>
-                        <td className="py-2.5 px-3 text-center font-bold text-zinc-900">
-                          {dayItem.totalSold > 0 ? `${formatNumber(dayItem.totalSold)} কপি` : '-'}
-                        </td>
-                        <td className="py-2.5 px-3 text-center font-medium text-zinc-700">
-                          {dayItem.pressReceived > 0 ? formatNumber(dayItem.pressReceived) : '-'}
-                        </td>
-                        <td className="py-2.5 px-3 text-center font-medium text-zinc-700">
-                          {dayItem.returns > 0 ? formatNumber(dayItem.returns) : '-'}
-                        </td>
-                        <td className="py-2.5 px-3 text-right font-medium text-zinc-800">
-                          {dayItem.revenue > 0 ? formatBDT(dayItem.revenue) : '-'}
-                        </td>
-                        <td className="py-2.5 px-3 text-right font-bold text-zinc-900">
-                          {dayItem.profit > 0 ? `+${formatBDT(dayItem.profit)}` : '-'}
-                        </td>
-                        <td className="py-2.5 px-3 text-center">
-                          <button
-                            onClick={() => {
-                              setSelectedDay(day);
-                              setPeriod('daily');
-                            }}
-                            className="text-[11px] text-zinc-800 hover:text-black font-semibold px-2 py-0.5 bg-zinc-100 hover:bg-zinc-200 rounded border border-zinc-200"
-                          >
-                            দৈনিক ভিউ
-                          </button>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                  {/* Week Total Row */}
-                  <tr className="bg-zinc-100 font-bold text-zinc-900 border-t-2 border-zinc-300">
-                    <td className="py-2.5 px-3">{currentWeekData.name} মোট যোগফল:</td>
-                    <td className="py-2.5 px-3 text-center">{formatNumber(currentWeekData.onlineSold)}</td>
-                    <td className="py-2.5 px-3 text-center">{formatNumber(currentWeekData.offlineSold)}</td>
-                    <td className="py-2.5 px-3 text-center font-black">{formatNumber(currentWeekData.totalSold)} কপি</td>
-                    <td className="py-2.5 px-3 text-center">{formatNumber(currentWeekData.pressReceived)}</td>
-                    <td className="py-2.5 px-3 text-center">{formatNumber(currentWeekData.returns)}</td>
-                    <td className="py-2.5 px-3 text-right">{formatBDT(currentWeekData.revenue)}</td>
-                    <td className="py-2.5 px-3 text-right font-black">{formatBDT(currentWeekData.profit)}</td>
-                    <td></td>
-                  </tr>
-                </tbody>
-              </table>
+          {/* Week Metrics */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <div className="bg-white p-4 rounded-2xl border border-zinc-200 shadow-xs">
+              <span className="text-xs text-zinc-500 block">সাপ্তাহিক মোট বিক্রয়</span>
+              <span className="text-2xl font-black text-zinc-900 mt-1 block">
+                {formatNumber(currentWeekData.totalSold)} কপি
+              </span>
+              <div className="text-xs text-zinc-500 mt-1">
+                অনলাইন {formatNumber(currentWeekData.onlineSold)} • অফলাইন {formatNumber(currentWeekData.offlineSold)}
+              </div>
+            </div>
+
+            <div className="bg-white p-4 rounded-2xl border border-zinc-200 shadow-xs">
+              <span className="text-xs text-zinc-500 block">সাপ্তাহিক রাজস্ব</span>
+              <span className="text-2xl font-black text-zinc-900 mt-1 block">
+                {formatBDT(currentWeekData.revenue)}
+              </span>
+              <div className="text-xs text-zinc-500 mt-1">বিক্রয়মূল্য</div>
+            </div>
+
+            <div className="bg-white p-4 rounded-2xl border border-zinc-200 shadow-xs">
+              <span className="text-xs text-zinc-500 block">সাপ্তাহিক নিট লাভ</span>
+              <span className="text-2xl font-black text-zinc-900 mt-1 block">
+                +{formatBDT(currentWeekData.profit)}
+              </span>
+              <div className="text-xs text-zinc-500 mt-1">মুনাফা</div>
+            </div>
+
+            <div className="bg-white p-4 rounded-2xl border border-zinc-200 shadow-xs">
+              <span className="text-xs text-zinc-500 block">সেরা বিক্রির দিন</span>
+              <span className="text-xl font-bold text-zinc-900 mt-1 block">
+                {currentWeekData.bestDay.day} তারিখ
+              </span>
+              <div className="text-xs text-zinc-500 mt-1">
+                ঐ দিনে বিক্রি: {formatNumber(currentWeekData.bestDay.sold)} কপি
+              </div>
             </div>
           </div>
 
@@ -534,10 +549,10 @@ export const PeriodViewSystem: React.FC<PeriodViewSystemProps> = ({
       )}
 
       {/* ======================================================== */}
-      {/* 3. MONTHLY VIEW (মাসিক ভিউ - ১ থেকে ৩১ তারিখ পর্যন্ত) */}
+      {/* 3. MONTHLY VIEW */}
       {/* ======================================================== */}
       {period === 'monthly' && (
-        <div className="space-y-5 animate-in fade-in duration-200">
+        <div className="space-y-5 animate-in fade-in duration-150">
           
           {/* Monthly KPI Overview */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -582,14 +597,14 @@ export const PeriodViewSystem: React.FC<PeriodViewSystemProps> = ({
             </div>
           </div>
 
-          {/* Monthly Weekly Progression Comparison */}
+          {/* Month Weeks Comparison */}
           <div className="bg-white p-5 rounded-2xl border border-zinc-200 shadow-xs">
             <h3 className="font-bold text-zinc-900 text-base mb-1">
               {formatMonthYearBengali(selectedMonth, selectedYear)} মাসের সপ্তাহের তুলনা
             </h3>
             <p className="text-xs text-zinc-500 mb-4">১ থেকে {formatNumber(daysInMonth)} তারিখের {formatNumber(weekDataList.length)}টি সপ্তাহের সেলস ও লাভের তুলনামূলক অগ্রগতি</p>
 
-            <div className="grid grid-cols-1 sm:grid-cols-5 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
               {weekDataList.map((w) => {
                 const maxSold = Math.max(...weekDataList.map(x => x.totalSold), 1);
                 const heightPct = Math.max((w.totalSold / maxSold) * 100, 8);
@@ -617,6 +632,405 @@ export const PeriodViewSystem: React.FC<PeriodViewSystemProps> = ({
                   </div>
                 );
               })}
+            </div>
+          </div>
+
+        </div>
+      )}
+
+      {/* ======================================================== */}
+      {/* 4. QUARTERLY VIEW (৩ মাসের রিপোর্ট) */}
+      {/* ======================================================== */}
+      {period === 'quarterly' && (
+        <div className="space-y-5 animate-in fade-in duration-150">
+          
+          {/* Quarter Selector Bar */}
+          <div className="bg-white p-4 rounded-2xl border border-zinc-200 shadow-xs flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-bold text-zinc-800">কোয়ার্টার নির্বাচন:</span>
+              <div className="flex flex-wrap gap-1.5">
+                {QUARTER_OPTIONS.map(q => (
+                  <button
+                    key={q.key}
+                    onClick={() => setSelectedQuarter(q.key)}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all border ${
+                      selectedQuarter === q.key
+                        ? 'bg-zinc-900 text-white border-zinc-900 shadow-xs'
+                        : 'bg-zinc-50 text-zinc-700 border-zinc-200 hover:bg-zinc-100'
+                    }`}
+                  >
+                    {q.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-semibold text-zinc-500">বছর:</span>
+              <select
+                value={reportYear}
+                onChange={(e) => setReportYear(Number(e.target.value))}
+                className="text-xs font-bold border border-zinc-300 rounded-lg px-2.5 py-1 bg-zinc-50 font-mono"
+              >
+                {AVAILABLE_YEARS.map(y => (
+                  <option key={y} value={y}>{y}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {/* Quarter KPI Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="bg-white p-5 rounded-2xl border border-zinc-200 shadow-xs">
+              <span className="text-xs text-zinc-500 block">{currentQuarterConfig.label} মোট বিক্রয়</span>
+              <span className="text-2xl font-black text-zinc-900 mt-1 block">
+                {formatNumber(quarterData.totalSold)} কপি
+              </span>
+              <span className="text-xs text-zinc-500 mt-1 block">
+                অনলাইন {formatNumber(quarterData.onlineSold)} • অফলাইন {formatNumber(quarterData.offlineSold)}
+              </span>
+            </div>
+
+            <div className="bg-white p-5 rounded-2xl border border-zinc-200 shadow-xs">
+              <span className="text-xs text-zinc-500 block">৩ মাসের মোট রাজস্ব</span>
+              <span className="text-2xl font-black text-zinc-900 mt-1 block">
+                {formatBDT(quarterData.revenue)}
+              </span>
+              <span className="text-xs text-zinc-500 mt-1 block">বিক্রয়মূল্য</span>
+            </div>
+
+            <div className="bg-white p-5 rounded-2xl border border-zinc-200 shadow-xs">
+              <span className="text-xs text-zinc-500 block">৩ মাসের মোট নিট লাভ</span>
+              <span className="text-2xl font-black text-zinc-900 mt-1 block">
+                +{formatBDT(quarterData.profit)}
+              </span>
+              <span className="text-xs text-zinc-500 mt-1 block">খরচ বাদে অর্জিত মুনাফা</span>
+            </div>
+
+            <div className="bg-white p-5 rounded-2xl border border-zinc-200 shadow-xs">
+              <span className="text-xs text-zinc-500 block">প্রেস প্রাপ্তি ও রিটার্ন</span>
+              <span className="text-2xl font-black text-zinc-900 mt-1 block">
+                {formatNumber(quarterData.pressReceived)} কপি
+              </span>
+              <span className="text-xs text-zinc-500 mt-1 block">
+                রিটার্ন: {formatNumber(quarterData.returns)} কপি
+              </span>
+            </div>
+          </div>
+
+          {/* Book Summary for Quarter */}
+          <div className="bg-white rounded-2xl border border-zinc-200 shadow-xs overflow-hidden">
+            <div className="p-4 border-b border-zinc-100 flex items-center justify-between">
+              <h3 className="font-bold text-zinc-900 text-sm">{currentQuarterConfig.label} ({reportYear}) - বই ভিত্তিক সারসংক্ষেপ</h3>
+              <span className="text-xs text-zinc-500">{quarterData.bookStats.length} টি বই</span>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse text-xs">
+                <thead>
+                  <tr className="bg-zinc-50 font-bold border-b border-zinc-200 text-zinc-900">
+                    <th className="py-2.5 px-3 w-12 text-center">SL</th>
+                    <th className="py-2.5 px-3">বইয়ের নাম</th>
+                    <th className="py-2.5 px-3 text-center">মোট বিক্রয়</th>
+                    <th className="py-2.5 px-3 text-right">৩ মাসের রাজস্ব</th>
+                    <th className="py-2.5 px-3 text-right">৩ মাসের নিট লাভ</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-zinc-100">
+                  {quarterData.bookStats.map(b => (
+                    <tr key={b.name} className="hover:bg-zinc-50/70">
+                      <td className="py-3 px-3 text-center font-mono">{b.sl}</td>
+                      <td className="py-3 px-3 font-bold text-zinc-900">{b.name}</td>
+                      <td className="py-3 px-3 text-center font-mono font-bold">{formatNumber(b.sold)} কপি</td>
+                      <td className="py-3 px-3 text-right font-mono font-bold text-zinc-900">{formatBDT(b.revenue)}</td>
+                      <td className="py-3 px-3 text-right font-mono font-bold text-zinc-900">+{formatBDT(b.profit)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+        </div>
+      )}
+
+      {/* ======================================================== */}
+      {/* 5. HALF-YEARLY VIEW (৬ মাসের রিপোর্ট) */}
+      {/* ======================================================== */}
+      {period === 'half_yearly' && (
+        <div className="space-y-5 animate-in fade-in duration-150">
+          
+          {/* Half-Year Selector Bar */}
+          <div className="bg-white p-4 rounded-2xl border border-zinc-200 shadow-xs flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-bold text-zinc-800">ষাণ্মাসিক নির্বাচন:</span>
+              <div className="flex flex-wrap gap-1.5">
+                {HALF_YEAR_OPTIONS.map(h => (
+                  <button
+                    key={h.key}
+                    onClick={() => setSelectedHalfYear(h.key)}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all border ${
+                      selectedHalfYear === h.key
+                        ? 'bg-zinc-900 text-white border-zinc-900 shadow-xs'
+                        : 'bg-zinc-50 text-zinc-700 border-zinc-200 hover:bg-zinc-100'
+                    }`}
+                  >
+                    {h.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-semibold text-zinc-500">বছর:</span>
+              <select
+                value={reportYear}
+                onChange={(e) => setReportYear(Number(e.target.value))}
+                className="text-xs font-bold border border-zinc-300 rounded-lg px-2.5 py-1 bg-zinc-50 font-mono"
+              >
+                {AVAILABLE_YEARS.map(y => (
+                  <option key={y} value={y}>{y}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {/* Half-Year KPI Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="bg-white p-5 rounded-2xl border border-zinc-200 shadow-xs">
+              <span className="text-xs text-zinc-500 block">{currentHalfConfig.label} মোট বিক্রয়</span>
+              <span className="text-2xl font-black text-zinc-900 mt-1 block">
+                {formatNumber(halfYearData.totalSold)} কপি
+              </span>
+              <span className="text-xs text-zinc-500 mt-1 block">
+                অনলাইন {formatNumber(halfYearData.onlineSold)} • অফলাইন {formatNumber(halfYearData.offlineSold)}
+              </span>
+            </div>
+
+            <div className="bg-white p-5 rounded-2xl border border-zinc-200 shadow-xs">
+              <span className="text-xs text-zinc-500 block">৬ মাসের মোট রাজস্ব</span>
+              <span className="text-2xl font-black text-zinc-900 mt-1 block">
+                {formatBDT(halfYearData.revenue)}
+              </span>
+              <span className="text-xs text-zinc-500 mt-1 block">বিক্রয়মূল্য</span>
+            </div>
+
+            <div className="bg-white p-5 rounded-2xl border border-zinc-200 shadow-xs">
+              <span className="text-xs text-zinc-500 block">৬ মাসের মোট নিট লাভ</span>
+              <span className="text-2xl font-black text-zinc-900 mt-1 block">
+                +{formatBDT(halfYearData.profit)}
+              </span>
+              <span className="text-xs text-zinc-500 mt-1 block">মুনাফা</span>
+            </div>
+
+            <div className="bg-white p-5 rounded-2xl border border-zinc-200 shadow-xs">
+              <span className="text-xs text-zinc-500 block">প্রেস প্রাপ্তি ও রিটার্ন</span>
+              <span className="text-2xl font-black text-zinc-900 mt-1 block">
+                {formatNumber(halfYearData.pressReceived)} কপি
+              </span>
+              <span className="text-xs text-zinc-500 mt-1 block">
+                রিটার্ন: {formatNumber(halfYearData.returns)} কপি
+              </span>
+            </div>
+          </div>
+
+        </div>
+      )}
+
+      {/* ======================================================== */}
+      {/* 6. YEARLY VIEW (বাৎসরিক / ইয়ারলি রিপোর্ট) */}
+      {/* ======================================================== */}
+      {period === 'yearly' && (
+        <div className="space-y-5 animate-in fade-in duration-150">
+          
+          {/* Year Selector Bar */}
+          <div className="bg-white p-4 rounded-2xl border border-zinc-200 shadow-xs flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-bold text-zinc-800">রিপোর্ট বছর:</span>
+              <select
+                value={reportYear}
+                onChange={(e) => setReportYear(Number(e.target.value))}
+                className="text-sm font-bold border border-zinc-300 rounded-xl px-3 py-1.5 bg-zinc-50 font-mono text-zinc-900"
+              >
+                {AVAILABLE_YEARS.map(y => (
+                  <option key={y} value={y}>{y} সালের পূর্ণাঙ্গ বার্ষিক খতিয়ান</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {/* Yearly Primary KPIs */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="bg-white p-5 rounded-2xl border border-zinc-200 shadow-xs">
+              <span className="text-xs text-zinc-500 block">{reportYear} সালের মোট বিক্রয়</span>
+              <span className="text-2xl font-black text-zinc-900 mt-1 block">
+                {formatNumber(yearlyData.totalSold)} কপি
+              </span>
+              <span className="text-xs text-zinc-500 mt-1 block">
+                অনলাইন {formatNumber(yearlyData.onlineSold)} • অফলাইন {formatNumber(yearlyData.offlineSold)}
+              </span>
+            </div>
+
+            <div className="bg-white p-5 rounded-2xl border border-zinc-200 shadow-xs">
+              <span className="text-xs text-zinc-500 block">বাৎসরিক মোট রাজস্ব</span>
+              <span className="text-2xl font-black text-zinc-900 mt-1 block">
+                {formatBDT(yearlyData.revenue)}
+              </span>
+              <span className="text-xs text-zinc-500 mt-1 block">১২ মাসের সমন্বিত বিক্রয়মূল্য</span>
+            </div>
+
+            <div className="bg-white p-5 rounded-2xl border border-zinc-200 shadow-xs">
+              <span className="text-xs text-zinc-500 block">বাৎসরিক মোট নিট লাভ</span>
+              <span className="text-2xl font-black text-zinc-900 mt-1 block">
+                +{formatBDT(yearlyData.profit)}
+              </span>
+              <span className="text-xs text-zinc-500 mt-1 block">প্রডাকশন ও বিজ্ঞাপন বাদে মুনাফা</span>
+            </div>
+
+            <div className="bg-white p-5 rounded-2xl border border-zinc-200 shadow-xs">
+              <span className="text-xs text-zinc-500 block">বাৎসরিক প্রেস চালান প্রাপ্তি</span>
+              <span className="text-2xl font-black text-zinc-900 mt-1 block">
+                {formatNumber(yearlyData.pressReceived)} কপি
+              </span>
+              <span className="text-xs text-zinc-500 mt-1 block">
+                মোট রিটার্ন: {formatNumber(yearlyData.returns)} কপি
+              </span>
+            </div>
+          </div>
+
+          {/* Month-by-Month Progress Bar Cards */}
+          <div className="bg-white p-5 rounded-2xl border border-zinc-200 shadow-xs">
+            <h3 className="font-bold text-zinc-900 text-sm mb-4">
+              {reportYear} সালের ১২টি মাসের বিক্রয় চিত্র
+            </h3>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+              {yearlyMonthlyBreakdown.map(m => {
+                const maxM = Math.max(...yearlyMonthlyBreakdown.map(x => x.sold), 1);
+                const pct = Math.max((m.sold / maxM) * 100, 6);
+                return (
+                  <div key={m.month} className="bg-zinc-50 p-3 rounded-xl border border-zinc-200 flex flex-col justify-between">
+                    <span className="font-bold text-xs text-zinc-900">{m.name}</span>
+                    <div className="h-16 flex items-end justify-center py-1">
+                      <div 
+                        className="w-8 bg-zinc-900 rounded-t-sm transition-all"
+                        style={{ height: `${pct}%` }}
+                      />
+                    </div>
+                    <div className="pt-1 border-t border-zinc-200 text-center">
+                      <span className="font-mono text-xs font-bold text-zinc-900 block">{formatNumber(m.sold)} কপি</span>
+                      <span className="text-[10px] text-zinc-500">+{formatBDT(m.profit)}</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+        </div>
+      )}
+
+      {/* ======================================================== */}
+      {/* 7. CUSTOM DATE RANGE VIEW (নির্দিষ্ট তারিখ থেকে তারিখের রিপোর্ট) */}
+      {/* ======================================================== */}
+      {period === 'custom' && (
+        <div className="space-y-5 animate-in fade-in duration-150">
+          
+          {/* Custom Date Range Picker Bar */}
+          <div className="bg-white p-4 rounded-2xl border border-zinc-200 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex flex-wrap items-center gap-3">
+              <div>
+                <label className="block text-[11px] font-bold text-zinc-700 mb-0.5">শুরুর তারিখ (From):</label>
+                <input
+                  type="date"
+                  value={customStartDate}
+                  onChange={(e) => setCustomStartDate(e.target.value)}
+                  className="text-xs font-semibold border border-zinc-300 rounded-xl px-3 py-1.5 bg-zinc-50 font-mono text-zinc-900 focus:bg-white"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold text-zinc-700 mb-0.5">শেষের তারিখ (To):</label>
+                <input
+                  type="date"
+                  value={customEndDate}
+                  onChange={(e) => setCustomEndDate(e.target.value)}
+                  className="text-xs font-semibold border border-zinc-300 rounded-xl px-3 py-1.5 bg-zinc-50 font-mono text-zinc-900 focus:bg-white"
+                />
+              </div>
+            </div>
+
+            <div className="text-xs font-bold text-zinc-800 bg-zinc-100 px-3 py-1.5 rounded-xl border border-zinc-200 self-start sm:self-auto">
+              ক্যালেন্ডার রেঞ্জ: {customStartDate} থেকে {customEndDate}
+            </div>
+          </div>
+
+          {/* Custom Range KPIs */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="bg-white p-5 rounded-2xl border border-zinc-200 shadow-xs">
+              <span className="text-xs text-zinc-500 block">নির্বাচিত রেঞ্জে মোট বিক্রয়</span>
+              <span className="text-2xl font-black text-zinc-900 mt-1 block">
+                {formatNumber(customRangeData.totalSold)} কপি
+              </span>
+              <span className="text-xs text-zinc-500 mt-1 block">
+                অনলাইন {formatNumber(customRangeData.onlineSold)} • অফলাইন {formatNumber(customRangeData.offlineSold)}
+              </span>
+            </div>
+
+            <div className="bg-white p-5 rounded-2xl border border-zinc-200 shadow-xs">
+              <span className="text-xs text-zinc-500 block">নির্বাচিত রেঞ্জে রাজস্ব</span>
+              <span className="text-2xl font-black text-zinc-900 mt-1 block">
+                {formatBDT(customRangeData.revenue)}
+              </span>
+              <span className="text-xs text-zinc-500 mt-1 block">বিক্রয়মূল্য</span>
+            </div>
+
+            <div className="bg-white p-5 rounded-2xl border border-zinc-200 shadow-xs">
+              <span className="text-xs text-zinc-500 block">নির্বাচিত রেঞ্জে নিট লাভ</span>
+              <span className="text-2xl font-black text-zinc-900 mt-1 block">
+                +{formatBDT(customRangeData.profit)}
+              </span>
+              <span className="text-xs text-zinc-500 mt-1 block">অর্জিত মুনাফা</span>
+            </div>
+
+            <div className="bg-white p-5 rounded-2xl border border-zinc-200 shadow-xs">
+              <span className="text-xs text-zinc-500 block">প্রেস প্রাপ্তি ও রিটার্ন</span>
+              <span className="text-2xl font-black text-zinc-900 mt-1 block">
+                {formatNumber(customRangeData.pressReceived)} কপি
+              </span>
+              <span className="text-xs text-zinc-500 mt-1 block">
+                রিটার্ন: {formatNumber(customRangeData.returns)} কপি
+              </span>
+            </div>
+          </div>
+
+          {/* Books in custom range */}
+          <div className="bg-white rounded-2xl border border-zinc-200 shadow-xs overflow-hidden">
+            <div className="p-4 border-b border-zinc-100 flex items-center justify-between">
+              <h3 className="font-bold text-zinc-900 text-sm">বই ভিত্তিক সেলস খতিয়ান ({customStartDate} থেকে {customEndDate})</h3>
+              <span className="text-xs text-zinc-500">{customRangeData.bookStats.length} টি বই</span>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse text-xs">
+                <thead>
+                  <tr className="bg-zinc-50 font-bold border-b border-zinc-200 text-zinc-900">
+                    <th className="py-2.5 px-3 w-12 text-center">SL</th>
+                    <th className="py-2.5 px-3">বইয়ের নাম</th>
+                    <th className="py-2.5 px-3 text-center">বিক্রিত কপি</th>
+                    <th className="py-2.5 px-3 text-right">রাজস্ব</th>
+                    <th className="py-2.5 px-3 text-right">নিট লাভ</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-zinc-100">
+                  {customRangeData.bookStats.map(b => (
+                    <tr key={b.name} className="hover:bg-zinc-50/70">
+                      <td className="py-3 px-3 text-center font-mono">{b.sl}</td>
+                      <td className="py-3 px-3 font-bold text-zinc-900">{b.name}</td>
+                      <td className="py-3 px-3 text-center font-mono font-bold">{formatNumber(b.sold)} কপি</td>
+                      <td className="py-3 px-3 text-right font-mono font-bold text-zinc-900">{formatBDT(b.revenue)}</td>
+                      <td className="py-3 px-3 text-right font-mono font-bold text-zinc-900">+{formatBDT(b.profit)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </div>
 
