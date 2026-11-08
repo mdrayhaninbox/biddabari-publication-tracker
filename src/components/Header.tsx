@@ -9,7 +9,6 @@ import {
   Upload, 
   PlusCircle, 
   Printer, 
-  RotateCcw,
   CalendarRange,
   ChevronLeft,
   ChevronRight,
@@ -30,7 +29,7 @@ interface HeaderProps {
   onOpenDailyEntry: () => void;
   onExportExcel: () => void;
   onOpenImport: () => void;
-  onResetData: () => void;
+  onResetData?: () => void;
   onPrint: () => void;
   bookCount: number;
   zoom?: '75' | '100';
@@ -218,13 +217,7 @@ export const Header: React.FC<HeaderProps> = ({
               <Printer className="w-4 h-4" />
             </button>
 
-            <button
-              onClick={onResetData}
-              className="inline-flex items-center p-1.5 text-xs font-medium text-zinc-400 hover:text-zinc-900 hover:bg-zinc-100 rounded-lg transition-colors border border-zinc-200"
-              title="ডিফল্ট এক্সেল ডাটায় রিসেট করুন"
-            >
-              <RotateCcw className="w-4 h-4" />
-            </button>
+
           </div>
         </div>
 
