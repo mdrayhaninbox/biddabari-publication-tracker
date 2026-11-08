@@ -16,17 +16,26 @@ import {
   calculateWeekBreakdowns, 
   calculateWeekBookBreakdown,
   formatBDT, 
-  formatNumber 
+  formatNumber,
+  formatMonthYearBengali 
 } from '../utils/calculations';
 import { exportBooksToExcel } from '../utils/excelHandler';
 
 interface PrintableReportProps {
   books: BookRecord[];
+  selectedMonth?: number;
+  selectedYear?: number;
+  daysInMonth?: number;
 }
 
 export type ReportType = 'daily' | 'weekly' | 'monthly';
 
-export const PrintableReport: React.FC<PrintableReportProps> = ({ books }) => {
+export const PrintableReport: React.FC<PrintableReportProps> = ({ 
+  books,
+  selectedMonth = 11,
+  selectedYear = 2026,
+  daysInMonth = 30,
+}) => {
   const [reportType, setReportType] = useState<ReportType>('monthly');
   const [selectedDay, setSelectedDay] = useState<number>(1);
   const [selectedWeek, setSelectedWeek] = useState<number>(1);
@@ -69,7 +78,7 @@ export const PrintableReport: React.FC<PrintableReportProps> = ({ books }) => {
   const dayData = calculateDayBreakdown(books, selectedDay);
 
   // Weekly breakdown
-  const weekList = calculateWeekBreakdowns(books);
+  const weekList = calculateWeekBreakdowns(books, daysInMonth);
   const currentWeek = weekList.find(w => w.weekNumber === selectedWeek) || weekList[0];
   const weekBooks = calculateWeekBookBreakdown(books, currentWeek.startDay, currentWeek.endDay);
 
@@ -96,7 +105,7 @@ export const PrintableReport: React.FC<PrintableReportProps> = ({ books }) => {
             </span>
 
             <button
-              onClick={() => exportBooksToExcel(books)}
+              onClick={() => exportBooksToExcel(books, selectedMonth, selectedYear)}
               className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-zinc-800 bg-white hover:bg-zinc-100 rounded-lg transition-colors border border-zinc-300"
             >
               <Download className="w-4 h-4 text-zinc-700" />
@@ -171,7 +180,7 @@ export const PrintableReport: React.FC<PrintableReportProps> = ({ books }) => {
                   onChange={(e) => setSelectedDay(Number(e.target.value))}
                   className="font-mono text-xs border border-zinc-300 rounded-lg px-2.5 py-1 bg-zinc-50"
                 >
-                  {Array.from({ length: 31 }, (_, i) => i + 1).map(d => (
+                  {Array.from({ length: daysInMonth }, (_, i) => i + 1).map(d => (
                     <option key={d} value={d}>
                       {d} তারিখ ({d}তম দিন)
                     </option>
@@ -179,8 +188,8 @@ export const PrintableReport: React.FC<PrintableReportProps> = ({ books }) => {
                 </select>
               </div>
               <button
-                disabled={selectedDay >= 31}
-                onClick={() => setSelectedDay(d => Math.min(31, d + 1))}
+                disabled={selectedDay >= daysInMonth}
+                onClick={() => setSelectedDay(d => Math.min(daysInMonth, d + 1))}
                 className="p-1.5 rounded-lg border border-zinc-200 hover:bg-zinc-100 disabled:opacity-30"
               >
                 <ChevronRight className="w-3.5 h-3.5" />
@@ -207,7 +216,7 @@ export const PrintableReport: React.FC<PrintableReportProps> = ({ books }) => {
 
           {reportType === 'monthly' && (
             <div className="text-xs text-zinc-500 font-medium">
-              ১লা থেকে ৩১শে তারিখের সমন্বিত খতিয়ান
+              ১লা থেকে {formatNumber(daysInMonth)} তারিখের সমন্বিত খতিয়ান ({formatMonthYearBengali(selectedMonth, selectedYear)})
             </div>
           )}
 
@@ -231,9 +240,9 @@ export const PrintableReport: React.FC<PrintableReportProps> = ({ books }) => {
           
           {/* Dynamic Badge */}
           <div className="inline-block mt-2 bg-zinc-100 text-zinc-900 text-xs px-4 py-1 rounded-full font-bold border border-zinc-300">
-            {reportType === 'daily' && `দৈনিক বিক্রয়, স্টক ও আর্থিক বিবরণী রিপোর্ট • তারিখ: ${selectedDay} তারিখ (মাসের ${selectedDay}তম দিন)`}
-            {reportType === 'weekly' && `সাপ্তাহিক বিক্রয় ও অগ্রগতি বিবরণী রিপোর্ট • ${currentWeek.name} (${currentWeek.startDay} থেকে ${currentWeek.endDay} তারিখ)`}
-            {reportType === 'monthly' && `মাসিক সার্বিক বুক সেলস, স্টক ইনভেন্টরি ও আর্থিক বিবরণী রিপোর্ট (১ থেকে ৩১ তারিখ)`}
+            {reportType === 'daily' && `দৈনিক বিক্রয়, স্টক ও আর্থিক বিবরণী রিপোর্ট • তারিখ: ${selectedDay} ${formatMonthYearBengali(selectedMonth, selectedYear)} (মাসের ${selectedDay}তম দিন)`}
+            {reportType === 'weekly' && `সাপ্তাহিক বিক্রয় ও অগ্রগতি বিবরণী রিপোর্ট • ${currentWeek.name} (${currentWeek.startDay} থেকে ${currentWeek.endDay} ${formatMonthYearBengali(selectedMonth, selectedYear)})`}
+            {reportType === 'monthly' && `মাসিক সার্বিক বুক সেলস, স্টক ইনভেন্টরি ও আর্থিক বিবরণী রিপোর্ট (${formatMonthYearBengali(selectedMonth, selectedYear)} • ১ থেকে ${formatNumber(daysInMonth)} তারিখ)`}
           </div>
 
           <div className="text-[11px] text-zinc-500 mt-2">
@@ -558,7 +567,7 @@ export const PrintableReport: React.FC<PrintableReportProps> = ({ books }) => {
             {/* Full 31-Day Books Table (Responsive Wrapper) */}
             <div>
               <h3 className="text-xs font-bold text-zinc-900 mb-2 border-b border-zinc-200 pb-1">
-                বই ভিত্তিক পূর্ণাঙ্গ হিসাব খতিয়ান (১ থেকে ৩১ তারিখ)
+                বই ভিত্তিক পূর্ণাঙ্গ হিসাব খতিয়ান (১ থেকে {formatNumber(daysInMonth)} তারিখ • {formatMonthYearBengali(selectedMonth, selectedYear)})
               </h3>
               <div className="overflow-x-auto w-full border border-zinc-200 rounded-xl">
                 <table className="w-full min-w-[850px] text-left border-collapse text-xs">

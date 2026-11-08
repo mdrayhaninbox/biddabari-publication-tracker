@@ -11,7 +11,7 @@ import {
   CheckCircle2 
 } from 'lucide-react';
 import { BookRecord } from '../types/book';
-import { calculateBookMetrics, formatBDT, formatNumber } from '../utils/calculations';
+import { calculateBookMetrics, formatBDT, formatNumber, formatMonthYearBengali } from '../utils/calculations';
 
 interface DailyEntryModalProps {
   isOpen: boolean;
@@ -40,6 +40,9 @@ interface DailyEntryModalProps {
       gift: number;
     }
   ) => void;
+  selectedMonth?: number;
+  selectedYear?: number;
+  daysInMonth?: number;
 }
 
 export const DailyEntryModal: React.FC<DailyEntryModalProps> = ({
@@ -48,6 +51,9 @@ export const DailyEntryModal: React.FC<DailyEntryModalProps> = ({
   books,
   initialBookId,
   onSaveDailyEntry,
+  selectedMonth = 11,
+  selectedYear = 2026,
+  daysInMonth = 30,
 }) => {
   const [selectedBookId, setSelectedBookId] = useState<string>(initialBookId || books[0]?.id || '');
   const [day, setDay] = useState<number>(1);
@@ -191,14 +197,14 @@ export const DailyEntryModal: React.FC<DailyEntryModalProps> = ({
 
               <div>
                 <label className="block text-xs font-bold text-zinc-800 mb-1.5">
-                  তারিখ নির্বাচন করুন (১লা থেকে ৩১শে তারিখ) *
+                  তারিখ নির্বাচন করুন (১লা থেকে {formatNumber(daysInMonth)} তারিখ • {formatMonthYearBengali(selectedMonth, selectedYear)}) *
                 </label>
                 <select
                   value={day}
                   onChange={(e) => setDay(Number(e.target.value))}
                   className="w-full text-xs font-bold border border-zinc-300 rounded-lg p-2.5 bg-white text-zinc-900 focus:ring-2 focus:ring-zinc-900 font-mono"
                 >
-                  {Array.from({ length: 31 }, (_, i) => i + 1).map(d => (
+                  {Array.from({ length: daysInMonth }, (_, i) => i + 1).map(d => (
                     <option key={d} value={d}>
                       {d} তারিখ ({d}তম দিন)
                     </option>
@@ -210,7 +216,7 @@ export const DailyEntryModal: React.FC<DailyEntryModalProps> = ({
             {/* Quick Live Summary of Selected Date */}
             <div className="bg-zinc-100 border border-zinc-200 rounded-xl p-3 flex flex-wrap items-center justify-between gap-3 text-xs">
               <span className="font-bold text-zinc-900">
-                {day} তারিখের হিসাব:
+                {day} {formatMonthYearBengali(selectedMonth, selectedYear)} এর হিসাব:
               </span>
               <span className="text-zinc-700">
                 অনলাইন: <b className="text-zinc-900">{formatNumber(dayOnlineSold)}</b> কপি

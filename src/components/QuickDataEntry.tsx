@@ -13,7 +13,7 @@ import {
   ArrowRight
 } from 'lucide-react';
 import { BookRecord } from '../types/book';
-import { calculateBookMetrics, formatBDT, formatNumber } from '../utils/calculations';
+import { calculateBookMetrics, formatBDT, formatNumber, formatMonthYearBengali } from '../utils/calculations';
 
 interface QuickDataEntryProps {
   books: BookRecord[];
@@ -41,6 +41,9 @@ interface QuickDataEntryProps {
       gift: number;
     }
   ) => void;
+  selectedMonth?: number;
+  selectedYear?: number;
+  daysInMonth?: number;
 }
 
 export const QuickDataEntry: React.FC<QuickDataEntryProps> = ({
@@ -48,6 +51,9 @@ export const QuickDataEntry: React.FC<QuickDataEntryProps> = ({
   initialBookId,
   initialDay = 1,
   onSaveDailyEntry,
+  selectedMonth = 11,
+  selectedYear = 2026,
+  daysInMonth = 30,
 }) => {
   const [entryMode, setEntryMode] = useState<'single' | 'sheet'>('single');
 
@@ -285,14 +291,14 @@ export const QuickDataEntry: React.FC<QuickDataEntryProps> = ({
 
             <div>
               <label className="block text-xs font-bold text-zinc-800 mb-1.5">
-                ২. তারিখ নির্বাচন করুন (১লা থেকে ৩১শে তারিখ)
+                ২. তারিখ নির্বাচন করুন (১লা থেকে {formatNumber(daysInMonth)} তারিখ - {formatMonthYearBengali(selectedMonth, selectedYear)})
               </label>
               <select
                 value={day}
                 onChange={(e) => setDay(Number(e.target.value))}
                 className="w-full text-sm font-bold border border-zinc-300 rounded-xl p-2.5 bg-zinc-50 text-zinc-900 focus:ring-2 focus:ring-zinc-900 focus:bg-white font-mono"
               >
-                {Array.from({ length: 31 }, (_, i) => i + 1).map(d => (
+                {Array.from({ length: daysInMonth }, (_, i) => i + 1).map(d => (
                   <option key={d} value={d}>
                     {d} তারিখ ({d}তম দিন)
                   </option>
@@ -484,10 +490,10 @@ export const QuickDataEntry: React.FC<QuickDataEntryProps> = ({
             <div className="flex items-center gap-2">
               <button
                 type="button"
-                onClick={() => setDay(d => Math.min(31, d + 1))}
+                onClick={() => setDay(d => Math.min(daysInMonth, d + 1))}
                 className="text-xs font-semibold text-zinc-700 hover:text-black bg-zinc-100 hover:bg-zinc-200 px-3 py-2 rounded-xl transition-colors border border-zinc-200"
               >
-                পরবর্তী তারিখ ({Math.min(31, day + 1)} তারিখ) ➔
+                পরবর্তী তারিখ ({Math.min(daysInMonth, day + 1)} তারিখ) ➔
               </button>
             </div>
 
@@ -518,7 +524,7 @@ export const QuickDataEntry: React.FC<QuickDataEntryProps> = ({
                 onChange={(e) => setSheetDay(Number(e.target.value))}
                 className="text-sm font-bold border border-zinc-300 rounded-xl px-3 py-1.5 bg-zinc-50 text-zinc-900 focus:ring-2 focus:ring-zinc-900 font-mono"
               >
-                {Array.from({ length: 31 }, (_, i) => i + 1).map(d => (
+                {Array.from({ length: daysInMonth }, (_, i) => i + 1).map(d => (
                   <option key={d} value={d}>
                     {d} তারিখ ({d}তম দিন)
                   </option>

@@ -12,30 +12,21 @@ import { PrintableReport } from './components/PrintableReport';
 import { PeriodViewSystem } from './components/PeriodViewSystem';
 import { QuickDataEntry } from './components/QuickDataEntry';
 import { exportBooksToExcel } from './utils/excelHandler';
+import { 
+  getDaysInMonth, 
+  createFreshMonthBooks, 
+  formatMonthYearBengali 
+} from './utils/calculations';
 
-const STORAGE_KEY = 'biddabari_books_data_v1';
+const LEGACY_STORAGE_KEY = 'biddabari_books_data_v1';
 const ZOOM_STORAGE_KEY = 'biddabari_ui_zoom_v1';
+const MONTH_STORAGE_KEY = 'biddabari_selected_month_v1';
+const YEAR_STORAGE_KEY = 'biddabari_selected_year_v1';
+
+const getMonthlyStorageKey = (year: number, month: number) => 
+  `biddabari_books_data_v2_${year}-${String(month).padStart(2, '0')}`;
 
 export const App: React.FC = () => {
-  // Load initial books from localStorage if available
-  const [books, setBooks] = useState<BookRecord[]>(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          return parsed;
-        }
-      }
-    } catch (e) {
-      console.error('Failed to parse saved books:', e);
-    }
-    return INITIAL_BOOKS;
-  });
-
-  const [activeTab, setActiveTab] = useState<ActiveTab>('dashboard');
-  const [selectedMatrixBookId, setSelectedMatrixBookId] = useState<string>(books[0]?.id || 'book-1');
-
   // UI Zoom state: default 75% compact view as requested
   const [uiZoom, setUiZoom] = useState<'75' | '100'>(() => {
     try {
@@ -56,6 +47,81 @@ export const App: React.FC = () => {
     }
   }, [uiZoom]);
 
+  // Selected Month & Year (Default to current active month: Nov 2026)
+  const [selectedYear, setSelectedYear] = useState<number>(() => {
+    try {
+      const savedYear = localStorage.getItem(YEAR_STORAGE_KEY);
+      if (savedYear) {
+        const parsed = Number(savedYear);
+        if (!isNaN(parsed) && parsed >= 2020 && parsed <= 2040) return parsed;
+      }
+    } catch (e) {
+      // fallback
+    }
+    return 2026;
+  });
+
+  const [selectedMonth, setSelectedMonth] = useState<number>(() => {
+    try {
+      const savedMonth = localStorage.getItem(MONTH_STORAGE_KEY);
+      if (savedMonth) {
+        const parsed = Number(savedMonth);
+        if (!isNaN(parsed) && parsed >= 1 && parsed <= 12) return parsed;
+      }
+    } catch (e) {
+      // fallback
+    }
+    return 11; // November
+  });
+
+  // Calculate dynamic days in the selected month
+  const daysInMonth = getDaysInMonth(selectedYear, selectedMonth);
+
+  // Helper to load books for specific month & year
+  const loadBooksForPeriod = (year: number, month: number): BookRecord[] => {
+    try {
+      const currentKey = getMonthlyStorageKey(year, month);
+      const saved = localStorage.getItem(currentKey);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed;
+        }
+      }
+
+      // If it's November 2026 and legacy key exists, migrate seamlessly
+      if (year === 2026 && month === 11) {
+        const legacySaved = localStorage.getItem(LEGACY_STORAGE_KEY);
+        if (legacySaved) {
+          const parsedLegacy = JSON.parse(legacySaved);
+          if (Array.isArray(parsedLegacy) && parsedLegacy.length > 0) {
+            localStorage.setItem(currentKey, legacySaved);
+            return parsedLegacy;
+          }
+        }
+        return INITIAL_BOOKS;
+      }
+
+      // For any other month/year that has no saved data yet:
+      // Inherit book catalog definitions (names, prices, costs) with clean 0 sales/receipts
+      const fallbackSource = localStorage.getItem(getMonthlyStorageKey(2026, 11))
+        || localStorage.getItem(LEGACY_STORAGE_KEY);
+      const baseCatalog = fallbackSource ? JSON.parse(fallbackSource) : INITIAL_BOOKS;
+      return createFreshMonthBooks(baseCatalog);
+    } catch (e) {
+      console.error('Failed to load books for period:', e);
+      return INITIAL_BOOKS;
+    }
+  };
+
+  // State: books for the active month/year
+  const [books, setBooks] = useState<BookRecord[]>(() => {
+    return loadBooksForPeriod(selectedYear, selectedMonth);
+  });
+
+  const [activeTab, setActiveTab] = useState<ActiveTab>('dashboard');
+  const [selectedMatrixBookId, setSelectedMatrixBookId] = useState<string>(books[0]?.id || 'book-1');
+
   // Input states
   const [entrySelectedDay, setEntrySelectedDay] = useState<number>(1);
   const [entrySelectedBookId, setEntrySelectedBookId] = useState<string>(books[0]?.id || 'book-1');
@@ -69,14 +135,62 @@ export const App: React.FC = () => {
 
   const [isExcelSyncOpen, setIsExcelSyncOpen] = useState(false);
 
-  // Auto-save to localStorage
+  // Auto-save month & year selection
   useEffect(() => {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(books));
+      localStorage.setItem(YEAR_STORAGE_KEY, String(selectedYear));
+      localStorage.setItem(MONTH_STORAGE_KEY, String(selectedMonth));
     } catch (e) {
-      console.error('Failed to save to localStorage:', e);
+      console.error(e);
     }
-  }, [books]);
+  }, [selectedYear, selectedMonth]);
+
+  // Auto-save active month's books to its dedicated localStorage key
+  useEffect(() => {
+    try {
+      const key = getMonthlyStorageKey(selectedYear, selectedMonth);
+      localStorage.setItem(key, JSON.stringify(books));
+    } catch (e) {
+      console.error('Failed to save books to localStorage:', e);
+    }
+  }, [books, selectedYear, selectedMonth]);
+
+  // Switch month and year safely
+  const handleSelectPeriod = (newMonth: number, newYear: number) => {
+    // 1. Save current month's latest state
+    try {
+      const currentKey = getMonthlyStorageKey(selectedYear, selectedMonth);
+      localStorage.setItem(currentKey, JSON.stringify(books));
+    } catch (e) {
+      console.error(e);
+    }
+
+    // 2. Load target period data
+    const newBooks = loadBooksForPeriod(newYear, newMonth);
+    setSelectedMonth(newMonth);
+    setSelectedYear(newYear);
+    setBooks(newBooks);
+
+    // 3. Ensure entry selected day does not overflow target month's days
+    const maxDays = getDaysInMonth(newYear, newMonth);
+    setEntrySelectedDay(prev => Math.min(prev, maxDays));
+  };
+
+  const handlePrevMonth = () => {
+    if (selectedMonth === 1) {
+      handleSelectPeriod(12, selectedYear - 1);
+    } else {
+      handleSelectPeriod(selectedMonth - 1, selectedYear);
+    }
+  };
+
+  const handleNextMonth = () => {
+    if (selectedMonth === 12) {
+      handleSelectPeriod(1, selectedYear + 1);
+    } else {
+      handleSelectPeriod(selectedMonth + 1, selectedYear);
+    }
+  };
 
   // Handle saving daily entry
   const handleSaveDailyEntry = (
@@ -198,15 +312,20 @@ export const App: React.FC = () => {
     }
   };
 
-  // Handle restoring initial Excel data
+  // Handle restoring initial Excel data for the current month
   const handleResetData = () => {
+    const periodName = formatMonthYearBengali(selectedMonth, selectedYear);
     if (
       window.confirm(
-        'আপনি কি মূল এক্সেল ফাইলের ডাটাতে ফিরে যেতে চান? আপনার তৈরি নতুন পরিবর্তন রিসেট হবে।'
+        `আপনি কি ${periodName} মাসের হিসাব রিসেট করে ডিফল্ট খতিয়ানে ফিরে যেতে চান?`
       )
     ) {
-      setBooks(INITIAL_BOOKS);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(INITIAL_BOOKS));
+      const fresh = (selectedYear === 2026 && selectedMonth === 11)
+        ? INITIAL_BOOKS
+        : createFreshMonthBooks(INITIAL_BOOKS);
+      setBooks(fresh);
+      const key = getMonthlyStorageKey(selectedYear, selectedMonth);
+      localStorage.setItem(key, JSON.stringify(fresh));
     }
   };
 
@@ -252,13 +371,18 @@ export const App: React.FC = () => {
         onOpenDailyEntry={() => {
           setActiveTab('entry');
         }}
-        onExportExcel={() => exportBooksToExcel(books)}
+        onExportExcel={() => exportBooksToExcel(books, selectedMonth, selectedYear)}
         onOpenImport={() => setIsExcelSyncOpen(true)}
         onResetData={handleResetData}
         onPrint={() => setActiveTab('reports')}
         bookCount={books.length}
         zoom={uiZoom}
         onSetZoom={setUiZoom}
+        selectedMonth={selectedMonth}
+        selectedYear={selectedYear}
+        onSelectPeriod={handleSelectPeriod}
+        onPrevMonth={handlePrevMonth}
+        onNextMonth={handleNextMonth}
       />
 
       {/* Main Content Area */}
@@ -270,6 +394,9 @@ export const App: React.FC = () => {
             books={books}
             onSelectBookForMatrix={handleSelectBookForMatrix}
             onOpenDailyEntryForBook={handleOpenDailyEntryForBook}
+            selectedMonth={selectedMonth}
+            selectedYear={selectedYear}
+            daysInMonth={daysInMonth}
           />
         )}
 
@@ -279,6 +406,9 @@ export const App: React.FC = () => {
             books={books}
             onOpenDailyEntryForDay={handleOpenDailyEntryForDay}
             onOpenDailyEntryForBookAndDay={handleOpenDailyEntryForBookAndDay}
+            selectedMonth={selectedMonth}
+            selectedYear={selectedYear}
+            daysInMonth={daysInMonth}
           />
         )}
 
@@ -289,6 +419,9 @@ export const App: React.FC = () => {
             initialBookId={entrySelectedBookId}
             initialDay={entrySelectedDay}
             onSaveDailyEntry={handleSaveDailyEntry}
+            selectedMonth={selectedMonth}
+            selectedYear={selectedYear}
+            daysInMonth={daysInMonth}
           />
         )}
 
@@ -315,24 +448,34 @@ export const App: React.FC = () => {
             onSelectBook={setSelectedMatrixBookId}
             onUpdateDailyCell={handleUpdateDailyCell}
             onBackToDashboard={() => setActiveTab('dashboard')}
+            selectedMonth={selectedMonth}
+            selectedYear={selectedYear}
+            daysInMonth={daysInMonth}
           />
         )}
 
         {/* 6. Executive Reports & Print */}
-        {activeTab === 'reports' && <PrintableReport books={books} />}
+        {activeTab === 'reports' && (
+          <PrintableReport 
+            books={books} 
+            selectedMonth={selectedMonth}
+            selectedYear={selectedYear}
+            daysInMonth={daysInMonth}
+          />
+        )}
       </main>
 
       {/* Footer */}
       <footer className="print:hidden bg-white border-t border-zinc-200/80 py-4 mt-auto">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between text-xs text-zinc-500 gap-2">
           <div>
-            © {new Date().getFullYear()} <b>বিদ্যাবাড়ি পাবলিকেশন (Biddabari Publication)</b>. সর্বস্বত্ব সংরক্ষিত।
+            © {selectedYear} <b>বিদ্যাবাড়ি পাবলিকেশন (Biddabari Publication)</b>. সর্বস্বত্ব সংরক্ষিত। ({formatMonthYearBengali(selectedMonth, selectedYear)})
           </div>
           <div className="flex items-center gap-3">
-            <span>অরিজিনাল এক্সেল ডাটাবেস ইন্টিগ্রেটেড</span>
+            <span>মাসভিত্তিক অটো-সিঙ্ক ও স্টোরেজ সক্রিয়</span>
             <span>•</span>
             <button
-              onClick={() => exportBooksToExcel(books)}
+              onClick={() => exportBooksToExcel(books, selectedMonth, selectedYear)}
               className="text-zinc-900 hover:underline font-semibold"
             >
               এক্সেল এক্সপোর্ট
@@ -356,6 +499,9 @@ export const App: React.FC = () => {
         books={books}
         initialBookId={modalBookId}
         onSaveDailyEntry={handleSaveDailyEntry}
+        selectedMonth={selectedMonth}
+        selectedYear={selectedYear}
+        daysInMonth={daysInMonth}
       />
 
       <AddEditBookModal

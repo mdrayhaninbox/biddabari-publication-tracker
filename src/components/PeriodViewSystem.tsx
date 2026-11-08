@@ -23,13 +23,17 @@ import {
   calculateWeekBreakdowns, 
   calculateBookMetrics, 
   formatBDT, 
-  formatNumber 
+  formatNumber,
+  formatMonthYearBengali 
 } from '../utils/calculations';
 
 interface PeriodViewSystemProps {
   books: BookRecord[];
   onOpenDailyEntryForDay: (day: number) => void;
   onOpenDailyEntryForBookAndDay: (bookId: string, day: number) => void;
+  selectedMonth?: number;
+  selectedYear?: number;
+  daysInMonth?: number;
 }
 
 export type ViewPeriod = 'daily' | 'weekly' | 'monthly';
@@ -38,6 +42,9 @@ export const PeriodViewSystem: React.FC<PeriodViewSystemProps> = ({
   books,
   onOpenDailyEntryForDay,
   onOpenDailyEntryForBookAndDay,
+  selectedMonth = 11,
+  selectedYear = 2026,
+  daysInMonth = 30,
 }) => {
   const [period, setPeriod] = useState<ViewPeriod>('daily');
   const [selectedDay, setSelectedDay] = useState<number>(1);
@@ -47,7 +54,7 @@ export const PeriodViewSystem: React.FC<PeriodViewSystemProps> = ({
   const dayData = calculateDayBreakdown(books, selectedDay);
 
   // Week breakdowns
-  const weekDataList = calculateWeekBreakdowns(books);
+  const weekDataList = calculateWeekBreakdowns(books, daysInMonth);
   const currentWeekData = weekDataList.find(w => w.weekNumber === selectedWeek) || weekDataList[0];
 
   // Month totals
@@ -85,10 +92,10 @@ export const PeriodViewSystem: React.FC<PeriodViewSystemProps> = ({
       <div className="bg-white p-4 sm:p-5 rounded-2xl border border-zinc-200 shadow-xs flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <h2 className="text-lg font-bold text-zinc-900 flex items-center gap-2">
-            <span>তারিখ ভিত্তিক রিপোর্ট ও বিশ্লেষণ</span>
+            <span>{formatMonthYearBengali(selectedMonth, selectedYear)} - তারিখ ভিত্তিক রিপোর্ট ও বিশ্লেষণ</span>
           </h2>
           <p className="text-xs text-zinc-500 mt-0.5">
-            ১ থেকে ৩১ তারিখের দৈনিক বিক্রয়, সাপ্তাহিক অগ্রগতি ও পুরো মাসের হিসাব
+            ১ থেকে {formatNumber(daysInMonth)} তারিখের দৈনিক বিক্রয়, সাপ্তাহিক অগ্রগতি ও পুরো মাসের হিসাব
           </p>
         </div>
 
@@ -152,15 +159,15 @@ export const PeriodViewSystem: React.FC<PeriodViewSystemProps> = ({
                 </button>
                 <div className="flex items-center gap-2">
                   <span className="font-bold text-zinc-900 text-base">
-                    {selectedDay} তারিখের প্রতিবেদন
+                    {selectedDay} {formatMonthYearBengali(selectedMonth, selectedYear)} এর প্রতিবেদন
                   </span>
                   <span className="text-[11px] text-zinc-500 font-mono">
                     (মাসের {selectedDay}তম দিন)
                   </span>
                 </div>
                 <button
-                  disabled={selectedDay >= 31}
-                  onClick={() => setSelectedDay(d => Math.min(31, d + 1))}
+                  disabled={selectedDay >= daysInMonth}
+                  onClick={() => setSelectedDay(d => Math.min(daysInMonth, d + 1))}
                   className="p-1.5 rounded-lg border border-zinc-200 hover:bg-zinc-100 disabled:opacity-40 disabled:hover:bg-transparent transition-colors"
                   title="পরবর্তী তারিখ"
                 >
@@ -180,10 +187,10 @@ export const PeriodViewSystem: React.FC<PeriodViewSystemProps> = ({
             {/* Clean Monochromatic Horizontal Date Pills (1 to 31) */}
             <div>
               <div className="text-[11px] font-semibold text-zinc-500 mb-1.5">
-                📅 ক্যালেন্ডার তারিখ নির্বাচন করুন (১লা থেকে ৩১শে তারিখ):
+                📅 ক্যালেন্ডার তারিখ নির্বাচন করুন (১লা থেকে {formatNumber(daysInMonth)} তারিখ):
               </div>
               <div className="flex items-center gap-1.5 overflow-x-auto pb-1 pt-0.5">
-                {Array.from({ length: 31 }, (_, i) => i + 1).map(dateNum => {
+                {Array.from({ length: daysInMonth }, (_, i) => i + 1).map(dateNum => {
                   const daySales = calculateDayBreakdown(books, dateNum).totalSold;
                   const isSelected = selectedDay === dateNum;
                   return (
@@ -578,9 +585,9 @@ export const PeriodViewSystem: React.FC<PeriodViewSystemProps> = ({
           {/* Monthly Weekly Progression Comparison */}
           <div className="bg-white p-5 rounded-2xl border border-zinc-200 shadow-xs">
             <h3 className="font-bold text-zinc-900 text-base mb-1">
-              পুরো মাসের সপ্তাহের তুলনা (Week 1 vs 2 vs 3 vs 4 vs 5)
+              {formatMonthYearBengali(selectedMonth, selectedYear)} মাসের সপ্তাহের তুলনা
             </h3>
-            <p className="text-xs text-zinc-500 mb-4">১ থেকে ৩১ তারিখের ৫টি সপ্তাহের সেলস ও লাভের তুলনামূলক অগ্রগতি</p>
+            <p className="text-xs text-zinc-500 mb-4">১ থেকে {formatNumber(daysInMonth)} তারিখের {formatNumber(weekDataList.length)}টি সপ্তাহের সেলস ও লাভের তুলনামূলক অগ্রগতি</p>
 
             <div className="grid grid-cols-1 sm:grid-cols-5 gap-3">
               {weekDataList.map((w) => {

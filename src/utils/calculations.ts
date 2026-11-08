@@ -99,6 +99,45 @@ export function calculateBookMetrics(book: BookRecord) {
 }
 
 // -------------------------------------------------------------
+// Month & Year Configuration and Helpers
+// -------------------------------------------------------------
+
+export const BENGALI_MONTHS = [
+  { value: 1, name: 'জানুয়ারি', shortName: 'জানু' },
+  { value: 2, name: 'ফেব্রুয়ারি', shortName: 'ফেব্রু' },
+  { value: 3, name: 'মার্চ', shortName: 'মার্চ' },
+  { value: 4, name: 'এপ্রিল', shortName: 'এপ্রিল' },
+  { value: 5, name: 'মে', shortName: 'মে' },
+  { value: 6, name: 'জুন', shortName: 'জুন' },
+  { value: 7, name: 'জুলাই', shortName: 'জুলাই' },
+  { value: 8, name: 'আগস্ট', shortName: 'আগস্ট' },
+  { value: 9, name: 'সেপ্টেম্বর', shortName: 'সেপ্টে' },
+  { value: 10, name: 'অক্টোবর', shortName: 'অক্টো' },
+  { value: 11, name: 'নভেম্বর', shortName: 'নভে' },
+  { value: 12, name: 'ডিসেম্বর', shortName: 'ডিসে' },
+];
+
+export const AVAILABLE_YEARS = [2023, 2024, 2025, 2026, 2027, 2028, 2029, 2030];
+
+export function getDaysInMonth(year: number, month: number): number {
+  return new Date(year, month, 0).getDate();
+}
+
+export function formatYearBengali(year: number): string {
+  const bnDigits: { [k: string]: string } = {
+    '0': '০', '1': '১', '2': '২', '3': '৩', '4': '৪',
+    '5': '৫', '6': '৬', '7': '৭', '8': '৮', '9': '৯',
+  };
+  return String(year).split('').map(c => bnDigits[c] || c).join('');
+}
+
+export function formatMonthYearBengali(month: number, year: number): string {
+  const m = BENGALI_MONTHS.find(x => x.value === month);
+  const mName = m ? m.name : `${month}ম মাস`;
+  return `${mName} ${formatYearBengali(year)}`;
+}
+
+// -------------------------------------------------------------
 // Daily, Weekly, Monthly Aggregation Helpers
 // -------------------------------------------------------------
 
@@ -218,7 +257,7 @@ export function calculateDayBreakdown(books: BookRecord[], day: number): DayBrea
 
 export interface WeekBreakdown {
   weekNumber: number; // 1..5
-  name: string; // e.g. "সপ্তাহ ১ (দিন ১-৭)"
+  name: string; // e.g. "সপ্তাহ ১ (১ - ৭ তারিখ)"
   startDay: number;
   endDay: number;
   totalSold: number;
@@ -232,14 +271,22 @@ export interface WeekBreakdown {
   dailyTotals: { day: number; sold: number }[];
 }
 
-export function calculateWeekBreakdowns(books: BookRecord[]): WeekBreakdown[] {
-  const weekDefinitions = [
-    { weekNumber: 1, name: 'সপ্তাহ ১', startDay: 1, endDay: 7 },
-    { weekNumber: 2, name: 'সপ্তাহ ২', startDay: 8, endDay: 14 },
-    { weekNumber: 3, name: 'সপ্তাহ ৩', startDay: 15, endDay: 21 },
-    { weekNumber: 4, name: 'সপ্তাহ ৪', startDay: 22, endDay: 28 },
-    { weekNumber: 5, name: 'সপ্তাহ ৫', startDay: 29, endDay: 31 },
+export function calculateWeekBreakdowns(books: BookRecord[], daysInMonth: number = 31): WeekBreakdown[] {
+  const weekDefinitions: { weekNumber: number; name: string; startDay: number; endDay: number }[] = [
+    { weekNumber: 1, name: 'সপ্তাহ ১', startDay: 1, endDay: Math.min(7, daysInMonth) },
+    { weekNumber: 2, name: 'সপ্তাহ ২', startDay: 8, endDay: Math.min(14, daysInMonth) },
+    { weekNumber: 3, name: 'সপ্তাহ ৩', startDay: 15, endDay: Math.min(21, daysInMonth) },
+    { weekNumber: 4, name: 'সপ্তাহ ৪', startDay: 22, endDay: Math.min(28, daysInMonth) },
   ];
+
+  if (daysInMonth > 28) {
+    weekDefinitions.push({
+      weekNumber: 5,
+      name: 'সপ্তাহ ৫',
+      startDay: 29,
+      endDay: daysInMonth,
+    });
+  }
 
   return weekDefinitions.map(w => {
     let totalSold = 0;
@@ -272,7 +319,7 @@ export function calculateWeekBreakdowns(books: BookRecord[]): WeekBreakdown[] {
 
     return {
       weekNumber: w.weekNumber,
-      name: `${w.name} (দিন ${w.startDay} - ${w.endDay})`,
+      name: `${w.name} (${w.startDay} - ${w.endDay} তারিখ)`,
       startDay: w.startDay,
       endDay: w.endDay,
       totalSold,
@@ -346,3 +393,27 @@ export function formatBDT(amount: number): string {
 export function formatNumber(num: number): string {
   return new Intl.NumberFormat('bn-BD').format(num);
 }
+
+export function createFreshMonthBooks(catalog: BookRecord[]): BookRecord[] {
+  return catalog.map(b => ({
+    ...b,
+    pressDailyReceipts: {},
+    boibari: {},
+    rokomari: {},
+    wafilife: {},
+    othersOnline: {},
+    headOfficeSellOffline: {},
+    nilkhetLibrary: {},
+    sumonaLibrary: {},
+    promiseLibrary: {},
+    joystarLibrary: {},
+    dailyReturns: {},
+    marketing: 0,
+    service: 0,
+    adVideoMaking: 0,
+    rd: 0,
+    gift: 0,
+    updatedAt: new Date().toISOString(),
+  }));
+}
+

@@ -3,7 +3,7 @@ import { BookRecord } from '../types/book';
 import { calculateBookMetrics } from './calculations';
 import { EXCEL_HEADERS } from './excelHeaders';
 
-export function exportBooksToExcel(books: BookRecord[]) {
+export function exportBooksToExcel(books: BookRecord[], month?: number, year?: number) {
   // 1. Build Sheet1 (373 columns matrix)
   const sheet1Data: (string | number | null | undefined)[][] = [];
   sheet1Data.push(EXCEL_HEADERS);
@@ -188,7 +188,8 @@ export function exportBooksToExcel(books: BookRecord[]) {
 
   const now = new Date();
   const dateStr = now.toISOString().split('T')[0];
-  XLSX.writeFile(wb, `Biddabari_Publication_Report_${dateStr}.xlsx`);
+  const filePrefix = year && month ? `Biddabari_Report_${year}_${String(month).padStart(2, '0')}` : `Biddabari_Publication_Report_${dateStr}`;
+  XLSX.writeFile(wb, `${filePrefix}.xlsx`);
 }
 
 export function importBooksFromExcel(file: File): Promise<BookRecord[]> {

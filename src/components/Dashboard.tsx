@@ -12,18 +12,24 @@ import {
   Filter
 } from 'lucide-react';
 import { BookRecord } from '../types/book';
-import { calculateBookMetrics, formatBDT, formatNumber } from '../utils/calculations';
+import { calculateBookMetrics, formatBDT, formatNumber, formatMonthYearBengali } from '../utils/calculations';
 
 interface DashboardProps {
   books: BookRecord[];
   onSelectBookForMatrix: (bookId: string) => void;
   onOpenDailyEntryForBook: (bookId: string) => void;
+  selectedMonth?: number;
+  selectedYear?: number;
+  daysInMonth?: number;
 }
 
 export const Dashboard: React.FC<DashboardProps> = ({
   books,
   onSelectBookForMatrix,
   onOpenDailyEntryForBook,
+  selectedMonth = 11,
+  selectedYear = 2026,
+  daysInMonth = 30,
 }) => {
   const [selectedBookFilter, setSelectedBookFilter] = useState<string>('all');
 
@@ -82,9 +88,9 @@ export const Dashboard: React.FC<DashboardProps> = ({
   );
 
   // Calculate day-by-day sales (1..31 dates)
-  const dailyAggregates: number[] = new Array(31).fill(0);
+  const dailyAggregates: number[] = new Array(daysInMonth).fill(0);
   filteredBooks.forEach(b => {
-    for (let d = 1; d <= 31; d++) {
+    for (let d = 1; d <= daysInMonth; d++) {
       const daySales = 
         (b.boibari[d] || 0) +
         (b.rokomari[d] || 0) +
@@ -108,7 +114,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-white p-4 rounded-2xl border border-zinc-200 shadow-xs">
         <div>
           <h2 className="text-lg font-bold text-zinc-900">সার্বিক সেলস ও স্টক ওভারভিউ</h2>
-          <p className="text-xs text-zinc-500">বই অনুযায়ী ফিল্টার করে সামগ্রিক চিত্র দেখুন</p>
+          <p className="text-xs text-zinc-500">{formatMonthYearBengali(selectedMonth, selectedYear)} এর সামগ্রিক বিক্রয় ও স্টক চিত্র</p>
         </div>
 
         <div className="flex items-center gap-2">
@@ -331,13 +337,13 @@ export const Dashboard: React.FC<DashboardProps> = ({
       <div className="bg-white p-5 rounded-2xl border border-zinc-200 shadow-xs">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h3 className="font-bold text-zinc-900 text-sm">১লা থেকে ৩১শে তারিখের দৈনিক বিক্রয় গতিধারা</h3>
-            <p className="text-xs text-zinc-500">মাসের প্রতিটি ক্যালেন্ডার তারিখের বিক্রিত কপির হিস্টোগ্রাম</p>
+            <h3 className="font-bold text-zinc-900 text-sm">১লা থেকে {formatNumber(daysInMonth)} তারিখের দৈনিক বিক্রয় গতিধারা</h3>
+            <p className="text-xs text-zinc-500">{formatMonthYearBengali(selectedMonth, selectedYear)} মাসের ক্যালেন্ডার তারিখ অনুযায়ী বিক্রিত কপির হিস্টোগ্রাম</p>
           </div>
-          <span className="text-xs text-zinc-500 font-mono">১ - ৩১ তারিখ</span>
+          <span className="text-xs text-zinc-500 font-mono">১ - {formatNumber(daysInMonth)} তারিখ</span>
         </div>
 
-        <div className="grid grid-cols-31 gap-1 items-end h-32 pt-4 border-b border-zinc-100">
+        <div className="grid gap-1 items-end h-32 pt-4 border-b border-zinc-100 overflow-x-auto min-w-full" style={{ gridTemplateColumns: `repeat(${daysInMonth}, minmax(0, 1fr))` }}>
           {dailyAggregates.map((sales, idx) => {
             const dateNum = idx + 1;
             const heightPercent = maxDailySales > 0 ? Math.max((sales / maxDailySales) * 100, 4) : 4;
@@ -435,7 +441,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     onClick={() => onSelectBookForMatrix(book.id)}
                     className="text-xs font-semibold text-white bg-zinc-900 hover:bg-black px-3 py-1.5 rounded-lg transition-colors shadow-xs flex items-center gap-1"
                   >
-                    <span>৩১ দিন ম্যাট্রিক্স</span>
+                    <span>{formatNumber(daysInMonth)} দিন ম্যাট্রিক্স</span>
                     <ArrowUpRight className="w-3.5 h-3.5" />
                   </button>
                 </div>

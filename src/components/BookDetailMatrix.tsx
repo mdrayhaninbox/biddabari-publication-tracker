@@ -4,7 +4,7 @@ import {
   ArrowLeft 
 } from 'lucide-react';
 import { BookRecord } from '../types/book';
-import { calculateBookMetrics, formatBDT, formatNumber, sumDaily } from '../utils/calculations';
+import { calculateBookMetrics, formatBDT, formatNumber, sumDaily, formatMonthYearBengali } from '../utils/calculations';
 
 interface BookDetailMatrixProps {
   books: BookRecord[];
@@ -12,6 +12,9 @@ interface BookDetailMatrixProps {
   onSelectBook: (bookId: string) => void;
   onUpdateDailyCell: (bookId: string, channelKey: string, day: number, value: number) => void;
   onBackToDashboard: () => void;
+  selectedMonth?: number;
+  selectedYear?: number;
+  daysInMonth?: number;
 }
 
 export const BookDetailMatrix: React.FC<BookDetailMatrixProps> = ({
@@ -20,6 +23,9 @@ export const BookDetailMatrix: React.FC<BookDetailMatrixProps> = ({
   onSelectBook,
   onUpdateDailyCell,
   onBackToDashboard,
+  selectedMonth = 11,
+  selectedYear = 2026,
+  daysInMonth = 30,
 }) => {
   const currentBook = books.find(b => b.id === selectedBookId) || books[0];
 
@@ -146,7 +152,7 @@ export const BookDetailMatrix: React.FC<BookDetailMatrixProps> = ({
             <div className="flex items-center gap-2">
               <FileSpreadsheet className="w-5 h-5 text-zinc-900" />
               <h2 className="text-lg font-bold text-zinc-900">
-                ১ থেকে ৩১ তারিখের সম্পূর্ণ ম্যাট্রিক্স ভিউ
+                ১ থেকে {formatNumber(daysInMonth)} তারিখের সম্পূর্ণ ম্যাট্রিক্স ভিউ ({formatMonthYearBengali(selectedMonth, selectedYear)})
               </h2>
             </div>
             <p className="text-xs text-zinc-500">
@@ -211,7 +217,7 @@ export const BookDetailMatrix: React.FC<BookDetailMatrixProps> = ({
                 <th className="py-2.5 px-3 text-center bg-zinc-200 font-bold min-w-[70px]">
                   মোট
                 </th>
-                {Array.from({ length: 31 }, (_, i) => i + 1).map(dateNum => (
+                {Array.from({ length: daysInMonth }, (_, i) => i + 1).map(dateNum => (
                   <th key={dateNum} className="py-2 px-1 text-center min-w-[44px] font-mono text-[11px]">
                     {dateNum} তাং
                   </th>
@@ -234,7 +240,7 @@ export const BookDetailMatrix: React.FC<BookDetailMatrixProps> = ({
                     </td>
 
                     {/* Dates 1 to 31 */}
-                    {Array.from({ length: 31 }, (_, i) => i + 1).map(dateNum => {
+                    {Array.from({ length: daysInMonth }, (_, i) => i + 1).map(dateNum => {
                       const val = row.salesMap?.[dateNum] || 0;
                       const isEditing = editingCell?.channelKey === row.key && editingCell?.day === dateNum;
 
@@ -279,7 +285,7 @@ export const BookDetailMatrix: React.FC<BookDetailMatrixProps> = ({
                 <td className="py-2.5 px-3 text-center bg-zinc-200 border-r border-zinc-200 text-zinc-900 text-sm font-mono">
                   {formatNumber(m.totalSold)}
                 </td>
-                {Array.from({ length: 31 }, (_, i) => i + 1).map(dateNum => {
+                {Array.from({ length: daysInMonth }, (_, i) => i + 1).map(dateNum => {
                   const dayTotal = 
                     (currentBook.boibari[dateNum] || 0) +
                     (currentBook.rokomari[dateNum] || 0) +
