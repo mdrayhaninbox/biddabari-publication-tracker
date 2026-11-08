@@ -135,104 +135,104 @@ export const Dashboard: React.FC<DashboardProps> = ({
       </div>
 
       {/* Primary KPI Cards (Black & White Theme) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-2.5 sm:gap-3">
         
         {/* Head Office Stock */}
-        <div className="bg-white p-4 rounded-xl border border-zinc-200 shadow-xs hover:border-zinc-400 transition-all">
-          <div className="flex items-center justify-between text-zinc-500 text-xs font-semibold">
+        <div className="bg-white p-3.5 sm:p-4 rounded-xl border border-zinc-200 shadow-xs hover:border-zinc-400 transition-all">
+          <div className="flex items-center justify-between text-zinc-500 text-[11px] sm:text-xs font-semibold">
             <span>হেড অফিস স্টক</span>
-            <div className="p-2 bg-zinc-100 rounded-lg text-zinc-900 border border-zinc-200">
-              <Boxes className="w-4 h-4" />
+            <div className="p-1.5 sm:p-2 bg-zinc-100 rounded-lg text-zinc-900 border border-zinc-200">
+              <Boxes className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </div>
           </div>
-          <div className="mt-2 flex items-baseline gap-1">
-            <span className="text-2xl font-bold text-zinc-900">{formatNumber(totals.totalHOStock)}</span>
-            <span className="text-xs text-zinc-500">কপি</span>
+          <div className="mt-1.5 sm:mt-2 flex items-baseline gap-1">
+            <span className="text-xl sm:text-2xl font-bold text-zinc-900 font-mono">{formatNumber(totals.totalHOStock)}</span>
+            <span className="text-[10px] sm:text-xs text-zinc-500">কপি</span>
           </div>
-          <div className="mt-2 text-[11px] text-zinc-600 font-medium">
+          <div className="mt-1 text-[10px] sm:text-[11px] text-zinc-600 font-medium">
             তাৎক্ষণিক ডেলিভারি প্রস্তুত
           </div>
         </div>
 
         {/* Farid Bhai Press Stock */}
-        <div className="bg-white p-4 rounded-xl border border-zinc-200 shadow-xs hover:border-zinc-400 transition-all">
-          <div className="flex items-center justify-between text-zinc-500 text-xs font-semibold">
+        <div className="bg-white p-3.5 sm:p-4 rounded-xl border border-zinc-200 shadow-xs hover:border-zinc-400 transition-all">
+          <div className="flex items-center justify-between text-zinc-500 text-[11px] sm:text-xs font-semibold">
             <span>ফরিদ ভাই (প্রেস) স্টক</span>
-            <div className="p-2 bg-zinc-100 rounded-lg text-zinc-900 border border-zinc-200">
-              <Warehouse className="w-4 h-4" />
+            <div className="p-1.5 sm:p-2 bg-zinc-100 rounded-lg text-zinc-900 border border-zinc-200">
+              <Warehouse className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </div>
           </div>
-          <div className="mt-2 flex items-baseline gap-1">
-            <span className="text-2xl font-bold text-zinc-900">{formatNumber(totals.totalPressStock)}</span>
-            <span className="text-xs text-zinc-500">কপি</span>
+          <div className="mt-1.5 sm:mt-2 flex items-baseline gap-1">
+            <span className="text-xl sm:text-2xl font-bold text-zinc-900 font-mono">{formatNumber(totals.totalPressStock)}</span>
+            <span className="text-[10px] sm:text-xs text-zinc-500">কপি</span>
           </div>
-          <div className="mt-2 text-[11px] text-zinc-500 font-medium">
+          <div className="mt-1 text-[10px] sm:text-[11px] text-zinc-500 font-medium font-mono">
             মোট অর্ডার: {formatNumber(totals.totalPressOrder)}
           </div>
         </div>
 
         {/* Total Sold */}
-        <div className="bg-white p-4 rounded-xl border border-zinc-200 shadow-xs hover:border-zinc-400 transition-all">
-          <div className="flex items-center justify-between text-zinc-500 text-xs font-semibold">
+        <div className="bg-white p-3.5 sm:p-4 rounded-xl border border-zinc-200 shadow-xs hover:border-zinc-400 transition-all">
+          <div className="flex items-center justify-between text-zinc-500 text-[11px] sm:text-xs font-semibold">
             <span>মোট বিক্রয়</span>
-            <div className="p-2 bg-zinc-100 rounded-lg text-zinc-900 border border-zinc-200">
-              <ShoppingBag className="w-4 h-4" />
+            <div className="p-1.5 sm:p-2 bg-zinc-100 rounded-lg text-zinc-900 border border-zinc-200">
+              <ShoppingBag className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </div>
           </div>
-          <div className="mt-2 flex items-baseline gap-1">
-            <span className="text-2xl font-bold text-zinc-900">{formatNumber(totals.totalSold)}</span>
-            <span className="text-xs text-zinc-500">কপি</span>
+          <div className="mt-1.5 sm:mt-2 flex items-baseline gap-1">
+            <span className="text-xl sm:text-2xl font-bold text-zinc-900 font-mono">{formatNumber(totals.totalSold)}</span>
+            <span className="text-[10px] sm:text-xs text-zinc-500">কপি</span>
           </div>
-          <div className="mt-2 text-[11px] text-zinc-600 font-medium">
+          <div className="mt-1 text-[10px] sm:text-[11px] text-zinc-600 font-medium">
             অনলাইন {Math.round((totals.totalOnlineSold / (totals.totalSold || 1)) * 100)}% • অফলাইন {Math.round((totals.totalOfflineSold / (totals.totalSold || 1)) * 100)}%
           </div>
         </div>
 
         {/* Total Revenue */}
-        <div className="bg-white p-4 rounded-xl border border-zinc-200 shadow-xs hover:border-zinc-400 transition-all">
-          <div className="flex items-center justify-between text-zinc-500 text-xs font-semibold">
+        <div className="bg-white p-3.5 sm:p-4 rounded-xl border border-zinc-200 shadow-xs hover:border-zinc-400 transition-all">
+          <div className="flex items-center justify-between text-zinc-500 text-[11px] sm:text-xs font-semibold">
             <span>মোট রাজস্ব (Revenue)</span>
-            <div className="p-2 bg-zinc-100 rounded-lg text-zinc-900 border border-zinc-200">
-              <Wallet className="w-4 h-4" />
+            <div className="p-1.5 sm:p-2 bg-zinc-100 rounded-lg text-zinc-900 border border-zinc-200">
+              <Wallet className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </div>
           </div>
-          <div className="mt-2 flex items-baseline gap-1">
-            <span className="text-xl font-bold text-zinc-900">{formatBDT(totals.totalRevenue)}</span>
+          <div className="mt-1.5 sm:mt-2 flex items-baseline gap-1">
+            <span className="text-lg sm:text-xl font-bold text-zinc-900 font-mono">{formatBDT(totals.totalRevenue)}</span>
           </div>
-          <div className="mt-2 text-[11px] text-zinc-500 font-medium">
+          <div className="mt-1 text-[10px] sm:text-[11px] text-zinc-500 font-medium">
             সর্বমোট বিক্রয়মূল্য
           </div>
         </div>
 
         {/* Total Profit */}
-        <div className="bg-white p-4 rounded-xl border border-zinc-200 shadow-xs hover:border-zinc-400 transition-all">
-          <div className="flex items-center justify-between text-zinc-500 text-xs font-semibold">
+        <div className="bg-white p-3.5 sm:p-4 rounded-xl border border-zinc-200 shadow-xs hover:border-zinc-400 transition-all">
+          <div className="flex items-center justify-between text-zinc-500 text-[11px] sm:text-xs font-semibold">
             <span>মোট নিট লাভ (Profit)</span>
-            <div className="p-2 bg-zinc-100 rounded-lg text-zinc-900 border border-zinc-200">
-              <TrendingUp className="w-4 h-4" />
+            <div className="p-1.5 sm:p-2 bg-zinc-100 rounded-lg text-zinc-900 border border-zinc-200">
+              <TrendingUp className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </div>
           </div>
-          <div className="mt-2 flex items-baseline gap-1">
-            <span className="text-xl font-bold text-zinc-900">+{formatBDT(totals.totalProfit)}</span>
+          <div className="mt-1.5 sm:mt-2 flex items-baseline gap-1">
+            <span className="text-lg sm:text-xl font-bold text-zinc-900 font-mono">+{formatBDT(totals.totalProfit)}</span>
           </div>
-          <div className="mt-2 text-[11px] text-zinc-500 font-medium">
+          <div className="mt-1 text-[10px] sm:text-[11px] text-zinc-500 font-medium">
             খরচ বাদে আনুমানিক মুনাফা
           </div>
         </div>
 
         {/* Returns & Promos */}
-        <div className="bg-white p-4 rounded-xl border border-zinc-200 shadow-xs hover:border-zinc-400 transition-all">
-          <div className="flex items-center justify-between text-zinc-500 text-xs font-semibold">
+        <div className="bg-white p-3.5 sm:p-4 rounded-xl border border-zinc-200 shadow-xs hover:border-zinc-400 transition-all">
+          <div className="flex items-center justify-between text-zinc-500 text-[11px] sm:text-xs font-semibold">
             <span>রিটার্ন ও প্রমোশন</span>
-            <div className="p-2 bg-zinc-100 rounded-lg text-zinc-900 border border-zinc-200">
-              <RotateCcw className="w-4 h-4" />
+            <div className="p-1.5 sm:p-2 bg-zinc-100 rounded-lg text-zinc-900 border border-zinc-200">
+              <RotateCcw className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </div>
           </div>
-          <div className="mt-2 flex items-baseline gap-1">
-            <span className="text-2xl font-bold text-zinc-900">{formatNumber(totals.totalReturns)}</span>
-            <span className="text-xs text-zinc-500">রিটার্ন / {formatNumber(totals.totalPromo)} প্রমো</span>
+          <div className="mt-1.5 sm:mt-2 flex items-baseline gap-1">
+            <span className="text-xl sm:text-2xl font-bold text-zinc-900 font-mono">{formatNumber(totals.totalReturns)}</span>
+            <span className="text-[10px] sm:text-xs text-zinc-500">রিটার্ন / {formatNumber(totals.totalPromo)} প্রমো</span>
           </div>
-          <div className="mt-2 text-[11px] text-zinc-500 font-medium">
+          <div className="mt-1 text-[10px] sm:text-[11px] text-zinc-500 font-medium">
             মার্কেটিং ও উপহার কপি
           </div>
         </div>
@@ -340,32 +340,35 @@ export const Dashboard: React.FC<DashboardProps> = ({
             <h3 className="font-bold text-zinc-900 text-sm">১লা থেকে {formatNumber(daysInMonth)} তারিখের দৈনিক বিক্রয় গতিধারা</h3>
             <p className="text-xs text-zinc-500">{formatMonthYearBengali(selectedMonth, selectedYear)} মাসের ক্যালেন্ডার তারিখ অনুযায়ী বিক্রিত কপির হিস্টোগ্রাম</p>
           </div>
-          <span className="text-xs text-zinc-500 font-mono">১ - {formatNumber(daysInMonth)} তারিখ</span>
+          <span className="text-xs text-zinc-500 font-mono hidden sm:inline">১ - {formatNumber(daysInMonth)} তারিখ</span>
+          <span className="text-[11px] text-zinc-400 font-mono sm:hidden">👉 ডানে স্ক্রোল করুন</span>
         </div>
 
-        <div className="grid gap-1 items-end h-32 pt-4 border-b border-zinc-100 overflow-x-auto min-w-full" style={{ gridTemplateColumns: `repeat(${daysInMonth}, minmax(0, 1fr))` }}>
-          {dailyAggregates.map((sales, idx) => {
-            const dateNum = idx + 1;
-            const heightPercent = maxDailySales > 0 ? Math.max((sales / maxDailySales) * 100, 4) : 4;
-            return (
-              <div key={dateNum} className="flex flex-col items-center group relative h-full justify-end">
-                {/* Tooltip on hover */}
-                <div className="absolute -top-8 bg-zinc-900 text-white text-[10px] py-0.5 px-1.5 rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap z-20 shadow-md">
-                  {dateNum} তারিখ: {sales} কপি
+        <div className="overflow-x-auto pb-2 -mx-1 px-1">
+          <div className="grid gap-1 items-end h-32 pt-4 border-b border-zinc-100 min-w-[580px]" style={{ gridTemplateColumns: `repeat(${daysInMonth}, minmax(16px, 1fr))` }}>
+            {dailyAggregates.map((sales, idx) => {
+              const dateNum = idx + 1;
+              const heightPercent = maxDailySales > 0 ? Math.max((sales / maxDailySales) * 100, 4) : 4;
+              return (
+                <div key={dateNum} className="flex flex-col items-center group relative h-full justify-end">
+                  {/* Tooltip on hover */}
+                  <div className="absolute -top-8 bg-zinc-900 text-white text-[10px] py-0.5 px-1.5 rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap z-20 shadow-md">
+                    {dateNum} তারিখ: {sales} কপি
+                  </div>
+                  {/* Bar */}
+                  <div
+                    className={`w-full rounded-t-xs transition-all ${
+                      sales > 0
+                        ? 'bg-zinc-900 hover:bg-black'
+                        : 'bg-zinc-100'
+                    }`}
+                    style={{ height: `${heightPercent}%` }}
+                  />
+                  <span className="text-[9px] text-zinc-400 mt-1 font-mono">{dateNum}</span>
                 </div>
-                {/* Bar */}
-                <div
-                  className={`w-full rounded-t-xs transition-all ${
-                    sales > 0
-                      ? 'bg-zinc-900 hover:bg-black'
-                      : 'bg-zinc-100'
-                  }`}
-                  style={{ height: `${heightPercent}%` }}
-                />
-                <span className="text-[9px] text-zinc-400 mt-1 font-mono">{dateNum}</span>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
       </div>
 
@@ -410,7 +413,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 </div>
 
                 {/* Stock & Sales stats */}
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-left md:text-right">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 text-left sm:text-right w-full md:w-auto">
                   <div>
                     <div className="text-[11px] text-zinc-400">হেড অফিস স্টক</div>
                     <div className="text-sm font-bold text-zinc-900 font-mono">{formatNumber(m.totalPresentStockHO)} কপি</div>
@@ -430,7 +433,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 </div>
 
                 {/* Quick actions */}
-                <div className="flex items-center gap-2 self-end md:self-center">
+                <div className="flex items-center gap-2 self-start md:self-center">
                   <button
                     onClick={() => onOpenDailyEntryForBook(book.id)}
                     className="text-xs font-semibold text-zinc-800 hover:text-black bg-zinc-100 hover:bg-zinc-200 px-3 py-1.5 rounded-lg transition-colors border border-zinc-200"

@@ -90,8 +90,12 @@ export const BooksTable: React.FC<BooksTableProps> = ({
 
       {/* Main Table */}
       <div className="bg-white rounded-2xl border border-zinc-200 shadow-xs overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse text-xs">
+        <div className="text-[11px] text-zinc-500 font-medium px-4 py-2 sm:hidden border-b border-zinc-100 bg-zinc-50 flex items-center justify-between">
+          <span>👉 সম্পূর্ণ তালিকা দেখতে ডানে স্ক্রোল করুন</span>
+          <span className="font-mono text-[10px]">{sortedBooks.length} টি বই</span>
+        </div>
+        <div className="overflow-x-auto w-full">
+          <table className="w-full text-left border-collapse text-xs min-w-[950px]">
             <thead>
               <tr className="bg-zinc-100 text-zinc-800 border-b border-zinc-200 font-bold">
                 <th className="py-3 px-3 w-12 text-center">SL</th>

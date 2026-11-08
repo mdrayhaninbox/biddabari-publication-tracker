@@ -65,31 +65,33 @@ export const Header: React.FC<HeaderProps> = ({
   return (
     <header className="bg-white border-b border-zinc-200 sticky top-0 z-30 shadow-xs">
       {/* Top Banner */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-2.5 sm:py-3">
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-2.5 sm:gap-3">
           
           {/* Logo, Title & Month-Year Badge */}
-          <div className="flex flex-wrap items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-zinc-900 flex items-center justify-center text-white shadow-xs shrink-0">
-              <BookOpen className="w-5 h-5" />
-            </div>
-            
-            <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-zinc-900">
-                  বিদ্যাবাড়ি পাবলিকেশন
-                </h1>
-                <span className="bg-zinc-100 text-zinc-800 text-[11px] px-2.5 py-0.5 rounded-full font-semibold border border-zinc-200">
-                  বুক ট্র্যাকার
-                </span>
+          <div className="flex flex-wrap items-center justify-between sm:justify-start gap-2.5 sm:gap-3 w-full lg:w-auto">
+            <div className="flex items-center gap-2.5">
+              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-zinc-900 flex items-center justify-center text-white shadow-xs shrink-0">
+                <BookOpen className="w-5 h-5" />
               </div>
-              <p className="text-xs text-zinc-500 font-normal">
-                {formatMonthYearBengali(selectedMonth, selectedYear)}-এর দৈনিক, সাপ্তাহিক ও মাসিক খতিয়ান • {bookCount} টি বই
-              </p>
+              
+              <div>
+                <div className="flex items-center gap-2">
+                  <h1 className="text-lg sm:text-2xl font-bold tracking-tight text-zinc-900">
+                    বিদ্যাবাড়ি পাবলিকেশন
+                  </h1>
+                  <span className="bg-zinc-100 text-zinc-800 text-[10px] sm:text-[11px] px-2 py-0.5 rounded-full font-semibold border border-zinc-200">
+                    বুক ট্র্যাকার
+                  </span>
+                </div>
+                <p className="text-[11px] sm:text-xs text-zinc-500 font-normal">
+                  {formatMonthYearBengali(selectedMonth, selectedYear)}-এর খতিয়ান • {bookCount} টি বই
+                </p>
+              </div>
             </div>
 
             {/* Prominent Month & Year Switcher */}
-            <div className="flex items-center bg-zinc-50 p-1 rounded-xl border border-zinc-300 gap-1 ml-0 sm:ml-2 shadow-xs">
+            <div className="flex items-center bg-zinc-50 p-1 rounded-xl border border-zinc-300 gap-1 shadow-xs ml-auto sm:ml-2">
               <button
                 type="button"
                 onClick={onPrevMonth}
@@ -100,13 +102,13 @@ export const Header: React.FC<HeaderProps> = ({
               </button>
 
               <div className="flex items-center gap-1">
-                <Calendar className="w-3.5 h-3.5 text-zinc-500 ml-1" />
+                <Calendar className="w-3.5 h-3.5 text-zinc-500 ml-0.5" />
                 
                 {/* Month Dropdown */}
                 <select
                   value={selectedMonth}
                   onChange={(e) => onSelectPeriod(Number(e.target.value), selectedYear)}
-                  className="text-xs font-bold bg-white border border-zinc-200 rounded-lg px-2 py-1 text-zinc-900 focus:outline-hidden cursor-pointer"
+                  className="text-xs font-bold bg-white border border-zinc-200 rounded-lg px-1.5 sm:px-2 py-1 text-zinc-900 focus:outline-hidden cursor-pointer"
                   title="মাস নির্বাচন করুন"
                 >
                   {BENGALI_MONTHS.map(m => (
@@ -120,7 +122,7 @@ export const Header: React.FC<HeaderProps> = ({
                 <select
                   value={selectedYear}
                   onChange={(e) => onSelectPeriod(selectedMonth, Number(e.target.value))}
-                  className="text-xs font-bold font-mono bg-white border border-zinc-200 rounded-lg px-2 py-1 text-zinc-900 focus:outline-hidden cursor-pointer"
+                  className="text-xs font-bold font-mono bg-white border border-zinc-200 rounded-lg px-1.5 sm:px-2 py-1 text-zinc-900 focus:outline-hidden cursor-pointer"
                   title="বছর নির্বাচন করুন"
                 >
                   {AVAILABLE_YEARS.map(y => (
@@ -144,10 +146,10 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
 
           {/* Action Buttons */}
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 w-full lg:w-auto justify-start sm:justify-end">
             
-            {/* View Zoom Switcher (75% default vs 100%) */}
-            <div className="flex items-center bg-zinc-100 p-0.5 rounded-lg border border-zinc-200 text-xs font-bold">
+            {/* View Zoom Switcher (Desktop 75% default vs 100%) */}
+            <div className="hidden lg:flex items-center bg-zinc-100 p-0.5 rounded-lg border border-zinc-200 text-xs font-bold" title="কম্পিউটার স্ক্রিন ভিউ (৭৫% কমপ্যাক্ট বা ১০০%)">
               <button
                 type="button"
                 onClick={() => onSetZoom?.('75')}
@@ -176,37 +178,37 @@ export const Header: React.FC<HeaderProps> = ({
 
             <button
               onClick={onOpenDailyEntry}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-white bg-zinc-900 hover:bg-black rounded-lg shadow-xs transition-colors"
+              className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 text-xs font-bold text-white bg-zinc-900 hover:bg-black rounded-lg shadow-xs transition-colors"
               title="সহজ ডেটা এন্ট্রি ফরম খুলুন"
             >
-              <CalendarPlus className="w-4 h-4" />
+              <CalendarPlus className="w-3.5 h-3.5" />
               <span>সহজ এন্ট্রি</span>
             </button>
 
             <button
               onClick={onOpenAddBook}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-zinc-800 bg-white hover:bg-zinc-100 rounded-lg transition-colors border border-zinc-200"
+              className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 text-xs font-semibold text-zinc-800 bg-white hover:bg-zinc-100 rounded-lg transition-colors border border-zinc-200"
               title="নতুন বই যুক্ত করুন"
             >
-              <PlusCircle className="w-4 h-4 text-zinc-700" />
+              <PlusCircle className="w-3.5 h-3.5 text-zinc-700" />
               <span>নতুন বই</span>
             </button>
 
             <button
               onClick={onExportExcel}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-zinc-800 bg-white hover:bg-zinc-100 rounded-lg transition-colors border border-zinc-200"
+              className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 text-xs font-semibold text-zinc-800 bg-white hover:bg-zinc-100 rounded-lg transition-colors border border-zinc-200"
               title="এক্সেল (.xlsx) ফাইল ডাউনলোড করুন"
             >
-              <Download className="w-4 h-4 text-zinc-700" />
+              <Download className="w-3.5 h-3.5 text-zinc-700" />
               <span>এক্সপোর্ট</span>
             </button>
 
             <button
               onClick={onOpenImport}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-zinc-800 bg-white hover:bg-zinc-100 rounded-lg transition-colors border border-zinc-200"
+              className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 text-xs font-semibold text-zinc-800 bg-white hover:bg-zinc-100 rounded-lg transition-colors border border-zinc-200"
               title="এক্সেল ফাইল ইমপোর্ট করুন"
             >
-              <Upload className="w-4 h-4 text-zinc-500" />
+              <Upload className="w-3.5 h-3.5 text-zinc-500" />
               <span>ইমপোর্ট</span>
             </button>
 
@@ -218,15 +220,14 @@ export const Header: React.FC<HeaderProps> = ({
               <Printer className="w-4 h-4" />
             </button>
 
-
           </div>
         </div>
 
         {/* Navigation Tabs (Full Width Responsive Grid - Never Overflows or Scrolls) */}
-        <nav className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-1.5 mt-3 border-t border-zinc-100 pt-2.5">
+        <nav className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-1 sm:gap-1.5 mt-2.5 sm:mt-3 border-t border-zinc-100 pt-2 sm:pt-2.5">
           <button
             onClick={() => setActiveTab('dashboard')}
-            className={`flex items-center justify-center gap-1.5 px-2 py-2 rounded-xl text-xs font-bold transition-all text-center ${
+            className={`flex items-center justify-center gap-1.5 px-2 py-2 rounded-xl text-[11px] sm:text-xs font-bold transition-all text-center min-w-0 ${
               activeTab === 'dashboard'
                 ? 'bg-zinc-900 text-white shadow-xs'
                 : 'bg-zinc-50 text-zinc-700 hover:bg-zinc-100 hover:text-zinc-900 border border-zinc-200/60'
@@ -238,7 +239,7 @@ export const Header: React.FC<HeaderProps> = ({
 
           <button
             onClick={() => setActiveTab('period')}
-            className={`flex items-center justify-center gap-1.5 px-2 py-2 rounded-xl text-xs font-bold transition-all text-center ${
+            className={`flex items-center justify-center gap-1.5 px-2 py-2 rounded-xl text-[11px] sm:text-xs font-bold transition-all text-center min-w-0 ${
               activeTab === 'period'
                 ? 'bg-zinc-900 text-white shadow-xs'
                 : 'bg-zinc-50 text-zinc-700 hover:bg-zinc-100 hover:text-zinc-900 border border-zinc-200/60'
@@ -250,7 +251,7 @@ export const Header: React.FC<HeaderProps> = ({
 
           <button
             onClick={() => setActiveTab('accounts')}
-            className={`flex items-center justify-center gap-1.5 px-2 py-2 rounded-xl text-xs font-bold transition-all text-center ${
+            className={`flex items-center justify-center gap-1.5 px-2 py-2 rounded-xl text-[11px] sm:text-xs font-bold transition-all text-center min-w-0 ${
               activeTab === 'accounts'
                 ? 'bg-zinc-900 text-white shadow-xs'
                 : 'bg-zinc-50 text-zinc-700 hover:bg-zinc-100 hover:text-zinc-900 border border-zinc-200/60'
@@ -262,7 +263,7 @@ export const Header: React.FC<HeaderProps> = ({
 
           <button
             onClick={() => setActiveTab('entry')}
-            className={`flex items-center justify-center gap-1.5 px-2.5 py-2 rounded-xl text-xs font-bold transition-all text-center ${
+            className={`flex items-center justify-center gap-1.5 px-2 py-2 rounded-xl text-[11px] sm:text-xs font-bold transition-all text-center min-w-0 ${
               activeTab === 'entry'
                 ? 'bg-zinc-900 text-white shadow-xs'
                 : 'bg-zinc-50 text-zinc-700 hover:bg-zinc-100 hover:text-zinc-900 border border-zinc-200/60'
@@ -274,7 +275,7 @@ export const Header: React.FC<HeaderProps> = ({
 
           <button
             onClick={() => setActiveTab('books')}
-            className={`flex items-center justify-center gap-1.5 px-2.5 py-2 rounded-xl text-xs font-bold transition-all text-center ${
+            className={`flex items-center justify-center gap-1.5 px-2 py-2 rounded-xl text-[11px] sm:text-xs font-bold transition-all text-center min-w-0 ${
               activeTab === 'books'
                 ? 'bg-zinc-900 text-white shadow-xs'
                 : 'bg-zinc-50 text-zinc-700 hover:bg-zinc-100 hover:text-zinc-900 border border-zinc-200/60'
@@ -286,7 +287,7 @@ export const Header: React.FC<HeaderProps> = ({
 
           <button
             onClick={() => setActiveTab('matrix')}
-            className={`flex items-center justify-center gap-1.5 px-2.5 py-2 rounded-xl text-xs font-bold transition-all text-center ${
+            className={`flex items-center justify-center gap-1.5 px-2 py-2 rounded-xl text-[11px] sm:text-xs font-bold transition-all text-center min-w-0 ${
               activeTab === 'matrix'
                 ? 'bg-zinc-900 text-white shadow-xs'
                 : 'bg-zinc-50 text-zinc-700 hover:bg-zinc-100 hover:text-zinc-900 border border-zinc-200/60'
@@ -298,7 +299,7 @@ export const Header: React.FC<HeaderProps> = ({
 
           <button
             onClick={() => setActiveTab('reports')}
-            className={`flex items-center justify-center gap-1.5 px-2.5 py-2 rounded-xl text-xs font-bold transition-all text-center ${
+            className={`col-span-2 sm:col-span-1 flex items-center justify-center gap-1.5 px-2 py-2 rounded-xl text-[11px] sm:text-xs font-bold transition-all text-center min-w-0 ${
               activeTab === 'reports'
                 ? 'bg-zinc-900 text-white shadow-xs'
                 : 'bg-zinc-50 text-zinc-700 hover:bg-zinc-100 hover:text-zinc-900 border border-zinc-200/60'

@@ -285,7 +285,7 @@ export const PeriodViewSystem: React.FC<PeriodViewSystemProps> = ({
         </div>
 
         {/* Responsive Period Switcher Pills */}
-        <div className="flex flex-wrap bg-zinc-100 p-1 rounded-xl border border-zinc-200 gap-1">
+        <div className="flex flex-wrap bg-zinc-100 p-1 rounded-xl border border-zinc-200 gap-1 w-full lg:w-auto">
           {[
             { key: 'daily', label: 'দৈনিক (Daily)', icon: Calendar },
             { key: 'weekly', label: 'সাপ্তাহিক (Weekly)', icon: CalendarDays },
@@ -301,7 +301,7 @@ export const PeriodViewSystem: React.FC<PeriodViewSystemProps> = ({
               <button
                 key={tab.key}
                 onClick={() => setPeriod(tab.key as ViewPeriod)}
-                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                className={`inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-[11px] sm:text-xs font-bold transition-all ${
                   isActive
                     ? 'bg-zinc-900 text-white shadow-xs'
                     : 'text-zinc-600 hover:text-zinc-900 hover:bg-zinc-200/60'
@@ -438,8 +438,8 @@ export const PeriodViewSystem: React.FC<PeriodViewSystemProps> = ({
               <span className="text-xs text-zinc-500">{dayData.bookBreakdown.length} টি বই</span>
             </div>
 
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse text-xs">
+            <div className="overflow-x-auto w-full">
+              <table className="w-full text-left border-collapse text-xs min-w-[550px]">
                 <thead>
                   <tr className="bg-zinc-50 text-zinc-800 font-semibold border-b border-zinc-200">
                     <th className="py-2.5 px-3">বইয়ের নাম</th>
@@ -724,8 +724,8 @@ export const PeriodViewSystem: React.FC<PeriodViewSystemProps> = ({
               <h3 className="font-bold text-zinc-900 text-sm">{currentQuarterConfig.label} ({reportYear}) - বই ভিত্তিক সারসংক্ষেপ</h3>
               <span className="text-xs text-zinc-500">{quarterData.bookStats.length} টি বই</span>
             </div>
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse text-xs">
+            <div className="overflow-x-auto w-full">
+              <table className="w-full text-left border-collapse text-xs min-w-[550px]">
                 <thead>
                   <tr className="bg-zinc-50 font-bold border-b border-zinc-200 text-zinc-900">
                     <th className="py-2.5 px-3 w-12 text-center">SL</th>
@@ -1008,8 +1008,8 @@ export const PeriodViewSystem: React.FC<PeriodViewSystemProps> = ({
               <h3 className="font-bold text-zinc-900 text-sm">বই ভিত্তিক সেলস খতিয়ান ({customStartDate} থেকে {customEndDate})</h3>
               <span className="text-xs text-zinc-500">{customRangeData.bookStats.length} টি বই</span>
             </div>
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse text-xs">
+            <div className="overflow-x-auto w-full">
+              <table className="w-full text-left border-collapse text-xs min-w-[550px]">
                 <thead>
                   <tr className="bg-zinc-50 font-bold border-b border-zinc-200 text-zinc-900">
                     <th className="py-2.5 px-3 w-12 text-center">SL</th>

@@ -544,8 +544,11 @@ export const QuickDataEntry: React.FC<QuickDataEntryProps> = ({
 
           {/* Bulk Spreadsheet Table */}
           <div className="bg-white rounded-2xl border border-zinc-200 shadow-xs overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse text-xs">
+            <div className="text-[11px] text-zinc-500 font-medium px-4 py-2 sm:hidden border-b border-zinc-100 bg-zinc-50 flex items-center justify-between">
+              <span>👉 সম্পূর্ণ শিট দেখতে ডানে স্ক্রোল করুন</span>
+            </div>
+            <div className="overflow-x-auto w-full">
+              <table className="w-full text-left border-collapse text-xs min-w-[900px]">
                 <thead>
                   <tr className="bg-zinc-100 text-zinc-700 font-semibold border-b border-zinc-200">
                     <th className="py-2.5 px-3 min-w-[180px] sticky left-0 z-10 bg-zinc-100">বইয়ের নাম</th>

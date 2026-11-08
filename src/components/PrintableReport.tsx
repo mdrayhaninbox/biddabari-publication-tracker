@@ -418,7 +418,7 @@ export const PrintableReport: React.FC<PrintableReportProps> = ({
           </h3>
 
           <div className="overflow-x-auto w-full border border-zinc-200 rounded-xl">
-            <table className="w-full text-left border-collapse text-xs">
+            <table className="w-full min-w-[700px] text-left border-collapse text-xs">
               <thead>
                 <tr className="bg-zinc-50 border-b border-zinc-200 font-bold text-zinc-800">
                   <th className="py-2 px-3">বইয়ের নাম</th>
@@ -461,7 +461,7 @@ export const PrintableReport: React.FC<PrintableReportProps> = ({
           </h3>
 
           <div className="overflow-x-auto w-full border border-zinc-200 rounded-xl">
-            <table className="w-full text-left border-collapse text-xs">
+            <table className="w-full min-w-[700px] text-left border-collapse text-xs">
               <thead>
                 <tr className="bg-zinc-50 border-b border-zinc-200 font-bold text-zinc-800">
                   <th className="py-2 px-3">চ্যানেল / লাইব্রেরি</th>

@@ -70,10 +70,10 @@ export const AccountsDueLedger: React.FC<AccountsDueLedgerProps> = ({
         </div>
 
         {/* Sub-tab Switcher (Black & White) */}
-        <div className="flex bg-zinc-100 p-1 rounded-xl border border-zinc-200 self-start md:self-auto">
+        <div className="flex bg-zinc-100 p-1 rounded-xl border border-zinc-200 w-full sm:w-auto">
           <button
             onClick={() => setActiveSubTab('press')}
-            className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all ${
+            className={`flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-3 sm:px-4 py-2 rounded-lg text-xs font-bold transition-all ${
               activeSubTab === 'press'
                 ? 'bg-zinc-900 text-white shadow-xs'
                 : 'text-zinc-600 hover:text-zinc-900 hover:bg-zinc-200/50'
@@ -85,7 +85,7 @@ export const AccountsDueLedger: React.FC<AccountsDueLedgerProps> = ({
 
           <button
             onClick={() => setActiveSubTab('channels')}
-            className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all ${
+            className={`flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-3 sm:px-4 py-2 rounded-lg text-xs font-bold transition-all ${
               activeSubTab === 'channels'
                 ? 'bg-zinc-900 text-white shadow-xs'
                 : 'text-zinc-600 hover:text-zinc-900 hover:bg-zinc-200/50'
@@ -98,7 +98,7 @@ export const AccountsDueLedger: React.FC<AccountsDueLedgerProps> = ({
       </div>
 
       {/* Primary KPI Overview Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-2.5 sm:gap-3">
         
         {/* Total Press Bill */}
         <div className="bg-white p-4 rounded-xl border border-zinc-200 shadow-xs">
@@ -195,8 +195,12 @@ export const AccountsDueLedger: React.FC<AccountsDueLedgerProps> = ({
               </button>
             </div>
 
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse text-xs">
+            <div className="text-[11px] text-zinc-500 font-medium px-4 py-2 sm:hidden border-b border-zinc-100 bg-zinc-50 flex items-center justify-between">
+              <span>👉 পুরো টেবিল দেখতে ডানে স্ক্রোল করুন</span>
+            </div>
+
+            <div className="overflow-x-auto w-full">
+              <table className="w-full text-left border-collapse text-xs min-w-[850px]">
                 <thead>
                   <tr className="bg-zinc-100 text-zinc-900 font-bold border-b border-zinc-200">
                     <th className="py-2.5 px-3 text-center w-12">SL</th>
@@ -286,8 +290,8 @@ export const AccountsDueLedger: React.FC<AccountsDueLedgerProps> = ({
                 এখনও কোনো প্রেস পেমেন্ট এন্ট্রি করা হয়নি। উপরে "প্রেস পেমেন্ট ভাউচার এন্ট্রি" বাটনে ক্লিক করে যুক্ত করুন।
               </div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse text-xs">
+              <div className="overflow-x-auto w-full">
+                <table className="w-full text-left border-collapse text-xs min-w-[700px]">
                   <thead>
                     <tr className="bg-zinc-50 text-zinc-800 font-semibold border-b border-zinc-200">
                       <th className="py-2.5 px-3">তারিখ</th>
@@ -436,8 +440,12 @@ export const AccountsDueLedger: React.FC<AccountsDueLedgerProps> = ({
               </button>
             </div>
 
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse text-xs">
+            <div className="text-[11px] text-zinc-500 font-medium px-4 py-2 sm:hidden border-b border-zinc-100 bg-zinc-50 flex items-center justify-between">
+              <span>👉 পুরো টেবিল দেখতে ডানে স্ক্রোল করুন</span>
+            </div>
+
+            <div className="overflow-x-auto w-full">
+              <table className="w-full text-left border-collapse text-xs min-w-[850px]">
                 <thead>
                   <tr className="bg-zinc-100 text-zinc-900 font-bold border-b border-zinc-200">
                     <th className="py-2.5 px-3 min-w-[200px]">চ্যানেল / লাইব্রেরি</th>
@@ -548,8 +556,8 @@ export const AccountsDueLedger: React.FC<AccountsDueLedgerProps> = ({
                 এখনও কোনো কালেকশন এন্ট্রি করা হয়নি। উপরে "+ নতুন কালেকশন এন্ট্রি" বাটনে ক্লিক করে যুক্ত করুন।
               </div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse text-xs">
+              <div className="overflow-x-auto w-full">
+                <table className="w-full text-left border-collapse text-xs min-w-[700px]">
                   <thead>
                     <tr className="bg-zinc-50 text-zinc-800 font-semibold border-b border-zinc-200">
                       <th className="py-2.5 px-3">তারিখ</th>

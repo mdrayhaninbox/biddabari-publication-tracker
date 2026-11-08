@@ -33,7 +33,7 @@ const getMonthlyStorageKey = (year: number, month: number) =>
   `biddabari_books_data_v2_${year}-${String(month).padStart(2, '0')}`;
 
 export const App: React.FC = () => {
-  // UI Zoom state: default 75% compact view as requested
+  // UI Zoom state: default 75% compact view on desktop as requested
   const [uiZoom, setUiZoom] = useState<'75' | '100'>(() => {
     try {
       const savedZoom = localStorage.getItem(ZOOM_STORAGE_KEY);
@@ -44,13 +44,24 @@ export const App: React.FC = () => {
     return '75';
   });
 
+  // Responsive Zoom handler: Desktop (>=1024px) supports 75% compact view; Mobile/Tablet (<1024px) remains native 100%
   useEffect(() => {
-    try {
-      localStorage.setItem(ZOOM_STORAGE_KEY, uiZoom);
-      document.body.style.zoom = uiZoom === '75' ? '0.75' : '1';
-    } catch (e) {
-      console.error(e);
-    }
+    const applyZoom = () => {
+      try {
+        localStorage.setItem(ZOOM_STORAGE_KEY, uiZoom);
+        if (window.innerWidth >= 1024 && uiZoom === '75') {
+          document.body.style.zoom = '0.75';
+        } else {
+          document.body.style.zoom = '1';
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    };
+
+    applyZoom();
+    window.addEventListener('resize', applyZoom);
+    return () => window.removeEventListener('resize', applyZoom);
   }, [uiZoom]);
 
   // Selected Month & Year (Default to current active month: Nov 2026)
@@ -455,7 +466,7 @@ export const App: React.FC = () => {
       />
 
       {/* Main Content Area */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <main className="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6">
         
         {/* 1. Main Dashboard */}
         {activeTab === 'dashboard' && (
@@ -555,13 +566,13 @@ export const App: React.FC = () => {
 
       {/* Footer */}
       <footer className="print:hidden bg-white border-t border-zinc-200/80 py-4 mt-auto">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between text-xs text-zinc-500 gap-2">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between text-xs text-zinc-500 gap-2 text-center sm:text-left">
           <div>
             © {selectedYear} <b>বিদ্যাবাড়ি পাবলিকেশন (Biddabari Publication)</b>. সর্বস্বত্ব সংরক্ষিত। ({formatMonthYearBengali(selectedMonth, selectedYear)})
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3">
             <span>প্রেস পেমেন্ট ও চ্যানেল ডিউ ট্র্যাকিং সক্রিয়</span>
-            <span>•</span>
+            <span className="hidden sm:inline">•</span>
             <button
               onClick={() => exportBooksToExcel(books, selectedMonth, selectedYear)}
               className="text-zinc-900 hover:underline font-semibold"
