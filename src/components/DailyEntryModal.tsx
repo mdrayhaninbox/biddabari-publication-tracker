@@ -10,8 +10,8 @@ import {
   Gift, 
   CheckCircle2 
 } from 'lucide-react';
-import { BookRecord } from '../types/book';
-import { calculateBookMetrics, formatBDT, formatNumber, formatMonthYearBengali } from '../utils/calculations';
+import { BookRecord, ChannelConfig, DEFAULT_CHANNELS } from '../types/book';
+import { calculateBookMetrics, getBookChannelSales, formatBDT, formatNumber, formatMonthYearBengali } from '../utils/calculations';
 import { Language, tr } from '../utils/i18n';
 
 interface DailyEntryModalProps {
@@ -22,29 +22,13 @@ interface DailyEntryModalProps {
   onSaveDailyEntry: (
     bookId: string,
     day: number,
-    data: {
-      pressReceipt: number;
-      boibari: number;
-      rokomari: number;
-      wafilife: number;
-      othersOnline: number;
-      headOfficeOffline: number;
-      nilkhet: number;
-      sumona: number;
-      promise: number;
-      joystar: number;
-      returns: number;
-      marketing: number;
-      service: number;
-      adVideoMaking: number;
-      rd: number;
-      gift: number;
-    }
+    data: any
   ) => void;
   selectedMonth?: number;
   selectedYear?: number;
   daysInMonth?: number;
   language?: Language;
+  channels?: ChannelConfig[];
 }
 
 export const DailyEntryModal: React.FC<DailyEntryModalProps> = ({
@@ -57,6 +41,7 @@ export const DailyEntryModal: React.FC<DailyEntryModalProps> = ({
   selectedYear = 2026,
   daysInMonth = 30,
   language = 'bn',
+  channels = DEFAULT_CHANNELS,
 }) => {
   const [selectedBookId, setSelectedBookId] = useState<string>(initialBookId || books[0]?.id || '');
   const [day, setDay] = useState<number>(1);
@@ -81,6 +66,11 @@ export const DailyEntryModal: React.FC<DailyEntryModalProps> = ({
   const [rd, setRd] = useState<number>(0);
   const [gift, setGift] = useState<number>(0);
 
+  const effectiveChannels = channels && channels.length > 0 ? channels : DEFAULT_CHANNELS;
+  const customOnlineChannels = effectiveChannels.filter(c => c.type === 'online' && !['boibari', 'rokomari', 'wafilife', 'othersOnline'].includes(c.id));
+  const customOfflineChannels = effectiveChannels.filter(c => c.type === 'offline' && !['headOfficeSellOffline', 'nilkhetLibrary', 'sumonaLibrary', 'promiseLibrary', 'joystarLibrary'].includes(c.id));
+
+  const [customChannelSales, setCustomChannelSales] = useState<{ [channelId: string]: number }>({});
   const [savedSuccess, setSavedSuccess] = useState(false);
 
   useEffect(() => {
@@ -108,9 +98,16 @@ export const DailyEntryModal: React.FC<DailyEntryModalProps> = ({
       setAdVideoMaking(book.adVideoMaking || 0);
       setRd(book.rd || 0);
       setGift(book.gift || 0);
+
+      const customMap: { [channelId: string]: number } = {};
+      [...customOnlineChannels, ...customOfflineChannels].forEach(ch => {
+        const map = getBookChannelSales(book, ch.id);
+        customMap[ch.id] = map[day] || 0;
+      });
+      setCustomChannelSales(customMap);
     }
     setSavedSuccess(false);
-  }, [selectedBookId, day, books]);
+  }, [selectedBookId, day, books, channels]);
 
   if (!isOpen) return null;
 
@@ -137,8 +134,10 @@ export const DailyEntryModal: React.FC<DailyEntryModalProps> = ({
   const currentMetrics = currentBook ? calculateBookMetrics(currentBook) : null;
 
   // Day calculations
-  const dayOnlineSold = boibari + rokomari + wafilife + othersOnline;
-  const dayOfflineSold = headOfficeOffline + nilkhet + sumona + promise + joystar;
+  const customOnlineSum = customOnlineChannels.reduce((sum, ch) => sum + (customChannelSales[ch.id] || 0), 0);
+  const customOfflineSum = customOfflineChannels.reduce((sum, ch) => sum + (customChannelSales[ch.id] || 0), 0);
+  const dayOnlineSold = boibari + rokomari + wafilife + othersOnline + customOnlineSum;
+  const dayOfflineSold = headOfficeOffline + nilkhet + sumona + promise + joystar + customOfflineSum;
   const dayTotalSold = dayOnlineSold + dayOfflineSold;
   const dayRevenue = dayTotalSold * (currentMetrics?.perBookAmount || 0);
   const dayProfit = dayTotalSold * (currentMetrics?.profitPerBook || 0);
@@ -164,6 +163,18 @@ export const DailyEntryModal: React.FC<DailyEntryModalProps> = ({
       adVideoMaking: Number(adVideoMaking) || 0,
       rd: Number(rd) || 0,
       gift: Number(gift) || 0,
+      channelSales: {
+        boibari,
+        rokomari,
+        wafilife,
+        othersOnline,
+        headOfficeSellOffline: headOfficeOffline,
+        nilkhetLibrary: nilkhet,
+        sumonaLibrary: sumona,
+        promiseLibrary: promise,
+        joystarLibrary: joystar,
+        ...customChannelSales,
+      },
     });
 
     setSavedSuccess(true);
@@ -346,6 +357,21 @@ export const DailyEntryModal: React.FC<DailyEntryModalProps> = ({
                     className="w-full text-sm font-bold border border-zinc-300 rounded-lg p-2 focus:ring-2 focus:ring-zinc-900 font-mono"
                   />
                 </div>
+                {customOnlineChannels.map((ch) => (
+                  <div key={ch.id}>
+                    <label className="block text-xs text-zinc-700 mb-1 font-semibold truncate" title={ch.name}>
+                      {language === 'bn' ? ch.name : (ch.nameEn || ch.name)}
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      value={customChannelSales[ch.id] || ''}
+                      onChange={(e) => setCustomChannelSales(prev => ({ ...prev, [ch.id]: Math.max(0, parseInt(e.target.value) || 0) }))}
+                      placeholder="0"
+                      className="w-full text-sm font-bold border border-zinc-300 rounded-lg p-2 focus:ring-2 focus:ring-zinc-900 font-mono"
+                    />
+                  </div>
+                ))}
               </div>
             </div>
 
@@ -411,6 +437,21 @@ export const DailyEntryModal: React.FC<DailyEntryModalProps> = ({
                     className="w-full text-sm font-bold border border-zinc-300 rounded-lg p-2 focus:ring-2 focus:ring-zinc-900 font-mono"
                   />
                 </div>
+                {customOfflineChannels.map((ch) => (
+                  <div key={ch.id}>
+                    <label className="block text-xs text-zinc-700 mb-1 font-semibold truncate" title={ch.name}>
+                      {language === 'bn' ? ch.name : (ch.nameEn || ch.name)}
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      value={customChannelSales[ch.id] || ''}
+                      onChange={(e) => setCustomChannelSales(prev => ({ ...prev, [ch.id]: Math.max(0, parseInt(e.target.value) || 0) }))}
+                      placeholder="0"
+                      className="w-full text-sm font-bold border border-zinc-300 rounded-lg p-2 focus:ring-2 focus:ring-zinc-900 font-mono"
+                    />
+                  </div>
+                ))}
               </div>
             </div>
 

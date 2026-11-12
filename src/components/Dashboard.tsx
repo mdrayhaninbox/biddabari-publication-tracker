@@ -9,10 +9,12 @@ import {
   ArrowUpRight, 
   Globe, 
   Store, 
-  Filter
+  Filter,
+  PlusCircle,
+  Edit2
 } from 'lucide-react';
-import { BookRecord } from '../types/book';
-import { calculateBookMetrics, formatBDT, formatNumber, formatMonthYearBengali } from '../utils/calculations';
+import { BookRecord, ChannelConfig, DEFAULT_CHANNELS } from '../types/book';
+import { calculateBookMetrics, getBookChannelSales, sumDaily, formatBDT, formatNumber, formatMonthYearBengali } from '../utils/calculations';
 import { Language, tr } from '../utils/i18n';
 
 interface DashboardProps {
@@ -23,6 +25,9 @@ interface DashboardProps {
   selectedYear?: number;
   daysInMonth?: number;
   language?: Language;
+  channels?: ChannelConfig[];
+  onOpenAddChannel?: (defaultType: 'online' | 'offline') => void;
+  onOpenEditChannel?: (channel: ChannelConfig) => void;
 }
 
 export const Dashboard: React.FC<DashboardProps> = ({
@@ -33,17 +38,33 @@ export const Dashboard: React.FC<DashboardProps> = ({
   selectedYear = 2026,
   daysInMonth = 30,
   language = 'bn',
+  channels = DEFAULT_CHANNELS,
+  onOpenAddChannel,
+  onOpenEditChannel,
 }) => {
   const [selectedBookFilter, setSelectedBookFilter] = useState<string>('all');
+
+  const effectiveChannels = channels && channels.length > 0 ? channels : DEFAULT_CHANNELS;
 
   const filteredBooks = selectedBookFilter === 'all' 
     ? books 
     : books.filter(b => b.id === selectedBookFilter);
 
+  // Dynamic channel totals map
+  const channelTotalsMap: { [channelId: string]: number } = {};
+  effectiveChannels.forEach(ch => {
+    let count = 0;
+    filteredBooks.forEach(b => {
+      const map = getBookChannelSales(b, ch.id);
+      count += sumDaily(map);
+    });
+    channelTotalsMap[ch.id] = count;
+  });
+
   // Aggregate metrics across filtered books
   const totals = filteredBooks.reduce(
     (acc, b) => {
-      const m = calculateBookMetrics(b);
+      const m = calculateBookMetrics(b, undefined, effectiveChannels);
       acc.totalHOStock += m.totalPresentStockHO;
       acc.totalPressStock += m.stockToFaridBhai;
       acc.totalPressOrder += m.totalOrderFaridBhai;
@@ -55,15 +76,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
       acc.totalPromo += m.totalPromo;
       acc.totalRevenue += m.totalRevenue;
       acc.totalProfit += m.totalNetProfit;
-      acc.boibari += m.boibariTotal;
-      acc.rokomari += m.rokomariTotal;
-      acc.wafilife += m.wafilifeTotal;
-      acc.othersOnline += m.othersOnlineTotal;
-      acc.hoOffline += m.headOfficeOfflineTotal;
-      acc.nilkhet += m.nilkhetTotal;
-      acc.sumona += m.sumonaTotal;
-      acc.promise += m.promiseTotal;
-      acc.joystar += m.joystarTotal;
       return acc;
     },
     {
@@ -78,37 +90,25 @@ export const Dashboard: React.FC<DashboardProps> = ({
       totalPromo: 0,
       totalRevenue: 0,
       totalProfit: 0,
-      boibari: 0,
-      rokomari: 0,
-      wafilife: 0,
-      othersOnline: 0,
-      hoOffline: 0,
-      nilkhet: 0,
-      sumona: 0,
-      promise: 0,
-      joystar: 0,
     }
   );
 
-  // Calculate day-by-day sales (1..31 dates)
+  // Calculate day-by-day sales (1..31 dates) across all channels
   const dailyAggregates: number[] = new Array(daysInMonth).fill(0);
   filteredBooks.forEach(b => {
     for (let d = 1; d <= daysInMonth; d++) {
-      const daySales = 
-        (b.boibari[d] || 0) +
-        (b.rokomari[d] || 0) +
-        (b.wafilife[d] || 0) +
-        (b.othersOnline[d] || 0) +
-        (b.headOfficeSellOffline[d] || 0) +
-        (b.nilkhetLibrary[d] || 0) +
-        (b.sumonaLibrary[d] || 0) +
-        (b.promiseLibrary[d] || 0) +
-        (b.joystarLibrary[d] || 0);
+      let daySales = 0;
+      effectiveChannels.forEach(ch => {
+        const map = getBookChannelSales(b, ch.id);
+        daySales += Number(map[d]) || 0;
+      });
       dailyAggregates[d - 1] += daySales;
     }
   });
 
   const maxDailySales = Math.max(...dailyAggregates, 1);
+  const onlineChannelsList = effectiveChannels.filter(c => c.type === 'online');
+  const offlineChannelsList = effectiveChannels.filter(c => c.type === 'offline');
 
   return (
     <div className="space-y-6">
@@ -248,12 +248,12 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
       </div>
 
-      {/* Visual Channel Breakdowns (Black & White Theme) */}
+      {/* Visual Channel Breakdowns (Black & White Theme + Dynamic Custom Channels) */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         
         {/* Online Channels Card */}
         <div className="bg-white p-5 rounded-2xl border border-zinc-200 shadow-xs">
-          <div className="flex items-center justify-between mb-4 pb-2 border-b border-zinc-100">
+          <div className="flex items-center justify-between mb-4 pb-2 border-b border-zinc-100 flex-wrap gap-2">
             <div className="flex items-center gap-2">
               <div className="p-2 bg-zinc-100 text-zinc-900 rounded-lg border border-zinc-200">
                 <Globe className="w-4 h-4" />
@@ -263,28 +263,52 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 <p className="text-xs text-zinc-500">{tr('ই-কমার্স প্ল্যাটফর্ম ভিত্তিক বিক্রয় খতিয়ান', 'E-commerce platform sales ledger', language)}</p>
               </div>
             </div>
-            <span className="text-xs font-bold text-zinc-900 bg-zinc-100 px-2.5 py-1 rounded-full border border-zinc-200">
-              {tr('মোট:', 'Total:', language)} {formatNumber(totals.totalOnlineSold, language)} {tr('কপি', 'copies', language)}
-            </span>
+
+            <div className="flex items-center gap-2">
+              {onOpenAddChannel && (
+                <button
+                  type="button"
+                  onClick={() => onOpenAddChannel('online')}
+                  className="inline-flex items-center gap-1 text-[11px] font-bold text-blue-600 bg-blue-50 hover:bg-blue-100 border border-blue-200 px-2.5 py-1 rounded-lg transition-colors shadow-2xs"
+                  title={tr('নতুন অনলাইন চ্যানেল যুক্ত করুন', 'Add New Online Channel', language)}
+                >
+                  <PlusCircle className="w-3.5 h-3.5" />
+                  <span>{tr('+ নতুন চ্যানেল', '+ Add Channel', language)}</span>
+                </button>
+              )}
+              <span className="text-xs font-bold text-zinc-900 bg-zinc-100 px-2.5 py-1 rounded-full border border-zinc-200 font-mono">
+                {tr('মোট:', 'Total:', language)} {formatNumber(totals.totalOnlineSold, language)} {tr('কপি', 'cps', language)}
+              </span>
+            </div>
           </div>
 
           <div className="space-y-3">
-            {[
-              { name: tr('বইবাড়ি (Boibari)', 'Boibari', language), count: totals.boibari, bar: 'bg-zinc-900' },
-              { name: tr('রকমারি (Rokomari)', 'Rokomari', language), count: totals.rokomari, bar: 'bg-zinc-700' },
-              { name: tr('ওয়াফিলাইফ (Wafilife)', 'Wafilife', language), count: totals.wafilife, bar: 'bg-zinc-500' },
-              { name: tr('অন্যান্য অনলাইন লাইব্রেরি', 'Others Online', language), count: totals.othersOnline, bar: 'bg-zinc-400' },
-            ].map(channel => {
-              const pct = totals.totalOnlineSold > 0 ? (channel.count / totals.totalOnlineSold) * 100 : 0;
+            {onlineChannelsList.map((ch) => {
+              const count = channelTotalsMap[ch.id] || 0;
+              const pct = totals.totalOnlineSold > 0 ? (count / totals.totalOnlineSold) * 100 : 0;
               return (
-                <div key={channel.name}>
-                  <div className="flex justify-between text-xs font-semibold text-zinc-800 mb-1">
-                    <span>{channel.name}</span>
-                    <span className="font-mono">{formatNumber(channel.count, language)} {tr('কপি', 'copies', language)} ({pct.toFixed(1)}%)</span>
+                <div key={ch.id} className="group">
+                  <div className="flex items-center justify-between text-xs font-semibold text-zinc-800 mb-1">
+                    <div className="flex items-center gap-1.5">
+                      <span>{language === 'bn' ? ch.name : (ch.nameEn || ch.name)}</span>
+                      {onOpenEditChannel && (
+                        <button
+                          type="button"
+                          onClick={() => onOpenEditChannel(ch)}
+                          className="opacity-0 group-hover:opacity-100 text-zinc-400 hover:text-blue-600 p-0.5 rounded transition-opacity"
+                          title={tr('চ্যানেল সম্পাদনা বা মুছুন', 'Edit or Delete Channel', language)}
+                        >
+                          <Edit2 className="w-3 h-3" />
+                        </button>
+                      )}
+                    </div>
+                    <span className="font-mono text-zinc-700">
+                      {formatNumber(count, language)} {tr('কপি', 'copies', language)} ({pct.toFixed(1)}%)
+                    </span>
                   </div>
                   <div className="w-full bg-zinc-100 h-2 rounded-full overflow-hidden border border-zinc-200/50">
                     <div
-                      className={`h-full ${channel.bar} rounded-full transition-all duration-500`}
+                      className="h-full bg-zinc-800 rounded-full transition-all duration-500"
                       style={{ width: `${pct}%` }}
                     />
                   </div>
@@ -296,7 +320,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
         {/* Offline & Library Channels Card */}
         <div className="bg-white p-5 rounded-2xl border border-zinc-200 shadow-xs">
-          <div className="flex items-center justify-between mb-4 pb-2 border-b border-zinc-100">
+          <div className="flex items-center justify-between mb-4 pb-2 border-b border-zinc-100 flex-wrap gap-2">
             <div className="flex items-center gap-2">
               <div className="p-2 bg-zinc-100 text-zinc-900 rounded-lg border border-zinc-200">
                 <Store className="w-4 h-4" />
@@ -306,31 +330,59 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 <p className="text-xs text-zinc-500">{tr('হেড অফিস ও ডিলার লাইব্রেরিভিত্তিক সরবরাহ', 'Head Office & library distribution', language)}</p>
               </div>
             </div>
-            <span className="text-xs font-bold text-zinc-900 bg-zinc-100 px-2.5 py-1 rounded-full border border-zinc-200">
-              {tr('মোট:', 'Total:', language)} {formatNumber(totals.totalOfflineSold, language)} {tr('কপি', 'copies', language)}
-            </span>
+
+            <div className="flex items-center gap-2">
+              {onOpenAddChannel && (
+                <button
+                  type="button"
+                  onClick={() => onOpenAddChannel('offline')}
+                  className="inline-flex items-center gap-1 text-[11px] font-bold text-blue-600 bg-blue-50 hover:bg-blue-100 border border-blue-200 px-2.5 py-1 rounded-lg transition-colors shadow-2xs"
+                  title={tr('নতুন অফলাইন / লাইব্রেরি চ্যানেল যুক্ত করুন', 'Add New Library Channel', language)}
+                >
+                  <PlusCircle className="w-3.5 h-3.5" />
+                  <span>{tr('+ নতুন লাইব্রেরি / চ্যানেল', '+ Add Library Channel', language)}</span>
+                </button>
+              )}
+              <span className="text-xs font-bold text-zinc-900 bg-zinc-100 px-2.5 py-1 rounded-full border border-zinc-200 font-mono">
+                {tr('মোট:', 'Total:', language)} {formatNumber(totals.totalOfflineSold, language)} {tr('কপি', 'cps', language)}
+              </span>
+            </div>
           </div>
 
           <div className="space-y-3">
-            {[
-              { name: tr('সুমনা লাইব্রেরি (Sumona Library)', 'Sumona Library', language), count: totals.sumona, bar: 'bg-zinc-900', note: tr('প্রেস থেকে সরাসরি', 'Direct from Press', language) },
-              { name: tr('প্রমিজ লাইব্রেরি (Promise Library)', 'Promise Library', language), count: totals.promise, bar: 'bg-zinc-700', note: tr('প্রেস থেকে সরাসরি', 'Direct from Press', language) },
-              { name: tr('জয়স্টার লাইব্রেরি (Joystar Library)', 'Joystar Library', language), count: totals.joystar, bar: 'bg-zinc-600', note: tr('প্রেস থেকে সরাসরি', 'Direct from Press', language) },
-              { name: tr('নীলক্ষেত লাইব্রেরি (Nilkhet)', 'Nilkhet Library', language), count: totals.nilkhet, bar: 'bg-zinc-500', note: tr('হেড অফিস সরবরাহ', 'Dispatched from HO', language) },
-              { name: tr('হেড অফিস সরাসরি অফলাইন বিক্রয়', 'Head Office Counter Sales', language), count: totals.hoOffline, bar: 'bg-zinc-400', note: tr('হেড অফিস কাউন্টার', 'HO Direct', language) },
-            ].map(lib => {
-              const pct = totals.totalOfflineSold > 0 ? (lib.count / totals.totalOfflineSold) * 100 : 0;
+            {offlineChannelsList.map((ch) => {
+              const count = channelTotalsMap[ch.id] || 0;
+              const pct = totals.totalOfflineSold > 0 ? (count / totals.totalOfflineSold) * 100 : 0;
+              const sourceNote = ch.source === 'press' 
+                ? tr('প্রেস থেকে সরাসরি', 'Direct from Press', language)
+                : tr('হেড অফিস সরবরাহ', 'Dispatched from HO', language);
+
               return (
-                <div key={lib.name}>
-                  <div className="flex justify-between text-xs font-semibold text-zinc-800 mb-1">
-                    <span>
-                      {lib.name} <span className="text-[10px] text-zinc-400 font-normal">({lib.note})</span>
+                <div key={ch.id} className="group">
+                  <div className="flex items-center justify-between text-xs font-semibold text-zinc-800 mb-1">
+                    <div className="flex items-center gap-1.5">
+                      <span>{language === 'bn' ? ch.name : (ch.nameEn || ch.name)}</span>
+                      <span className="text-[10px] text-zinc-400 font-normal">
+                        ({sourceNote})
+                      </span>
+                      {onOpenEditChannel && (
+                        <button
+                          type="button"
+                          onClick={() => onOpenEditChannel(ch)}
+                          className="opacity-0 group-hover:opacity-100 text-zinc-400 hover:text-blue-600 p-0.5 rounded transition-opacity"
+                          title={tr('চ্যানেল সম্পাদনা বা মুছুন', 'Edit or Delete Channel', language)}
+                        >
+                          <Edit2 className="w-3 h-3" />
+                        </button>
+                      )}
+                    </div>
+                    <span className="font-mono text-zinc-700">
+                      {formatNumber(count, language)} {tr('কপি', 'copies', language)} ({pct.toFixed(1)}%)
                     </span>
-                    <span className="font-mono">{formatNumber(lib.count, language)} {tr('কপি', 'copies', language)} ({pct.toFixed(1)}%)</span>
                   </div>
                   <div className="w-full bg-zinc-100 h-2 rounded-full overflow-hidden border border-zinc-200/50">
                     <div
-                      className={`h-full ${lib.bar} rounded-full transition-all duration-500`}
+                      className="h-full bg-zinc-700 rounded-full transition-all duration-500"
                       style={{ width: `${pct}%` }}
                     />
                   </div>

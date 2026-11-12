@@ -45,6 +45,12 @@ export interface BookRecord {
   updatedAt?: string;
   initialOrderDate?: string;
   initialLotName?: string;
+
+  // Dynamic / Custom Channel Daily Sales
+  customChannelSales?: {
+    [channelId: string]: DailyChannelSales;
+  };
+  [key: string]: any;
 }
 
 export type ActiveTab = 'dashboard' | 'period' | 'accounts' | 'entry' | 'books' | 'matrix' | 'reports';
@@ -102,6 +108,28 @@ export interface ChannelCollectionRecord {
   createdAt: string;
 }
 
+export interface ChannelConfig {
+  id: string; // unique key, e.g. 'boibari', 'nilkhetLibrary', 'chan_1234567'
+  name: string; // Bangla display name, e.g. 'নীলক্ষেত লাইব্রেরি'
+  nameEn?: string; // English display name, e.g. 'Nilkhet Library'
+  type: 'online' | 'offline';
+  source?: 'headOffice' | 'press'; // for offline: 'headOffice' (from HO) or 'press' (directly from Farid Bhai Press)
+  category?: string;
+  isSystemDefault?: boolean;
+}
+
+export const DEFAULT_CHANNELS: ChannelConfig[] = [
+  { id: 'boibari', name: 'বইবাড়ি (Boibari)', nameEn: 'Boibari', type: 'online', category: 'অনলাইন ই-কমার্স', isSystemDefault: true },
+  { id: 'rokomari', name: 'রকমারি (Rokomari)', nameEn: 'Rokomari', type: 'online', category: 'অনলাইন ই-কমার্স', isSystemDefault: true },
+  { id: 'wafilife', name: 'ওয়াফিলাইফ (Wafilife)', nameEn: 'Wafilife', type: 'online', category: 'অনলাইন ই-কমার্স', isSystemDefault: true },
+  { id: 'othersOnline', name: 'অন্যান্য অনলাইন লাইব্রেরি', nameEn: 'Others Online', type: 'online', category: 'অনলাইন প্ল্যাটফর্ম', isSystemDefault: true },
+  { id: 'sumonaLibrary', name: 'সুমনা লাইব্রেরি (Sumona Library)', nameEn: 'Sumona Library', type: 'offline', source: 'press', category: 'ডিলার লাইব্রেরি (প্রেস থেকে সরাসরি)', isSystemDefault: true },
+  { id: 'promiseLibrary', name: 'প্রমিজ লাইব্রেরি (Promise Library)', nameEn: 'Promise Library', type: 'offline', source: 'press', category: 'ডিলার লাইব্রেরি (প্রেস থেকে সরাসরি)', isSystemDefault: true },
+  { id: 'joystarLibrary', name: 'জয়স্টার লাইব্রেরি (Joystar Library)', nameEn: 'Joystar Library', type: 'offline', source: 'press', category: 'ডিলার লাইব্রেরি (প্রেস থেকে সরাসরি)', isSystemDefault: true },
+  { id: 'nilkhetLibrary', name: 'নীলক্ষেত লাইব্রেরি (Nilkhet)', nameEn: 'Nilkhet Library', type: 'offline', source: 'headOffice', category: 'লোকাল মার্কেট (হেড অফিস সরবরাহ)', isSystemDefault: true },
+  { id: 'headOfficeSellOffline', name: 'হেড অফিস সরাসরি অফলাইন বিক্রয়', nameEn: 'Head Office Direct Counter', type: 'offline', source: 'headOffice', category: 'হেড অফিস সরাসরি', isSystemDefault: true },
+];
+
 export interface ChannelInfo {
   key: string;
   name: string;
@@ -109,14 +137,9 @@ export interface ChannelInfo {
   category: string;
 }
 
-export const SALES_CHANNELS: ChannelInfo[] = [
-  { key: 'boibari', name: 'বইবাড়ি (Boibari)', type: 'online', category: 'অনলাইন ই-কমার্স' },
-  { key: 'rokomari', name: 'রকমারি (Rokomari)', type: 'online', category: 'অনলাইন ই-কমার্স' },
-  { key: 'wafilife', name: 'ওয়াফিলাইফ (Wafilife)', type: 'online', category: 'অনলাইন ই-কমার্স' },
-  { key: 'othersOnline', name: 'অন্যান্য অনলাইন লাইব্রেরি', type: 'online', category: 'অনলাইন প্ল্যাটফর্ম' },
-  { key: 'sumonaLibrary', name: 'সুমনা লাইব্রেরি (Sumona Library)', type: 'offline', category: 'ডিলার লাইব্রেরি (প্রেস সরবরাহ)' },
-  { key: 'promiseLibrary', name: 'প্রমিজ লাইব্রেরি (Promise Library)', type: 'offline', category: 'ডিলার লাইব্রেরি (প্রেস সরবরাহ)' },
-  { key: 'joystarLibrary', name: 'জয়স্টার লাইব্রেরি (Joystar Library)', type: 'offline', category: 'ডিলার লাইব্রেরি (প্রেস সরবরাহ)' },
-  { key: 'nilkhetLibrary', name: 'নীলক্ষেত লাইব্রেরি (Nilkhet)', type: 'offline', category: 'লোকাল মার্কেট (হেড অফিস)' },
-  { key: 'headOfficeSellOffline', name: 'হেড অফিস কাউন্টার বিক্রয়', type: 'offline', category: 'হেড অফিস সরাসরি' },
-];
+export const SALES_CHANNELS: ChannelInfo[] = DEFAULT_CHANNELS.map(c => ({
+  key: c.id,
+  name: c.name,
+  type: c.type,
+  category: c.category || (c.type === 'online' ? 'অনলাইন' : 'অফলাইন'),
+}));

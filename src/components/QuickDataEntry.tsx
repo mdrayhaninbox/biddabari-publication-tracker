@@ -11,8 +11,8 @@ import {
   RotateCcw,
   BookOpen
 } from 'lucide-react';
-import { BookRecord } from '../types/book';
-import { calculateBookMetrics, formatBDT, formatNumber, formatMonthYearBengali } from '../utils/calculations';
+import { BookRecord, ChannelConfig, DEFAULT_CHANNELS } from '../types/book';
+import { calculateBookMetrics, getBookChannelSales, formatBDT, formatNumber, formatMonthYearBengali } from '../utils/calculations';
 import { Language, tr } from '../utils/i18n';
 
 interface QuickDataEntryProps {
@@ -22,29 +22,13 @@ interface QuickDataEntryProps {
   onSaveDailyEntry: (
     bookId: string,
     day: number,
-    data: {
-      pressReceipt: number;
-      boibari: number;
-      rokomari: number;
-      wafilife: number;
-      othersOnline: number;
-      headOfficeOffline: number;
-      nilkhet: number;
-      sumona: number;
-      promise: number;
-      joystar: number;
-      returns: number;
-      marketing: number;
-      service: number;
-      adVideoMaking: number;
-      rd: number;
-      gift: number;
-    }
+    data: any
   ) => void;
   selectedMonth?: number;
   selectedYear?: number;
   daysInMonth?: number;
   language?: Language;
+  channels?: ChannelConfig[];
 }
 
 export const QuickDataEntry: React.FC<QuickDataEntryProps> = ({
@@ -56,6 +40,7 @@ export const QuickDataEntry: React.FC<QuickDataEntryProps> = ({
   selectedYear = 2026,
   daysInMonth = 30,
   language = 'bn',
+  channels = DEFAULT_CHANNELS,
 }) => {
   const [entryMode, setEntryMode] = useState<'single' | 'sheet'>('single');
 

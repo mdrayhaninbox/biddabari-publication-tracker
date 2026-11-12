@@ -10,14 +10,17 @@ import {
   X, 
   Globe, 
   Store,
-  Filter
+  Filter,
+  Edit2
 } from 'lucide-react';
 import { 
   BookRecord, 
   PressPaymentRecord, 
   ChannelCollectionRecord, 
   PressOrderRecord, 
-  PressDeliveryRecord 
+  PressDeliveryRecord,
+  ChannelConfig,
+  DEFAULT_CHANNELS
 } from '../types/book';
 import { 
   calculatePressAccounts, 
@@ -44,6 +47,9 @@ interface AccountsDueLedgerProps {
   selectedMonth?: number;
   selectedYear?: number;
   language?: Language;
+  channels?: ChannelConfig[];
+  onOpenAddChannel?: (defaultType: 'online' | 'offline') => void;
+  onOpenEditChannel?: (channel: ChannelConfig) => void;
 }
 
 export const AccountsDueLedger: React.FC<AccountsDueLedgerProps> = ({
@@ -61,13 +67,19 @@ export const AccountsDueLedger: React.FC<AccountsDueLedgerProps> = ({
   onAddChannelCollection,
   onDeleteChannelCollection,
   language = 'bn',
+  channels = DEFAULT_CHANNELS,
+  onOpenAddChannel,
+  onOpenEditChannel,
 }) => {
   const [activeSubTab, setActiveSubTab] = useState<'press' | 'orders' | 'channels'>('press');
   const [selectedBookFilter, setSelectedBookFilter] = useState<string>('all');
   const [voucherSearchQuery, setVoucherSearchQuery] = useState<string>('');
 
+  const effectiveChannels = channels && channels.length > 0 ? channels : DEFAULT_CHANNELS;
+
   // Compute live press financials (incorporating multi press orders)
   const pressAccounts = calculatePressAccounts(books, pressPayments, pressOrders);
+  const channelAccounts = calculateChannelDueAccounts(books, channelCollections, effectiveChannels);
 
   // Filter press orders for Press Order Management
   const filteredOrders = pressOrders.filter((o) => {
@@ -102,9 +114,6 @@ export const AccountsDueLedger: React.FC<AccountsDueLedgerProps> = ({
   const totalDeliveredCopies = filteredDeliveries.reduce((sum, d) => sum + (Number(d.quantity) || 0), 0);
   const totalOrdersBill = filteredOrders.reduce((sum, o) => sum + (Number(o.totalBill) || 0), 0);
   const remainingAtPress = Math.max(0, totalOrderedCopies - totalDeliveredCopies);
-
-  // Compute live channel dues & collections
-  const channelAccounts = calculateChannelDueAccounts(books, channelCollections);
 
   return (
     <div className="space-y-6 animate-in fade-in">
@@ -914,13 +923,25 @@ export const AccountsDueLedger: React.FC<AccountsDueLedgerProps> = ({
                 </p>
               </div>
 
-              <button
-                onClick={() => onAddChannelCollection()}
-                className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-white bg-zinc-900 hover:bg-black rounded-xl transition-all shadow-xs self-start sm:self-auto"
-              >
-                <PlusCircle className="w-3.5 h-3.5" />
-                <span>{tr('+ নতুন কালেকশন এন্ট্রি', '+ New Collection Entry', language)}</span>
-              </button>
+              <div className="flex items-center gap-2 flex-wrap self-start sm:self-auto">
+                {onOpenAddChannel && (
+                  <button
+                    type="button"
+                    onClick={() => onOpenAddChannel('offline')}
+                    className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-zinc-900 bg-zinc-100 hover:bg-zinc-200 border border-zinc-300 rounded-xl transition-all shadow-xs"
+                  >
+                    <PlusCircle className="w-3.5 h-3.5" />
+                    <span>{tr('+ নতুন চ্যানেল যোগ', '+ Add Channel', language)}</span>
+                  </button>
+                )}
+                <button
+                  onClick={() => onAddChannelCollection()}
+                  className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-white bg-zinc-900 hover:bg-black rounded-xl transition-all shadow-xs"
+                >
+                  <PlusCircle className="w-3.5 h-3.5" />
+                  <span>{tr('+ নতুন কালেকশন এন্ট্রি', '+ New Collection Entry', language)}</span>
+                </button>
+              </div>
             </div>
 
             <div className="text-[11px] text-zinc-500 font-medium px-4 py-2 sm:hidden border-b border-zinc-100 bg-zinc-50 flex items-center justify-between">
@@ -997,12 +1018,28 @@ export const AccountsDueLedger: React.FC<AccountsDueLedgerProps> = ({
                         </span>
                       </td>
                       <td className="py-3 px-3 text-center">
-                        <button
-                          onClick={() => onAddChannelCollection(ch.key)}
-                          className="text-[11px] font-bold text-zinc-800 hover:text-black bg-zinc-100 hover:bg-zinc-200 px-2.5 py-1 rounded-lg transition-colors border border-zinc-300"
-                        >
-                          {tr('আদায়', 'Collect', language)}
-                        </button>
+                        <div className="flex items-center justify-center gap-1.5">
+                          <button
+                            onClick={() => onAddChannelCollection(ch.key)}
+                            className="text-[11px] font-bold text-zinc-800 hover:text-black bg-zinc-100 hover:bg-zinc-200 px-2.5 py-1 rounded-lg transition-colors border border-zinc-300"
+                            title={tr('টাকা আদায়ের ভাউচার লিখুন', 'Record collection receipt', language)}
+                          >
+                            {tr('আদায়', 'Collect', language)}
+                          </button>
+                          {onOpenEditChannel && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const found = effectiveChannels.find(c => c.id === ch.key);
+                                if (found) onOpenEditChannel(found);
+                              }}
+                              className="p-1 text-zinc-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                              title={tr('চ্যানেল সম্পাদন বা মুছুন', 'Edit or Delete Channel', language)}
+                            >
+                              <Edit2 className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   ))}

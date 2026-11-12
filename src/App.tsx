@@ -5,7 +5,9 @@ import {
   PressPaymentRecord, 
   ChannelCollectionRecord, 
   PressOrderRecord, 
-  PressDeliveryRecord 
+  PressDeliveryRecord,
+  ChannelConfig,
+  DEFAULT_CHANNELS
 } from './types/book';
 import { INITIAL_BOOKS } from './data/initialBooks';
 import { 
@@ -29,12 +31,14 @@ import { AddPressPaymentModal } from './components/AddPressPaymentModal';
 import { AddPressOrderModal } from './components/AddPressOrderModal';
 import { AddPressDeliveryModal } from './components/AddPressDeliveryModal';
 import { AddChannelCollectionModal } from './components/AddChannelCollectionModal';
+import { AddEditChannelModal } from './components/AddEditChannelModal';
 import { exportBooksToExcel } from './utils/excelHandler';
 import { 
   getDaysInMonth, 
   createFreshMonthBooks, 
   formatMonthYearBengali,
-  setAppLanguage 
+  setAppLanguage,
+  setBookChannelDailySales
 } from './utils/calculations';
 import { Theme, Language } from './utils/i18n';
 
@@ -47,6 +51,7 @@ const PRESS_PAYMENTS_STORAGE_KEY = 'biddabari_press_payments_v4';
 const PRESS_ORDERS_STORAGE_KEY = 'biddabari_press_orders_v4';
 const PRESS_DELIVERIES_STORAGE_KEY = 'biddabari_press_deliveries_v4';
 const CHANNEL_COLLECTIONS_STORAGE_KEY = 'biddabari_channel_collections_v4';
+const CHANNELS_STORAGE_KEY = 'biddabari_sales_channels_v5';
 const THEME_STORAGE_KEY = 'biddabari_theme_v1';
 const LANGUAGE_STORAGE_KEY = 'biddabari_language_v1';
 
@@ -256,6 +261,20 @@ export const App: React.FC = () => {
     return INITIAL_PRESS_DELIVERIES;
   });
 
+  // State: Sales Channels (Dynamic Online & Offline Channels)
+  const [channels, setChannels] = useState<ChannelConfig[]>(() => {
+    try {
+      const saved = localStorage.getItem(CHANNELS_STORAGE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch (e) {
+      console.error(e);
+    }
+    return DEFAULT_CHANNELS;
+  });
+
   const [activeTab, setActiveTab] = useState<ActiveTab>('dashboard');
   const [selectedMatrixBookId, setSelectedMatrixBookId] = useState<string>(books[0]?.id || 'book-1');
 
@@ -280,6 +299,11 @@ export const App: React.FC = () => {
   const [pressDeliveryPreSelectedBookId, setPressDeliveryPreSelectedBookId] = useState<string | undefined>(undefined);
   const [isChannelCollectionModalOpen, setIsChannelCollectionModalOpen] = useState(false);
   const [selectedChannelForCollection, setSelectedChannelForCollection] = useState<string | undefined>(undefined);
+
+  // Channel Management Modal
+  const [isAddEditChannelOpen, setIsAddEditChannelOpen] = useState(false);
+  const [editingChannel, setEditingChannel] = useState<ChannelConfig | null>(null);
+  const [channelModalDefaultType, setChannelModalDefaultType] = useState<'online' | 'offline'>('offline');
 
   // Single Book Printing Pre-selection
   const [reportPreSelectedBookId, setReportPreSelectedBookId] = useState<string | undefined>(undefined);
@@ -340,6 +364,62 @@ export const App: React.FC = () => {
     }
   }, [channelCollections]);
 
+  // Auto-save Channels
+  useEffect(() => {
+    try {
+      localStorage.setItem(CHANNELS_STORAGE_KEY, JSON.stringify(channels));
+    } catch (e) {
+      console.error(e);
+    }
+  }, [channels]);
+
+  // Channel Actions (Add, Edit, Safe Delete)
+  const handleOpenAddChannel = (defaultType: 'online' | 'offline' = 'offline') => {
+    setEditingChannel(null);
+    setChannelModalDefaultType(defaultType);
+    setIsAddEditChannelOpen(true);
+  };
+
+  const handleOpenEditChannel = (channel: ChannelConfig) => {
+    setEditingChannel(channel);
+    setChannelModalDefaultType(channel.type);
+    setIsAddEditChannelOpen(true);
+  };
+
+  const handleSaveChannel = (channelData: Partial<ChannelConfig>) => {
+    if (editingChannel) {
+      setChannels(prev =>
+        prev.map(c => (c.id === editingChannel.id ? ({ ...c, ...channelData } as ChannelConfig) : c))
+      );
+    } else {
+      const newId = `channel_${Date.now()}`;
+      const newChannel: ChannelConfig = {
+        id: newId,
+        name: channelData.name || 'নতুন চ্যানেল',
+        nameEn: channelData.nameEn || '',
+        type: channelData.type || channelModalDefaultType,
+        source: channelData.source || 'headOffice',
+        category:
+          channelData.category ||
+          (channelData.type === 'online'
+            ? 'অনলাইন ই-কমার্স'
+            : channelData.source === 'press'
+            ? 'প্রেস সরাসরি'
+            : 'হেড অফিস সরবরাহ'),
+        isSystemDefault: false,
+      };
+      setChannels(prev => [...prev, newChannel]);
+    }
+    setIsAddEditChannelOpen(false);
+    setEditingChannel(null);
+  };
+
+  const handleDeleteChannel = (channelId: string) => {
+    setChannels(prev => prev.filter(c => c.id !== channelId));
+    setIsAddEditChannelOpen(false);
+    setEditingChannel(null);
+  };
+
   // Switch month and year safely
   const handleSelectPeriod = (newMonth: number, newYear: number) => {
     try {
@@ -395,13 +475,14 @@ export const App: React.FC = () => {
       adVideoMaking: number;
       rd: number;
       gift: number;
+      channelSales?: { [channelId: string]: number };
     }
   ) => {
     setBooks(prev =>
       prev.map(b => {
         if (b.id !== bookId) return b;
 
-        return {
+        let updatedBook: BookRecord = {
           ...b,
           pressDailyReceipts: { ...b.pressDailyReceipts, [day]: data.pressReceipt },
           boibari: { ...b.boibari, [day]: data.boibari },
@@ -421,6 +502,14 @@ export const App: React.FC = () => {
           gift: data.gift,
           updatedAt: new Date().toISOString(),
         };
+
+        if (data.channelSales) {
+          Object.entries(data.channelSales).forEach(([chId, qty]) => {
+            updatedBook = setBookChannelDailySales(updatedBook, chId, day, Number(qty) || 0);
+          });
+        }
+
+        return updatedBook;
       })
     );
   };
@@ -430,13 +519,9 @@ export const App: React.FC = () => {
     setBooks(prev =>
       prev.map(b => {
         if (b.id !== bookId) return b;
-        const currentChannelMap = (b as any)[channelKey] || {};
+        const updated = setBookChannelDailySales(b, channelKey, day, value);
         return {
-          ...b,
-          [channelKey]: {
-            ...currentChannelMap,
-            [day]: value,
-          },
+          ...updated,
           updatedAt: new Date().toISOString(),
         };
       })
@@ -644,6 +729,7 @@ export const App: React.FC = () => {
       setPressDeliveries([]);
       setPressPayments([]);
       setChannelCollections([]);
+      setChannels(DEFAULT_CHANNELS);
       alert('সকল ডেমো ডেটা সফলভাবে মুছে শূন্য (০) করা হয়েছে। এখন নতুন বই যুক্ত করে হিসাব শুরু করুন।');
     }
   };
@@ -748,6 +834,9 @@ export const App: React.FC = () => {
             selectedYear={selectedYear}
             daysInMonth={daysInMonth}
             language={language}
+            channels={channels}
+            onOpenAddChannel={handleOpenAddChannel}
+            onOpenEditChannel={handleOpenEditChannel}
           />
         )}
 
@@ -785,6 +874,9 @@ export const App: React.FC = () => {
             selectedMonth={selectedMonth}
             selectedYear={selectedYear}
             language={language}
+            channels={channels}
+            onOpenAddChannel={handleOpenAddChannel}
+            onOpenEditChannel={handleOpenEditChannel}
           />
         )}
 
@@ -799,6 +891,7 @@ export const App: React.FC = () => {
             selectedYear={selectedYear}
             daysInMonth={daysInMonth}
             language={language}
+            channels={channels}
           />
         )}
 
@@ -831,6 +924,7 @@ export const App: React.FC = () => {
             selectedYear={selectedYear}
             daysInMonth={daysInMonth}
             language={language}
+            channels={channels}
           />
         )}
 
@@ -847,6 +941,7 @@ export const App: React.FC = () => {
             channelCollections={channelCollections}
             initialSelectedBookId={reportPreSelectedBookId}
             language={language}
+            channels={channels}
           />
         )}
       </main>
@@ -889,6 +984,7 @@ export const App: React.FC = () => {
         selectedYear={selectedYear}
         daysInMonth={daysInMonth}
         language={language}
+        channels={channels}
       />
 
       <AddEditBookModal
@@ -946,6 +1042,22 @@ export const App: React.FC = () => {
         onClose={() => setIsChannelCollectionModalOpen(false)}
         onSaveCollection={handleAddChannelCollection}
         initialChannelKey={selectedChannelForCollection}
+        language={language}
+      />
+
+      {/* Add / Edit Channel Modal (With Safe Deletion Guard) */}
+      <AddEditChannelModal
+        isOpen={isAddEditChannelOpen}
+        onClose={() => {
+          setIsAddEditChannelOpen(false);
+          setEditingChannel(null);
+        }}
+        editingChannel={editingChannel}
+        defaultType={channelModalDefaultType}
+        onSaveChannel={handleSaveChannel}
+        onDeleteChannel={handleDeleteChannel}
+        books={books}
+        channelCollections={channelCollections}
         language={language}
       />
 

@@ -1,4 +1,13 @@
-import { BookRecord, DailyChannelSales, PressPaymentRecord, ChannelCollectionRecord, PressOrderRecord, SALES_CHANNELS } from '../types/book';
+import { 
+  BookRecord, 
+  DailyChannelSales, 
+  PressPaymentRecord, 
+  ChannelCollectionRecord, 
+  PressOrderRecord, 
+  ChannelConfig, 
+  DEFAULT_CHANNELS, 
+  SALES_CHANNELS 
+} from '../types/book';
 
 export function sumDaily(salesMap: DailyChannelSales = {}): number {
   if (!salesMap) return 0;
@@ -9,7 +18,53 @@ export function getDailyTotalForDay(salesMap: DailyChannelSales = {}, day: numbe
   return Number(salesMap[day]) || 0;
 }
 
-export function calculateBookMetrics(book: BookRecord, pressOrders?: PressOrderRecord[]) {
+export function getBookChannelSales(book: BookRecord, channelId: string): DailyChannelSales {
+  if (book.customChannelSales && book.customChannelSales[channelId]) {
+    return book.customChannelSales[channelId];
+  }
+  if ((book as any)[channelId]) {
+    return (book as any)[channelId];
+  }
+  return {};
+}
+
+export function setBookChannelDailySales(
+  book: BookRecord, 
+  channelId: string, 
+  day: number, 
+  qty: number
+): BookRecord {
+  const standardProps = [
+    'boibari', 'rokomari', 'wafilife', 'othersOnline',
+    'headOfficeSellOffline', 'nilkhetLibrary',
+    'sumonaLibrary', 'promiseLibrary', 'joystarLibrary'
+  ];
+  if (standardProps.includes(channelId)) {
+    return {
+      ...book,
+      [channelId]: {
+        ...((book as any)[channelId] || {}),
+        [day]: qty,
+      },
+    };
+  }
+  return {
+    ...book,
+    customChannelSales: {
+      ...book.customChannelSales,
+      [channelId]: {
+        ...(book.customChannelSales?.[channelId] || {}),
+        [day]: qty,
+      },
+    },
+  };
+}
+
+export function calculateBookMetrics(
+  book: BookRecord, 
+  pressOrders?: PressOrderRecord[],
+  channelsList: ChannelConfig[] = DEFAULT_CHANNELS
+) {
   const adCost = Number(book.adCost) || 0;
   const makingCost = Number(book.makingCost) || 0;
   const perBookAmount = Number(book.perBookAmount) || 0;
@@ -18,20 +73,40 @@ export function calculateBookMetrics(book: BookRecord, pressOrders?: PressOrderR
   // Press receipts
   const faridBhaiToHeadOffice = sumDaily(book.pressDailyReceipts);
 
-  // Online Sales (Boibari, Rokomari, Wafilife, Others Online)
-  const boibariTotal = sumDaily(book.boibari);
-  const rokomariTotal = sumDaily(book.rokomari);
-  const wafilifeTotal = sumDaily(book.wafilife);
-  const othersOnlineTotal = sumDaily(book.othersOnline);
-  const totalOnlineSell = boibariTotal + rokomariTotal + wafilifeTotal + othersOnlineTotal;
+  // Dynamic channel sales breakdown
+  const channelTotals: { [channelId: string]: number } = {};
+  channelsList.forEach(ch => {
+    const map = getBookChannelSales(book, ch.id);
+    channelTotals[ch.id] = sumDaily(map);
+  });
+
+  // Online Sales (All online channels)
+  const onlineChannels = channelsList.filter(c => c.type === 'online');
+  const totalOnlineSell = onlineChannels.reduce((sum, ch) => sum + (channelTotals[ch.id] || 0), 0);
 
   // Offline Sales
-  const headOfficeOfflineTotal = sumDaily(book.headOfficeSellOffline);
-  const nilkhetTotal = sumDaily(book.nilkhetLibrary);
-  const sumonaTotal = sumDaily(book.sumonaLibrary);
-  const promiseTotal = sumDaily(book.promiseLibrary);
-  const joystarTotal = sumDaily(book.joystarLibrary);
-  const totalOfflineSell = headOfficeOfflineTotal + nilkhetTotal + sumonaTotal + promiseTotal + joystarTotal;
+  const offlineChannels = channelsList.filter(c => c.type === 'offline');
+  const totalOfflineSell = offlineChannels.reduce((sum, ch) => sum + (channelTotals[ch.id] || 0), 0);
+
+  // Offline Dispatched directly from Press vs from Head Office
+  const offlinePressTotal = offlineChannels
+    .filter(ch => ch.source === 'press')
+    .reduce((sum, ch) => sum + (channelTotals[ch.id] || 0), 0);
+
+  const offlineHOTotal = offlineChannels
+    .filter(ch => ch.source !== 'press')
+    .reduce((sum, ch) => sum + (channelTotals[ch.id] || 0), 0);
+
+  // Legacy channel totals for backwards compatibility
+  const boibariTotal = channelTotals['boibari'] !== undefined ? channelTotals['boibari'] : sumDaily(book.boibari);
+  const rokomariTotal = channelTotals['rokomari'] !== undefined ? channelTotals['rokomari'] : sumDaily(book.rokomari);
+  const wafilifeTotal = channelTotals['wafilife'] !== undefined ? channelTotals['wafilife'] : sumDaily(book.wafilife);
+  const othersOnlineTotal = channelTotals['othersOnline'] !== undefined ? channelTotals['othersOnline'] : sumDaily(book.othersOnline);
+  const headOfficeOfflineTotal = channelTotals['headOfficeSellOffline'] !== undefined ? channelTotals['headOfficeSellOffline'] : sumDaily(book.headOfficeSellOffline);
+  const nilkhetTotal = channelTotals['nilkhetLibrary'] !== undefined ? channelTotals['nilkhetLibrary'] : sumDaily(book.nilkhetLibrary);
+  const sumonaTotal = channelTotals['sumonaLibrary'] !== undefined ? channelTotals['sumonaLibrary'] : sumDaily(book.sumonaLibrary);
+  const promiseTotal = channelTotals['promiseLibrary'] !== undefined ? channelTotals['promiseLibrary'] : sumDaily(book.promiseLibrary);
+  const joystarTotal = channelTotals['joystarLibrary'] !== undefined ? channelTotals['joystarLibrary'] : sumDaily(book.joystarLibrary);
 
   // Total Sold
   const totalSold = totalOnlineSell + totalOfflineSell;
@@ -54,11 +129,11 @@ export function calculateBookMetrics(book: BookRecord, pressOrders?: PressOrderR
     ? bookOrders.reduce((sum, o) => sum + (Number(o.orderQuantity) || 0), 0)
     : (Number(book.totalOrderFaridBhai) || 0);
 
-  const stockToFaridBhai = totalOrderFaridBhai - faridBhaiToHeadOffice - sumonaTotal - promiseTotal - joystarTotal;
+  const stockToFaridBhai = totalOrderFaridBhai - faridBhaiToHeadOffice - offlinePressTotal;
 
   // Stock at Head Office
-  // Formula: (Received from Press - Online Sales - HO Offline - Nilkhet - Promo copies) + Returns
-  const stockDispatchedFromHO = totalOnlineSell + headOfficeOfflineTotal + nilkhetTotal + totalPromo;
+  // Formula: (Received from Press - Online Sales - HO Dispatched Offline - Promo copies) + Returns
+  const stockDispatchedFromHO = totalOnlineSell + offlineHOTotal + totalPromo;
   const totalPresentStockHO = (faridBhaiToHeadOffice - stockDispatchedFromHO) + totalReturns;
 
   // Financials
@@ -627,27 +702,28 @@ export interface ChannelAccountsSummary {
 
 export function calculateChannelDueAccounts(
   books: BookRecord[],
-  channelCollections: ChannelCollectionRecord[]
+  channelCollections: ChannelCollectionRecord[],
+  channelsList: ChannelConfig[] = DEFAULT_CHANNELS
 ): ChannelAccountsSummary {
   let onlineBilled = 0;
   let onlineCollected = 0;
   let offlineBilled = 0;
   let offlineCollected = 0;
 
-  const channels: ChannelDueAccount[] = SALES_CHANNELS.map(ch => {
+  const channels: ChannelDueAccount[] = channelsList.map(ch => {
     // Total copies sold across all books for this channel
     let totalCopies = 0;
     let totalBilled = 0;
 
     books.forEach(b => {
-      const channelMap = (b as any)[ch.key] as DailyChannelSales || {};
+      const channelMap = getBookChannelSales(b, ch.id);
       const copies = sumDaily(channelMap);
       totalCopies += copies;
       totalBilled += copies * (Number(b.perBookAmount) || 0);
     });
 
     const totalCollected = channelCollections
-      .filter(c => c.channelKey === ch.key)
+      .filter(c => c.channelKey === ch.id)
       .reduce((sum, c) => sum + (Number(c.amount) || 0), 0);
 
     const dueAmount = Math.max(0, totalBilled - totalCollected);
@@ -670,10 +746,10 @@ export function calculateChannelDueAccounts(
     }
 
     return {
-      key: ch.key,
+      key: ch.id,
       name: ch.name,
       type: ch.type,
-      category: ch.category,
+      category: ch.category || (ch.type === 'online' ? 'অনলাইন' : 'অফলাইন'),
       totalCopies,
       totalBilled,
       totalCollected,

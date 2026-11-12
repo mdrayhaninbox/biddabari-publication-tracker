@@ -3,8 +3,8 @@ import {
   FileSpreadsheet, 
   ArrowLeft 
 } from 'lucide-react';
-import { BookRecord } from '../types/book';
-import { calculateBookMetrics, formatBDT, formatNumber, sumDaily, formatMonthYearBengali } from '../utils/calculations';
+import { BookRecord, ChannelConfig, DEFAULT_CHANNELS } from '../types/book';
+import { calculateBookMetrics, getBookChannelSales, formatBDT, formatNumber, sumDaily, formatMonthYearBengali } from '../utils/calculations';
 import { Language, tr } from '../utils/i18n';
 
 interface BookDetailMatrixProps {
@@ -17,6 +17,7 @@ interface BookDetailMatrixProps {
   selectedYear?: number;
   daysInMonth?: number;
   language?: Language;
+  channels?: ChannelConfig[];
 }
 
 export const BookDetailMatrix: React.FC<BookDetailMatrixProps> = ({
@@ -29,8 +30,10 @@ export const BookDetailMatrix: React.FC<BookDetailMatrixProps> = ({
   selectedYear = 2026,
   daysInMonth = 30,
   language = 'bn',
+  channels = DEFAULT_CHANNELS,
 }) => {
   const currentBook = books.find(b => b.id === selectedBookId) || books[0];
+  const effectiveChannels = channels && channels.length > 0 ? channels : DEFAULT_CHANNELS;
 
   // Inline edit state
   const [editingCell, setEditingCell] = useState<{ channelKey: string; day: number } | null>(null);
@@ -68,7 +71,7 @@ export const BookDetailMatrix: React.FC<BookDetailMatrixProps> = ({
     }
   };
 
-  // Channels to render in matrix
+  // Channels to render in matrix (Dynamic Channels support)
   const matrixRows = [
     {
       key: 'pressDailyReceipts',
@@ -76,60 +79,12 @@ export const BookDetailMatrix: React.FC<BookDetailMatrixProps> = ({
       salesMap: currentBook.pressDailyReceipts,
       bgHeader: 'bg-zinc-100 text-zinc-900',
     },
-    {
-      key: 'boibari',
-      title: tr('বইবাড়ি (Boibari Online)', 'Boibari Online', language),
-      salesMap: currentBook.boibari,
+    ...effectiveChannels.map((ch) => ({
+      key: ch.id,
+      title: language === 'bn' ? ch.name : (ch.nameEn || ch.name),
+      salesMap: getBookChannelSales(currentBook, ch.id),
       bgHeader: 'bg-white text-zinc-800',
-    },
-    {
-      key: 'rokomari',
-      title: tr('রকমারি (Rokomari Online)', 'Rokomari Online', language),
-      salesMap: currentBook.rokomari,
-      bgHeader: 'bg-white text-zinc-800',
-    },
-    {
-      key: 'wafilife',
-      title: tr('ওয়াফিলাইফ (Wafilife Online)', 'Wafilife Online', language),
-      salesMap: currentBook.wafilife,
-      bgHeader: 'bg-white text-zinc-800',
-    },
-    {
-      key: 'othersOnline',
-      title: tr('অন্যান্য অনলাইন লাইব্রেরি', 'Other Online Channels', language),
-      salesMap: currentBook.othersOnline,
-      bgHeader: 'bg-white text-zinc-800',
-    },
-    {
-      key: 'headOfficeSellOffline',
-      title: tr('হেড অফিস সেল অফলাইন (HO)', 'Head Office Offline', language),
-      salesMap: currentBook.headOfficeSellOffline,
-      bgHeader: 'bg-white text-zinc-800',
-    },
-    {
-      key: 'nilkhetLibrary',
-      title: tr('নীলক্ষেত লাইব্রেরি (Nilkhet)', 'Nilkhet Library', language),
-      salesMap: currentBook.nilkhetLibrary,
-      bgHeader: 'bg-white text-zinc-800',
-    },
-    {
-      key: 'sumonaLibrary',
-      title: tr('সুমনা লাইব্রেরি (Sumona - প্রেস)', 'Sumona Library', language),
-      salesMap: currentBook.sumonaLibrary,
-      bgHeader: 'bg-white text-zinc-800',
-    },
-    {
-      key: 'promiseLibrary',
-      title: tr('প্রমিজ লাইব্রেরি (Promise - প্রেস)', 'Promise Library', language),
-      salesMap: currentBook.promiseLibrary,
-      bgHeader: 'bg-white text-zinc-800',
-    },
-    {
-      key: 'joystarLibrary',
-      title: tr('জয়স্টার লাইব্রেরি (Joystar - প্রেস)', 'Joystar Library', language),
-      salesMap: currentBook.joystarLibrary,
-      bgHeader: 'bg-white text-zinc-800',
-    },
+    })),
     {
       key: 'dailyReturns',
       title: tr('দৈনিক রিটার্ন (Daily Return to HO)', 'Daily Return to Head Office', language),

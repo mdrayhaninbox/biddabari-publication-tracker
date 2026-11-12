@@ -20,7 +20,7 @@ import {
   Square,
   Settings2
 } from 'lucide-react';
-import { BookRecord, PressPaymentRecord, ChannelCollectionRecord, PressOrderRecord, PressDeliveryRecord } from '../types/book';
+import { BookRecord, PressPaymentRecord, ChannelCollectionRecord, PressOrderRecord, PressDeliveryRecord, ChannelConfig, DEFAULT_CHANNELS } from '../types/book';
 import { 
   calculateBookMetrics, 
   calculateDayBreakdown, 
@@ -50,6 +50,7 @@ interface PrintableReportProps {
   channelCollections?: ChannelCollectionRecord[];
   initialSelectedBookId?: string;
   language?: Language;
+  channels?: ChannelConfig[];
 }
 
 export type ReportType = 'monthly' | 'daily' | 'weekly' | 'quarterly' | 'half_yearly' | 'yearly' | 'custom';
@@ -67,7 +68,9 @@ export const PrintableReport: React.FC<PrintableReportProps> = ({
   channelCollections = [],
   initialSelectedBookId,
   language = 'bn',
+  channels = DEFAULT_CHANNELS,
 }) => {
+  const effectiveChannels = channels && channels.length > 0 ? channels : DEFAULT_CHANNELS;
   // Time period filter state
   const [reportType, setReportType] = useState<ReportType>('monthly');
   const [selectedDay, setSelectedDay] = useState<number>(1);
@@ -177,7 +180,7 @@ export const PrintableReport: React.FC<PrintableReportProps> = ({
 
   // Press accounts and Channel Dues for Effective Books
   const pressAccounts = calculatePressAccounts(effectiveBooks, pressPayments, pressOrders);
-  const channelAccounts = calculateChannelDueAccounts(effectiveBooks, channelCollections);
+  const channelAccounts = calculateChannelDueAccounts(effectiveBooks, channelCollections, effectiveChannels);
 
   // Filtered Press Payments for Effective Books
   const filteredPressPayments = React.useMemo(() => {
