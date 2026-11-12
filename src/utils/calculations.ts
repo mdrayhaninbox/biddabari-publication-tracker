@@ -129,19 +129,20 @@ export function getDaysInMonth(year: number, month: number): number {
   return new Date(year, month, 0).getDate();
 }
 
-export type AppLanguage = 'bn' | 'en';
-let currentAppLanguage: AppLanguage = 'bn';
+import { Language, setGlobalLanguage, getGlobalLanguage } from './i18n';
+
+export type AppLanguage = Language;
 
 export function setAppLanguage(lang: AppLanguage) {
-  currentAppLanguage = lang;
+  setGlobalLanguage(lang);
 }
 
 export function getAppLanguage(): AppLanguage {
-  return currentAppLanguage;
+  return getGlobalLanguage();
 }
 
 export function formatYearBengali(year: number, lang?: AppLanguage): string {
-  const activeLang = lang || currentAppLanguage;
+  const activeLang = lang || getAppLanguage();
   if (activeLang === 'en') return String(year);
   const bnDigits: { [k: string]: string } = {
     '0': '০', '1': '১', '2': '২', '3': '৩', '4': '৪',
@@ -151,7 +152,7 @@ export function formatYearBengali(year: number, lang?: AppLanguage): string {
 }
 
 export function formatMonthYearBengali(month: number, year: number, lang?: AppLanguage): string {
-  const activeLang = lang || currentAppLanguage;
+  const activeLang = lang || getAppLanguage();
   if (activeLang === 'en') {
     const enMonths = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
     return `${enMonths[month - 1] || month} ${year}`;
@@ -407,7 +408,7 @@ export function calculateWeekBookBreakdown(books: BookRecord[], startDay: number
 }
 
 export function formatBDT(amount: number, lang?: AppLanguage): string {
-  const activeLang = lang || currentAppLanguage;
+  const activeLang = lang || getAppLanguage();
   if (activeLang === 'en') {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
@@ -423,7 +424,7 @@ export function formatBDT(amount: number, lang?: AppLanguage): string {
 }
 
 export function formatNumber(num: number, lang?: AppLanguage): string {
-  const activeLang = lang || currentAppLanguage;
+  const activeLang = lang || getAppLanguage();
   if (activeLang === 'en') {
     return new Intl.NumberFormat('en-US').format(num);
   }

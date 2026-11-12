@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
-import { X, HandCoins, Store, Globe } from 'lucide-react';
+import { X, HandCoins } from 'lucide-react';
 import { ChannelCollectionRecord, PaymentMethod, SALES_CHANNELS } from '../types/book';
+import { Language, tr } from '../utils/i18n';
 
 interface AddChannelCollectionModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSaveCollection: (collection: Omit<ChannelCollectionRecord, 'id' | 'createdAt'>) => void;
   initialChannelKey?: string;
+  language?: Language;
 }
 
 export const AddChannelCollectionModal: React.FC<AddChannelCollectionModalProps> = ({
@@ -14,6 +16,7 @@ export const AddChannelCollectionModal: React.FC<AddChannelCollectionModalProps>
   onClose,
   onSaveCollection,
   initialChannelKey,
+  language = 'bn',
 }) => {
   const [date, setDate] = useState<string>(() => new Date().toISOString().split('T')[0]);
   const [channelKey, setChannelKey] = useState<string>(initialChannelKey || SALES_CHANNELS[0].key);
@@ -27,7 +30,7 @@ export const AddChannelCollectionModal: React.FC<AddChannelCollectionModalProps>
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!amount || Number(amount) <= 0) {
-      alert('অনুগ্রহ করে সঠিক আদায়ের পরিমাণ (টাকা) লিখুন');
+      alert(tr('অনুগ্রহ করে সঠিক আদায়ের পরিমাণ (টাকা) লিখুন', 'Please enter a valid collection amount', language));
       return;
     }
 
@@ -57,8 +60,12 @@ export const AddChannelCollectionModal: React.FC<AddChannelCollectionModalProps>
               <HandCoins className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="font-bold text-zinc-900 text-base">বিক্রয় বিল আদায় / কালেকশন এন্ট্রি</h3>
-              <p className="text-xs text-zinc-500">অনলাইন প্ল্যাটফর্ম বা অফলাইন লাইব্রেরি থেকে প্রাপ্ত টাকা যুক্ত করুন</p>
+              <h3 className="font-bold text-zinc-900 text-base">
+                {tr('বিক্রয় বিল আদায় / কালেকশন এন্ট্রি', 'Sales Collection Entry', language)}
+              </h3>
+              <p className="text-xs text-zinc-500">
+                {tr('অনলাইন প্ল্যাটফর্ম বা অফলাইন লাইব্রেরি থেকে প্রাপ্ত টাকা যুক্ত করুন', 'Record dues received from online channels or offline libraries', language)}
+              </p>
             </div>
           </div>
           <button
@@ -74,7 +81,7 @@ export const AddChannelCollectionModal: React.FC<AddChannelCollectionModalProps>
             {/* Date */}
             <div>
               <label className="block text-xs font-bold text-zinc-800 mb-1">
-                আদায়ের তারিখ *
+                {tr('আদায়ের তারিখ *', 'Collection Date *', language)}
               </label>
               <input
                 type="date"
@@ -88,21 +95,21 @@ export const AddChannelCollectionModal: React.FC<AddChannelCollectionModalProps>
             {/* Channel Selection */}
             <div>
               <label className="block text-xs font-bold text-zinc-800 mb-1">
-                চ্যানেল / লাইব্রেরি *
+                {tr('চ্যানেল / লাইব্রেরি *', 'Channel / Library *', language)}
               </label>
               <select
                 value={channelKey}
                 onChange={(e) => setChannelKey(e.target.value)}
                 className="w-full text-xs font-semibold border border-zinc-300 rounded-xl p-2.5 bg-zinc-50 focus:bg-white focus:ring-2 focus:ring-zinc-900"
               >
-                <optgroup label="🌐 অনলাইন চ্যানেলসমূহ">
+                <optgroup label={tr('🌐 অনলাইন চ্যানেলসমূহ', '🌐 Online Channels', language)}>
                   {SALES_CHANNELS.filter(c => c.type === 'online').map(c => (
                     <option key={c.key} value={c.key}>
                       {c.name}
                     </option>
                   ))}
                 </optgroup>
-                <optgroup label="🏪 অফলাইন ও লাইব্রেরিসমূহ">
+                <optgroup label={tr('🏪 অফলাইন ও লাইব্রেরিসমূহ', '🏪 Offline & Libraries', language)}>
                   {SALES_CHANNELS.filter(c => c.type === 'offline').map(c => (
                     <option key={c.key} value={c.key}>
                       {c.name}
@@ -117,13 +124,13 @@ export const AddChannelCollectionModal: React.FC<AddChannelCollectionModalProps>
             {/* Amount */}
             <div>
               <label className="block text-xs font-bold text-zinc-800 mb-1">
-                আদায়কৃত টাকা (৳) *
+                {tr('আদায়কৃত টাকা (৳) *', 'Collected Amount (৳) *', language)}
               </label>
               <input
                 type="number"
                 required
                 min="1"
-                placeholder="যেমন: ৫০,০০০"
+                placeholder={tr('যেমন: ৫০,০০০', 'e.g. 50,000', language)}
                 value={amount}
                 onChange={(e) => setAmount(e.target.value === '' ? '' : Number(e.target.value))}
                 className="w-full text-sm font-bold border border-zinc-300 rounded-xl p-2.5 bg-zinc-50 focus:bg-white focus:ring-2 focus:ring-zinc-900 font-mono"
@@ -133,19 +140,19 @@ export const AddChannelCollectionModal: React.FC<AddChannelCollectionModalProps>
             {/* Payment Method */}
             <div>
               <label className="block text-xs font-bold text-zinc-800 mb-1">
-                পেমেন্ট মাধ্যম *
+                {tr('পেমেন্ট মাধ্যম *', 'Payment Method *', language)}
               </label>
               <select
                 value={paymentMethod}
                 onChange={(e) => setPaymentMethod(e.target.value as PaymentMethod)}
                 className="w-full text-xs font-semibold border border-zinc-300 rounded-xl p-2.5 bg-zinc-50 focus:bg-white focus:ring-2 focus:ring-zinc-900"
               >
-                <option value="bank">ব্যাংক ট্রান্সফার (Bank Deposit/Transfer)</option>
-                <option value="cash">নগদ ক্যাশ (Cash)</option>
-                <option value="bkash">বিকাশ (bKash)</option>
-                <option value="nagad">নগদ (Nagad)</option>
-                <option value="check">ব্যাংক চেক (Cheque)</option>
-                <option value="other">অন্যান্য</option>
+                <option value="bank">{tr('ব্যাংক ট্রান্সফার (Bank Deposit/Transfer)', 'Bank Deposit/Transfer', language)}</option>
+                <option value="cash">{tr('নগদ ক্যাশ (Cash)', 'Cash', language)}</option>
+                <option value="bkash">{tr('বিকাশ (bKash)', 'bKash', language)}</option>
+                <option value="nagad">{tr('নগদ (Nagad)', 'Nagad', language)}</option>
+                <option value="check">{tr('ব্যাংক চেক (Cheque)', 'Cheque', language)}</option>
+                <option value="other">{tr('অন্যান্য', 'Other', language)}</option>
               </select>
             </div>
           </div>
@@ -153,11 +160,11 @@ export const AddChannelCollectionModal: React.FC<AddChannelCollectionModalProps>
           {/* Receipt No */}
           <div>
             <label className="block text-xs font-bold text-zinc-800 mb-1">
-              রশিদ / ইনভয়েস / ট্রানজেকশন আইডি (ঐচ্ছিক)
+              {tr('রশিদ / ইনভয়েস / ট্রানজেকশন আইডি (ঐচ্ছিক)', 'Receipt / Invoice / Trx ID (Optional)', language)}
             </label>
             <input
               type="text"
-              placeholder="যেমন: REC-2026-092 বা TrxID: 9X738KA"
+              placeholder={tr('যেমন: REC-2026-092 বা TrxID: 9X738KA', 'e.g. REC-2026-092 or TrxID: 9X738KA', language)}
               value={receiptNo}
               onChange={(e) => setReceiptNo(e.target.value)}
               className="w-full text-xs border border-zinc-300 rounded-xl p-2.5 bg-zinc-50 focus:bg-white focus:ring-2 focus:ring-zinc-900"
@@ -167,11 +174,11 @@ export const AddChannelCollectionModal: React.FC<AddChannelCollectionModalProps>
           {/* Notes */}
           <div>
             <label className="block text-xs font-bold text-zinc-800 mb-1">
-              নোট বা বিবরণ (ঐচ্ছিক)
+              {tr('নোট বা বিবরণ (ঐচ্ছিক)', 'Remarks or Notes (Optional)', language)}
             </label>
             <textarea
               rows={2}
-              placeholder="কালেকশন সংক্রান্ত বিস্তারিত..."
+              placeholder={tr('কালেকশন সংক্রান্ত বিস্তারিত...', 'Collection details or reference...', language)}
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               className="w-full text-xs border border-zinc-300 rounded-xl p-2.5 bg-zinc-50 focus:bg-white focus:ring-2 focus:ring-zinc-900"
@@ -185,13 +192,13 @@ export const AddChannelCollectionModal: React.FC<AddChannelCollectionModalProps>
               onClick={onClose}
               className="px-4 py-2 text-xs font-bold text-zinc-700 hover:text-black bg-zinc-100 hover:bg-zinc-200 rounded-xl transition-colors"
             >
-              বাতিল
+              {tr('বাতিল', 'Cancel', language)}
             </button>
             <button
               type="submit"
               className="px-5 py-2 text-xs font-bold text-white bg-zinc-900 hover:bg-black rounded-xl transition-colors shadow-xs"
             >
-              কালেকশন সংরক্ষণ করুন
+              {tr('কালেকশন সংরক্ষণ করুন', 'Save Collection', language)}
             </button>
           </div>
         </form>

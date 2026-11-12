@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
-import { X, PlusCircle, CreditCard } from 'lucide-react';
+import { X, CreditCard } from 'lucide-react';
 import { BookRecord, PressPaymentRecord, PaymentMethod } from '../types/book';
+import { Language, tr } from '../utils/i18n';
 
 interface AddPressPaymentModalProps {
   isOpen: boolean;
   onClose: () => void;
   books: BookRecord[];
   onSavePayment: (payment: Omit<PressPaymentRecord, 'id' | 'createdAt'>) => void;
+  language?: Language;
 }
 
 export const AddPressPaymentModal: React.FC<AddPressPaymentModalProps> = ({
@@ -14,6 +16,7 @@ export const AddPressPaymentModal: React.FC<AddPressPaymentModalProps> = ({
   onClose,
   books,
   onSavePayment,
+  language = 'bn',
 }) => {
   const [date, setDate] = useState<string>(() => new Date().toISOString().split('T')[0]);
   const [bookId, setBookId] = useState<string>(books[0]?.id || '');
@@ -27,7 +30,7 @@ export const AddPressPaymentModal: React.FC<AddPressPaymentModalProps> = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!amount || Number(amount) <= 0) {
-      alert('অনুগ্রহ করে সঠিক পেমেন্টের পরিমাণ (টাকা) লিখুন');
+      alert(tr('অনুগ্রহ করে সঠিক পেমেন্টের পরিমাণ (টাকা) লিখুন', 'Please enter a valid payment amount', language));
       return;
     }
 
@@ -36,7 +39,7 @@ export const AddPressPaymentModal: React.FC<AddPressPaymentModalProps> = ({
     onSavePayment({
       date,
       bookId: bookId || undefined,
-      bookName: selectedBook ? selectedBook.bookName : 'সার্বিক প্রেস অর্ডার',
+      bookName: selectedBook ? selectedBook.bookName : tr('সার্বিক প্রেস অর্ডার', 'General Press Orders', language),
       amount: Number(amount),
       paymentMethod,
       voucherNo: voucherNo.trim() || undefined,
@@ -57,8 +60,12 @@ export const AddPressPaymentModal: React.FC<AddPressPaymentModalProps> = ({
               <CreditCard className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="font-bold text-zinc-900 text-base">প্রেস পেমেন্ট ভাউচার এন্ট্রি</h3>
-              <p className="text-xs text-zinc-500">ফরিদ ভাই প্রেসে পরিশোধকৃত টাকার হিসাব লিপিবদ্ধ করুন</p>
+              <h3 className="font-bold text-zinc-900 text-base">
+                {tr('প্রেস পেমেন্ট ভাউচার এন্ট্রি', 'Enter Press Payment Voucher', language)}
+              </h3>
+              <p className="text-xs text-zinc-500">
+                {tr('ফরিদ ভাই প্রেসে পরিশোধকৃত টাকার হিসাব লিপিবদ্ধ করুন', 'Record payment made to Farid Bhai Press', language)}
+              </p>
             </div>
           </div>
           <button
@@ -74,7 +81,7 @@ export const AddPressPaymentModal: React.FC<AddPressPaymentModalProps> = ({
             {/* Date */}
             <div>
               <label className="block text-xs font-bold text-zinc-800 mb-1">
-                পেমেন্টের তারিখ *
+                {tr('পেমেন্টের তারিখ *', 'Payment Date *', language)}
               </label>
               <input
                 type="date"
@@ -88,14 +95,14 @@ export const AddPressPaymentModal: React.FC<AddPressPaymentModalProps> = ({
             {/* Book Selection */}
             <div>
               <label className="block text-xs font-bold text-zinc-800 mb-1">
-                বইয়ের নাম (খাত) *
+                {tr('বইয়ের নাম (খাত) *', 'Book Name (Account) *', language)}
               </label>
               <select
                 value={bookId}
                 onChange={(e) => setBookId(e.target.value)}
                 className="w-full text-xs font-semibold border border-zinc-300 rounded-xl p-2.5 bg-zinc-50 focus:bg-white focus:ring-2 focus:ring-zinc-900"
               >
-                <option value="">সার্বিক প্রেস চালান (All Books)</option>
+                <option value="">{tr('সার্বিক প্রেস চালান (All Books)', 'General Press Account (All Books)', language)}</option>
                 {books.map(b => (
                   <option key={b.id} value={b.id}>
                     {b.sl}. {b.bookName}
@@ -109,13 +116,13 @@ export const AddPressPaymentModal: React.FC<AddPressPaymentModalProps> = ({
             {/* Amount */}
             <div>
               <label className="block text-xs font-bold text-zinc-800 mb-1">
-                পরিশোধকৃত টাকা (৳) *
+                {tr('পরিশোধকৃত টাকা (৳) *', 'Amount Paid (৳) *', language)}
               </label>
               <input
                 type="number"
                 required
                 min="1"
-                placeholder="যেমন: ৫০,০০০"
+                placeholder={tr('যেমন: ৫০,০০০', 'e.g. 50,000', language)}
                 value={amount}
                 onChange={(e) => setAmount(e.target.value === '' ? '' : Number(e.target.value))}
                 className="w-full text-sm font-bold border border-zinc-300 rounded-xl p-2.5 bg-zinc-50 focus:bg-white focus:ring-2 focus:ring-zinc-900 font-mono"
@@ -125,19 +132,19 @@ export const AddPressPaymentModal: React.FC<AddPressPaymentModalProps> = ({
             {/* Payment Method */}
             <div>
               <label className="block text-xs font-bold text-zinc-800 mb-1">
-                পেমেন্ট মাধ্যম *
+                {tr('পেমেন্ট মাধ্যম *', 'Payment Method *', language)}
               </label>
               <select
                 value={paymentMethod}
                 onChange={(e) => setPaymentMethod(e.target.value as PaymentMethod)}
                 className="w-full text-xs font-semibold border border-zinc-300 rounded-xl p-2.5 bg-zinc-50 focus:bg-white focus:ring-2 focus:ring-zinc-900"
               >
-                <option value="bank">ব্যাংক ট্রান্সফার (Bank Transfer)</option>
-                <option value="cash">নগদ ক্যাশ (Cash)</option>
-                <option value="check">ব্যাংক চেক (Cheque)</option>
-                <option value="bkash">বিকাশ (bKash)</option>
-                <option value="nagad">নগদ (Nagad)</option>
-                <option value="other">অন্যান্য</option>
+                <option value="bank">{tr('ব্যাংক ট্রান্সফার (Bank Transfer)', 'Bank Transfer', language)}</option>
+                <option value="cash">{tr('নগদ ক্যাশ (Cash)', 'Cash', language)}</option>
+                <option value="check">{tr('ব্যাংক চেক (Cheque)', 'Cheque', language)}</option>
+                <option value="bkash">{tr('বিকাশ (bKash)', 'bKash', language)}</option>
+                <option value="nagad">{tr('নগদ (Nagad)', 'Nagad', language)}</option>
+                <option value="other">{tr('অন্যান্য', 'Other', language)}</option>
               </select>
             </div>
           </div>
@@ -145,11 +152,11 @@ export const AddPressPaymentModal: React.FC<AddPressPaymentModalProps> = ({
           {/* Voucher / Slip No */}
           <div>
             <label className="block text-xs font-bold text-zinc-800 mb-1">
-              ভাউচার / চেক / চালান নম্বর (ঐচ্ছিক)
+              {tr('ভাউচার / চেক / চালান নম্বর (ঐচ্ছিক)', 'Voucher / Cheque / Chalan No (Optional)', language)}
             </label>
             <input
               type="text"
-              placeholder="যেমন: PR-2026-004 বা চেক নং: ১২৩৪৫৬"
+              placeholder={tr('যেমন: PR-2026-004 বা চেক নং: ১২৩৪৫৬', 'e.g. PR-2026-004 or Cheque No: 123456', language)}
               value={voucherNo}
               onChange={(e) => setVoucherNo(e.target.value)}
               className="w-full text-xs border border-zinc-300 rounded-xl p-2.5 bg-zinc-50 focus:bg-white focus:ring-2 focus:ring-zinc-900"
@@ -159,11 +166,11 @@ export const AddPressPaymentModal: React.FC<AddPressPaymentModalProps> = ({
           {/* Notes */}
           <div>
             <label className="block text-xs font-bold text-zinc-800 mb-1">
-              বিবরণ বা নোট (ঐচ্ছিক)
+              {tr('বিবরণ বা নোট (ঐচ্ছিক)', 'Description or Notes (Optional)', language)}
             </label>
             <textarea
               rows={2}
-              placeholder="পেমেন্ট সংক্রান্ত কোনো বিশেষ নোট থাকলে লিখুন..."
+              placeholder={tr('পেমেন্ট সংক্রান্ত কোনো বিশেষ নোট থাকলে লিখুন...', 'Enter any special payment remarks...', language)}
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               className="w-full text-xs border border-zinc-300 rounded-xl p-2.5 bg-zinc-50 focus:bg-white focus:ring-2 focus:ring-zinc-900"
@@ -177,13 +184,13 @@ export const AddPressPaymentModal: React.FC<AddPressPaymentModalProps> = ({
               onClick={onClose}
               className="px-4 py-2 text-xs font-bold text-zinc-700 hover:text-black bg-zinc-100 hover:bg-zinc-200 rounded-xl transition-colors"
             >
-              বাতিল
+              {tr('বাতিল', 'Cancel', language)}
             </button>
             <button
               type="submit"
               className="px-5 py-2 text-xs font-bold text-white bg-zinc-900 hover:bg-black rounded-xl transition-colors shadow-xs"
             >
-              ভাউচার সংরক্ষণ করুন
+              {tr('ভাউচার সংরক্ষণ করুন', 'Save Voucher', language)}
             </button>
           </div>
         </form>

@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { BookRecord } from '../types/book';
 import { calculateBookMetrics, formatBDT, formatNumber, formatMonthYearBengali } from '../utils/calculations';
+import { Language, tr } from '../utils/i18n';
 
 interface DailyEntryModalProps {
   isOpen: boolean;
@@ -43,6 +44,7 @@ interface DailyEntryModalProps {
   selectedMonth?: number;
   selectedYear?: number;
   daysInMonth?: number;
+  language?: Language;
 }
 
 export const DailyEntryModal: React.FC<DailyEntryModalProps> = ({
@@ -54,6 +56,7 @@ export const DailyEntryModal: React.FC<DailyEntryModalProps> = ({
   selectedMonth = 11,
   selectedYear = 2026,
   daysInMonth = 30,
+  language = 'bn',
 }) => {
   const [selectedBookId, setSelectedBookId] = useState<string>(initialBookId || books[0]?.id || '');
   const [day, setDay] = useState<number>(1);
@@ -115,13 +118,15 @@ export const DailyEntryModal: React.FC<DailyEntryModalProps> = ({
     return (
       <div className="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
         <div className="bg-white rounded-2xl p-6 max-w-sm w-full text-center space-y-3 shadow-2xl border border-zinc-200">
-          <h3 className="font-bold text-zinc-900 text-sm">কোনো বই পাওয়া যায়নি</h3>
-          <p className="text-xs text-zinc-500">ডেটা এন্ট্রি করার আগে অনুগ্রহ করে "+ নতুন বই" বাটনে ক্লিক করে বই যুক্ত করুন।</p>
+          <h3 className="font-bold text-zinc-900 text-sm">{tr('কোনো বই পাওয়া যায়নি', 'No books found', language)}</h3>
+          <p className="text-xs text-zinc-500">
+            {tr('ডেটা এন্ট্রি করার আগে অনুগ্রহ করে "+ নতুন বই" বাটনে ক্লিক করে বই যুক্ত করুন।', 'Please click "+ New Book" to add a book before entering data.', language)}
+          </p>
           <button
             onClick={onClose}
             className="w-full py-2 bg-zinc-900 text-white rounded-lg text-xs font-bold hover:bg-black transition-colors"
           >
-            বন্ধ করুন
+            {tr('বন্ধ করুন', 'Close', language)}
           </button>
         </div>
       </div>
@@ -178,8 +183,12 @@ export const DailyEntryModal: React.FC<DailyEntryModalProps> = ({
               <CalendarPlus className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-base font-bold">তারিখ ভিত্তিক ডেটা এন্ট্রি ফরম</h3>
-              <p className="text-xs text-zinc-400">প্রতিদিনের সেলস, প্রেস চালান ও রিটার্ন লিপিবদ্ধ করুন</p>
+              <h3 className="text-base font-bold">
+                {tr('তারিখ ভিত্তিক ডেটা এন্ট্রি ফরম', 'Date-wise Data Entry Form', language)}
+              </h3>
+              <p className="text-xs text-zinc-400">
+                {tr('প্রতিদিনের সেলস, প্রেস চালান ও রিটার্ন লিপিবদ্ধ করুন', 'Record daily sales, press receipts, and returns', language)}
+              </p>
             </div>
           </div>
           <button
@@ -197,7 +206,7 @@ export const DailyEntryModal: React.FC<DailyEntryModalProps> = ({
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-zinc-50 p-4 rounded-xl border border-zinc-200">
               <div>
                 <label className="block text-xs font-bold text-zinc-800 mb-1.5">
-                  বই নির্বাচন করুন *
+                  {tr('বই নির্বাচন করুন *', 'Select Book *', language)}
                 </label>
                 <select
                   value={selectedBookId}
@@ -214,7 +223,11 @@ export const DailyEntryModal: React.FC<DailyEntryModalProps> = ({
 
               <div>
                 <label className="block text-xs font-bold text-zinc-800 mb-1.5">
-                  তারিখ নির্বাচন করুন (১লা থেকে {formatNumber(daysInMonth)} তারিখ • {formatMonthYearBengali(selectedMonth, selectedYear)}) *
+                  {tr(
+                    `তারিখ নির্বাচন করুন (১লা থেকে ${formatNumber(daysInMonth, language)} তারিখ • ${formatMonthYearBengali(selectedMonth, selectedYear, language)}) *`,
+                    `Select Date (Day 1 to ${formatNumber(daysInMonth, language)} • ${formatMonthYearBengali(selectedMonth, selectedYear, language)}) *`,
+                    language
+                  )}
                 </label>
                 <select
                   value={day}
@@ -223,7 +236,7 @@ export const DailyEntryModal: React.FC<DailyEntryModalProps> = ({
                 >
                   {Array.from({ length: daysInMonth }, (_, i) => i + 1).map(d => (
                     <option key={d} value={d}>
-                      {d} তারিখ ({d}তম দিন)
+                      {language === 'bn' ? `${d} তারিখ (${d}তম দিন)` : `Day ${d}`}
                     </option>
                   ))}
                 </select>
@@ -233,22 +246,22 @@ export const DailyEntryModal: React.FC<DailyEntryModalProps> = ({
             {/* Quick Live Summary of Selected Date */}
             <div className="bg-zinc-100 border border-zinc-200 rounded-xl p-3 flex flex-wrap items-center justify-between gap-3 text-xs">
               <span className="font-bold text-zinc-900">
-                {day} {formatMonthYearBengali(selectedMonth, selectedYear)} এর হিসাব:
+                {language === 'bn' ? `${day} ${formatMonthYearBengali(selectedMonth, selectedYear, language)} এর হিসাব:` : `Day ${day} Summary:`}
               </span>
               <span className="text-zinc-700">
-                অনলাইন: <b className="text-zinc-900">{formatNumber(dayOnlineSold)}</b> কপি
+                {tr('অনলাইন:', 'Online:', language)} <b className="text-zinc-900">{formatNumber(dayOnlineSold, language)}</b> {tr('কপি', 'copies', language)}
               </span>
               <span className="text-zinc-700">
-                অফলাইন: <b className="text-zinc-900">{formatNumber(dayOfflineSold)}</b> কপি
+                {tr('অফলাইন:', 'Offline:', language)} <b className="text-zinc-900">{formatNumber(dayOfflineSold, language)}</b> {tr('কপি', 'copies', language)}
               </span>
               <span className="text-zinc-700">
-                মোট বিক্রয়: <b className="text-zinc-900 font-bold">{formatNumber(dayTotalSold)}</b> কপি
+                {tr('মোট বিক্রয়:', 'Total Sold:', language)} <b className="text-zinc-900 font-bold">{formatNumber(dayTotalSold, language)}</b> {tr('কপি', 'copies', language)}
               </span>
               <span className="text-zinc-700">
-                সম্ভাব্য রাজস্ব: <b className="text-zinc-900">{formatBDT(dayRevenue)}</b>
+                {tr('সম্ভাব্য রাজস্ব:', 'Revenue:', language)} <b className="text-zinc-900">{formatBDT(dayRevenue, language)}</b>
               </span>
               <span className="text-zinc-700">
-                প্রাক্কলিত লাভ: <b className="text-zinc-900 font-bold">+{formatBDT(dayProfit)}</b>
+                {tr('প্রাক্কলিত লাভ:', 'Net Profit:', language)} <b className="text-zinc-900 font-bold">+{formatBDT(dayProfit, language)}</b>
               </span>
             </div>
 
@@ -256,12 +269,12 @@ export const DailyEntryModal: React.FC<DailyEntryModalProps> = ({
             <div className="border border-zinc-200 rounded-xl p-4 bg-white">
               <div className="flex items-center gap-2 mb-3 text-zinc-900 font-bold text-xs">
                 <Warehouse className="w-4 h-4 text-zinc-700" />
-                <span>১. ফরিদ ভাই প্রেস থেকে হেড অফিসে চালান গ্রহণ (Press Receipt)</span>
+                <span>{tr('১. ফরিদ ভাই প্রেস থেকে হেড অফিসে চালান গ্রহণ (Press Receipt)', '1. Press Delivery Received to Head Office (Chalan Receipt)', language)}</span>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs text-zinc-600 mb-1">
-                    {day} তারিখে প্রাপ্ত মোট বই (Farid Bhai to HO)
+                    {tr(`${day} তারিখে প্রাপ্ত মোট বই (Farid Bhai to HO)`, `Books received on Day ${day} (Press to HO)`, language)}
                   </label>
                   <input
                     type="number"
@@ -272,12 +285,12 @@ export const DailyEntryModal: React.FC<DailyEntryModalProps> = ({
                     className="w-full text-sm font-bold border border-zinc-300 rounded-lg p-2 focus:ring-2 focus:ring-zinc-900 font-mono"
                   />
                   <span className="text-[11px] text-zinc-400 mt-0.5 block font-mono">
-                    বর্তমান মোট প্রাপ্ত: {currentMetrics?.faridBhaiToHeadOffice || 0} কপি
+                    {tr('বর্তমান মোট প্রাপ্ত:', 'Total Received so far:', language)} {formatNumber(currentMetrics?.faridBhaiToHeadOffice || 0, language)} {tr('কপি', 'copies', language)}
                   </span>
                 </div>
                 <div className="p-3 bg-zinc-50 rounded-lg text-xs text-zinc-800 border border-zinc-200 flex flex-col justify-center">
-                  <span>প্রেসের মোট অর্ডার: <b>{formatNumber(currentMetrics?.totalOrderFaridBhai || 0)}</b> কপি</span>
-                  <span className="mt-0.5">প্রেসে বর্তমান স্টক: <b>{formatNumber(currentMetrics?.stockToFaridBhai || 0)}</b> কপি</span>
+                  <span>{tr('প্রেসের মোট অর্ডার:', 'Total Press Orders:', language)} <b>{formatNumber(currentMetrics?.totalOrderFaridBhai || 0, language)}</b> {tr('কপি', 'copies', language)}</span>
+                  <span className="mt-0.5">{tr('প্রেসে বর্তমান স্টক:', 'Remaining at Press:', language)} <b>{formatNumber(currentMetrics?.stockToFaridBhai || 0, language)}</b> {tr('কপি', 'copies', language)}</span>
                 </div>
               </div>
             </div>
@@ -286,11 +299,11 @@ export const DailyEntryModal: React.FC<DailyEntryModalProps> = ({
             <div className="border border-zinc-200 rounded-xl p-4 bg-white">
               <div className="flex items-center gap-2 mb-3 text-zinc-900 font-bold text-xs">
                 <Globe className="w-4 h-4 text-zinc-700" />
-                <span>২. অনলাইন প্ল্যাটফর্মে বিক্রয় ({day} তারিখের অনলাইন সেলস)</span>
+                <span>{tr(`২. অনলাইন প্ল্যাটফর্মে বিক্রয় (${day} তারিখের অনলাইন সেলস)`, `2. Online Sales (Day ${day})`, language)}</span>
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 <div>
-                  <label className="block text-xs text-zinc-700 mb-1 font-semibold">বইবাড়ি</label>
+                  <label className="block text-xs text-zinc-700 mb-1 font-semibold">{tr('বইবাড়ি', 'Boibari', language)}</label>
                   <input
                     type="number"
                     min="0"
@@ -301,7 +314,7 @@ export const DailyEntryModal: React.FC<DailyEntryModalProps> = ({
                   />
                 </div>
                 <div>
-                  <label className="block text-xs text-zinc-700 mb-1 font-semibold">রকমারি</label>
+                  <label className="block text-xs text-zinc-700 mb-1 font-semibold">{tr('রকমারি', 'Rokomari', language)}</label>
                   <input
                     type="number"
                     min="0"
@@ -312,7 +325,7 @@ export const DailyEntryModal: React.FC<DailyEntryModalProps> = ({
                   />
                 </div>
                 <div>
-                  <label className="block text-xs text-zinc-700 mb-1 font-semibold">ওয়াফিলাইফ</label>
+                  <label className="block text-xs text-zinc-700 mb-1 font-semibold">{tr('ওয়াফিলাইফ', 'Wafilife', language)}</label>
                   <input
                     type="number"
                     min="0"
@@ -323,7 +336,7 @@ export const DailyEntryModal: React.FC<DailyEntryModalProps> = ({
                   />
                 </div>
                 <div>
-                  <label className="block text-xs text-zinc-700 mb-1 font-semibold">অন্যান্য অনলাইন</label>
+                  <label className="block text-xs text-zinc-700 mb-1 font-semibold">{tr('অন্যান্য অনলাইন', 'Others Online', language)}</label>
                   <input
                     type="number"
                     min="0"
@@ -340,11 +353,11 @@ export const DailyEntryModal: React.FC<DailyEntryModalProps> = ({
             <div className="border border-zinc-200 rounded-xl p-4 bg-white">
               <div className="flex items-center gap-2 mb-3 text-zinc-900 font-bold text-xs">
                 <Store className="w-4 h-4 text-zinc-700" />
-                <span>৩. অফলাইন ও লাইব্রেরি বিক্রয় ({day} তারিখের অফলাইন সেলস)</span>
+                <span>{tr(`৩. অফলাইন ও লাইব্রেরি বিক্রয় (${day} তারিখের অফলাইন সেলস)`, `3. Offline & Library Sales (Day ${day})`, language)}</span>
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
                 <div>
-                  <label className="block text-xs text-zinc-700 mb-1 font-semibold">হেড অফিস সেল</label>
+                  <label className="block text-xs text-zinc-700 mb-1 font-semibold">{tr('হেড অফিস সেল', 'Head Office', language)}</label>
                   <input
                     type="number"
                     min="0"
@@ -355,7 +368,7 @@ export const DailyEntryModal: React.FC<DailyEntryModalProps> = ({
                   />
                 </div>
                 <div>
-                  <label className="block text-xs text-zinc-700 mb-1 font-semibold">নীলক্ষেত লাইব্রেরি</label>
+                  <label className="block text-xs text-zinc-700 mb-1 font-semibold">{tr('নীলক্ষেত লাইব্রেরি', 'Nilkhet', language)}</label>
                   <input
                     type="number"
                     min="0"
@@ -366,7 +379,7 @@ export const DailyEntryModal: React.FC<DailyEntryModalProps> = ({
                   />
                 </div>
                 <div>
-                  <label className="block text-xs text-zinc-700 mb-1 font-semibold">সুমনা (প্রেস)</label>
+                  <label className="block text-xs text-zinc-700 mb-1 font-semibold">{tr('সুমনা (প্রেস)', 'Sumona', language)}</label>
                   <input
                     type="number"
                     min="0"
@@ -377,7 +390,7 @@ export const DailyEntryModal: React.FC<DailyEntryModalProps> = ({
                   />
                 </div>
                 <div>
-                  <label className="block text-xs text-zinc-700 mb-1 font-semibold">প্রমিজ (প্রেস)</label>
+                  <label className="block text-xs text-zinc-700 mb-1 font-semibold">{tr('প্রমিজ (প্রেস)', 'Promise', language)}</label>
                   <input
                     type="number"
                     min="0"
@@ -388,7 +401,7 @@ export const DailyEntryModal: React.FC<DailyEntryModalProps> = ({
                   />
                 </div>
                 <div>
-                  <label className="block text-xs text-zinc-700 mb-1 font-semibold">জয়স্টার (প্রেস)</label>
+                  <label className="block text-xs text-zinc-700 mb-1 font-semibold">{tr('জয়স্টার (প্রেস)', 'Joystar', language)}</label>
                   <input
                     type="number"
                     min="0"
@@ -408,10 +421,10 @@ export const DailyEntryModal: React.FC<DailyEntryModalProps> = ({
               <div className="border border-zinc-200 rounded-xl p-4 bg-white">
                 <div className="flex items-center gap-2 mb-2 text-zinc-900 font-bold text-xs">
                   <RotateCcw className="w-4 h-4 text-zinc-700" />
-                  <span>৪. দৈনিক রিটার্ন ({day} তারিখে ফেরত আসা বই)</span>
+                  <span>{tr(`৪. দৈনিক রিটার্ন (${day} তারিখে ফেরত আসা বই)`, `4. Daily Returns (Day ${day})`, language)}</span>
                 </div>
                 <label className="block text-xs text-zinc-600 mb-1">
-                  হেড অফিসে ফেরত আসা বই (স্টকে যুক্ত হবে)
+                  {tr('হেড অফিসে ফেরত আসা বই (স্টকে যুক্ত হবে)', 'Books returned to Head Office (Added to stock)', language)}
                 </label>
                 <input
                   type="number"
@@ -427,11 +440,11 @@ export const DailyEntryModal: React.FC<DailyEntryModalProps> = ({
               <div className="border border-zinc-200 rounded-xl p-4 bg-white">
                 <div className="flex items-center gap-2 mb-2 text-zinc-900 font-bold text-xs">
                   <Gift className="w-4 h-4 text-zinc-700" />
-                  <span>৫. প্রমোশন ও ডিপার্টমেন্ট কপি</span>
+                  <span>{tr('৫. প্রমোশন ও ডিপার্টমেন্ট কপি', '5. Promo & Dept Copies', language)}</span>
                 </div>
                 <div className="grid grid-cols-5 gap-2">
                   <div>
-                    <label className="block text-[10px] text-zinc-500 mb-0.5">মার্কেটিং</label>
+                    <label className="block text-[10px] text-zinc-500 mb-0.5">{tr('মার্কেটিং', 'Mkt', language)}</label>
                     <input
                       type="number"
                       min="0"
@@ -441,7 +454,7 @@ export const DailyEntryModal: React.FC<DailyEntryModalProps> = ({
                     />
                   </div>
                   <div>
-                    <label className="block text-[10px] text-zinc-500 mb-0.5">সার্ভিস</label>
+                    <label className="block text-[10px] text-zinc-500 mb-0.5">{tr('সার্ভিস', 'Service', language)}</label>
                     <input
                       type="number"
                       min="0"
@@ -451,7 +464,7 @@ export const DailyEntryModal: React.FC<DailyEntryModalProps> = ({
                     />
                   </div>
                   <div>
-                    <label className="block text-[10px] text-zinc-500 mb-0.5">ভিডিও</label>
+                    <label className="block text-[10px] text-zinc-500 mb-0.5">{tr('ভিডিও', 'Video', language)}</label>
                     <input
                       type="number"
                       min="0"
@@ -471,7 +484,7 @@ export const DailyEntryModal: React.FC<DailyEntryModalProps> = ({
                     />
                   </div>
                   <div>
-                    <label className="block text-[10px] text-zinc-500 mb-0.5">উপহার</label>
+                    <label className="block text-[10px] text-zinc-500 mb-0.5">{tr('উপহার', 'Gift', language)}</label>
                     <input
                       type="number"
                       min="0"
@@ -492,11 +505,11 @@ export const DailyEntryModal: React.FC<DailyEntryModalProps> = ({
             {savedSuccess ? (
               <div className="flex items-center gap-1.5 text-xs text-zinc-900 font-bold animate-fade-in">
                 <CheckCircle2 className="w-4 h-4" />
-                <span>সফলভাবে {day} তারিখের ডাটা সংরক্ষিত হয়েছে!</span>
+                <span>{tr(`সফলভাবে ${day} তারিখের ডাটা সংরক্ষিত হয়েছে!`, `Successfully saved data for Day ${day}!`, language)}</span>
               </div>
             ) : (
               <span className="text-xs text-zinc-500">
-                সংরক্ষণ করলে তাৎক্ষণিক স্টক ও হিসাব আপডেট হবে
+                {tr('সংরক্ষণ করলে তাৎক্ষণিক স্টক ও হিসাব আপডেট হবে', 'Saving will immediately update stock and metrics', language)}
               </span>
             )}
 
@@ -506,14 +519,14 @@ export const DailyEntryModal: React.FC<DailyEntryModalProps> = ({
                 onClick={onClose}
                 className="px-4 py-2 text-xs font-semibold text-zinc-700 hover:bg-zinc-200 rounded-lg transition-colors"
               >
-                বাতিল
+                {tr('বাতিল', 'Cancel', language)}
               </button>
               <button
                 type="submit"
                 className="inline-flex items-center gap-1.5 px-5 py-2 text-xs font-bold text-white bg-zinc-900 hover:bg-black rounded-lg shadow-xs transition-colors"
               >
                 <Save className="w-4 h-4" />
-                <span>সংরক্ষণ করুন</span>
+                <span>{tr('সংরক্ষণ করুন', 'Save', language)}</span>
               </button>
             </div>
           </div>

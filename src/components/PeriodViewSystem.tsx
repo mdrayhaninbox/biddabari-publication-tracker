@@ -4,22 +4,11 @@ import {
   CalendarDays, 
   CalendarRange, 
   TrendingUp, 
-  Wallet, 
-  ShoppingBag, 
-  Warehouse, 
-  RotateCcw, 
-  ArrowRight, 
-  CalendarPlus,
-  Globe,
-  Store,
-  CheckCircle2, 
+  CalendarPlus, 
   ChevronLeft, 
   ChevronRight, 
-  Boxes,
-  Clock,
-  Layers,
-  CreditCard,
-  HandCoins,
+  Layers, 
+  Clock, 
   Filter
 } from 'lucide-react';
 import { BookRecord, PressPaymentRecord, ChannelCollectionRecord } from '../types/book';
@@ -27,18 +16,16 @@ import {
   calculateDayBreakdown, 
   calculateWeekBreakdowns, 
   calculateBookMetrics, 
-  calculatePressAccounts,
-  calculateChannelDueAccounts,
   formatBDT, 
-  formatNumber,
-  formatMonthYearBengali,
-  QUARTER_OPTIONS,
-  HALF_YEAR_OPTIONS,
-  createFreshMonthBooks,
-  getDaysInMonth,
-  BENGALI_MONTHS,
-  AVAILABLE_YEARS
+  formatNumber, 
+  formatMonthYearBengali, 
+  QUARTER_OPTIONS, 
+  HALF_YEAR_OPTIONS, 
+  createFreshMonthBooks, 
+  BENGALI_MONTHS, 
+  AVAILABLE_YEARS 
 } from '../utils/calculations';
+import { Language, tr } from '../utils/i18n';
 
 interface PeriodViewSystemProps {
   books: BookRecord[];
@@ -49,6 +36,7 @@ interface PeriodViewSystemProps {
   daysInMonth?: number;
   pressPayments?: PressPaymentRecord[];
   channelCollections?: ChannelCollectionRecord[];
+  language?: Language;
 }
 
 export type ViewPeriod = 'daily' | 'weekly' | 'monthly' | 'quarterly' | 'half_yearly' | 'yearly' | 'custom';
@@ -60,8 +48,7 @@ export const PeriodViewSystem: React.FC<PeriodViewSystemProps> = ({
   selectedMonth = 11,
   selectedYear = 2026,
   daysInMonth = 30,
-  pressPayments = [],
-  channelCollections = [],
+  language = 'bn',
 }) => {
   const [period, setPeriod] = useState<ViewPeriod>('daily');
   const [selectedDay, setSelectedDay] = useState<number>(1);
@@ -131,9 +118,7 @@ export const PeriodViewSystem: React.FC<PeriodViewSystemProps> = ({
     }
   );
 
-  // -------------------------------------------------------------
   // Aggregate Multi-Month / Custom Range Data
-  // -------------------------------------------------------------
   const getAggregatedDataForMonths = (monthsList: { year: number; month: number }[]) => {
     let totalSold = 0;
     let onlineSold = 0;
@@ -180,7 +165,13 @@ export const PeriodViewSystem: React.FC<PeriodViewSystemProps> = ({
         channels.hoOffline += m.headOfficeOfflineTotal;
 
         if (!bookStatsMap[b.id]) {
-          bookStatsMap[b.id] = { sl: b.sl, name: b.bookName, sold: 0, revenue: 0, profit: 0 };
+          bookStatsMap[b.id] = {
+            sl: b.sl,
+            name: b.bookName,
+            sold: 0,
+            revenue: 0,
+            profit: 0,
+          };
         }
         bookStatsMap[b.id].sold += m.totalSold;
         bookStatsMap[b.id].revenue += m.totalRevenue;
@@ -236,8 +227,9 @@ export const PeriodViewSystem: React.FC<PeriodViewSystemProps> = ({
     const mInfo = BENGALI_MONTHS.find(x => x.value === month);
     return {
       month,
-      name: mInfo ? mInfo.name : `${month}ম মাস`,
-      shortName: mInfo ? mInfo.shortName : `${month}ম`,
+      name: language === 'bn' 
+        ? (mInfo ? mInfo.name : `${month}ম মাস`)
+        : ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'][month - 1],
       sold,
       revenue: rev,
       profit: prof,
@@ -252,7 +244,6 @@ export const PeriodViewSystem: React.FC<PeriodViewSystemProps> = ({
       return getAggregatedDataForMonths([{ year: selectedYear, month: selectedMonth }]);
     }
 
-    // Determine involved months
     const involvedMonths: { year: number; month: number }[] = [];
     let cur = new Date(sDate.getFullYear(), sDate.getMonth(), 1);
     const endLimit = new Date(eDate.getFullYear(), eDate.getMonth(), 1);
@@ -266,10 +257,6 @@ export const PeriodViewSystem: React.FC<PeriodViewSystemProps> = ({
   };
   const customRangeData = getCustomRangeData();
 
-  // Active aggregated press and channel accounts
-  const pressAccounts = calculatePressAccounts(books, pressPayments);
-  const channelAccounts = calculateChannelDueAccounts(books, channelCollections);
-
   return (
     <div className="space-y-6">
       
@@ -277,23 +264,27 @@ export const PeriodViewSystem: React.FC<PeriodViewSystemProps> = ({
       <div className="bg-white p-4 sm:p-5 rounded-2xl border border-zinc-200 shadow-xs flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
         <div>
           <h2 className="text-lg font-bold text-zinc-900 flex items-center gap-2">
-            <span>পিরিয়ডিক রিপোর্ট ও আর্থিক বিশ্লেষণ</span>
+            <span>{tr('পিরিয়ডিক রিপোর্ট ও আর্থিক বিশ্লেষণ', 'Periodic Reports & Financial Analytics', language)}</span>
           </h2>
           <p className="text-xs text-zinc-500 mt-0.5">
-            দৈনিক, সাপ্তাহিক, মাসিক, ৩ মাস, ৬ মাস, বাৎসরিক ও নির্দিষ্ট তারিখ থেকে তারিখের রিপোর্ট
+            {tr(
+              'দৈনিক, সাপ্তাহিক, মাসিক, ৩ মাস, ৬ মাস, বাৎসরিক ও নির্দিষ্ট তারিখ থেকে তারিখের রিপোর্ট',
+              'Daily, weekly, monthly, 3-month, 6-month, yearly, and custom range date analytics',
+              language
+            )}
           </p>
         </div>
 
         {/* Responsive Period Switcher Pills */}
         <div className="flex flex-wrap bg-zinc-100 p-1 rounded-xl border border-zinc-200 gap-1 w-full lg:w-auto">
           {[
-            { key: 'daily', label: 'দৈনিক (Daily)', icon: Calendar },
-            { key: 'weekly', label: 'সাপ্তাহিক (Weekly)', icon: CalendarDays },
-            { key: 'monthly', label: 'মাসিক (Monthly)', icon: CalendarRange },
-            { key: 'quarterly', label: '৩ মাস (Quarterly)', icon: Layers },
-            { key: 'half_yearly', label: '৬ মাস (Half-Yearly)', icon: Clock },
-            { key: 'yearly', label: 'বাৎসরিক (Yearly)', icon: TrendingUp },
-            { key: 'custom', label: 'তারিখ রেঞ্জ (Custom)', icon: Filter },
+            { key: 'daily', label: tr('দৈনিক (Daily)', 'Daily', language), icon: Calendar },
+            { key: 'weekly', label: tr('সাপ্তাহিক (Weekly)', 'Weekly', language), icon: CalendarDays },
+            { key: 'monthly', label: tr('মাসিক (Monthly)', 'Monthly', language), icon: CalendarRange },
+            { key: 'quarterly', label: tr('৩ মাস (Quarterly)', '3-Month (Quarterly)', language), icon: Layers },
+            { key: 'half_yearly', label: tr('৬ মাস (Half-Yearly)', '6-Month (Half-Yearly)', language), icon: Clock },
+            { key: 'yearly', label: tr('বাৎসরিক (Yearly)', 'Yearly', language), icon: TrendingUp },
+            { key: 'custom', label: tr('তারিখ রেঞ্জ (Custom)', 'Custom Date Range', language), icon: Filter },
           ].map(tab => {
             const Icon = tab.icon;
             const isActive = period === tab.key;
@@ -329,23 +320,23 @@ export const PeriodViewSystem: React.FC<PeriodViewSystemProps> = ({
                   disabled={selectedDay <= 1}
                   onClick={() => setSelectedDay(d => Math.max(1, d - 1))}
                   className="p-1.5 rounded-lg border border-zinc-200 hover:bg-zinc-100 disabled:opacity-40 disabled:hover:bg-transparent transition-colors"
-                  title="পূর্ববর্তী তারিখ"
+                  title={tr('পূর্ববর্তী তারিখ', 'Previous Date', language)}
                 >
                   <ChevronLeft className="w-4 h-4 text-zinc-700" />
                 </button>
                 <div className="flex items-center gap-2">
                   <span className="font-bold text-zinc-900 text-base">
-                    {selectedDay} {formatMonthYearBengali(selectedMonth, selectedYear)} এর প্রতিবেদন
+                    {language === 'bn' ? `${selectedDay} ${formatMonthYearBengali(selectedMonth, selectedYear, language)} এর প্রতিবেদন` : `Report for Day ${selectedDay}, ${formatMonthYearBengali(selectedMonth, selectedYear, language)}`}
                   </span>
                   <span className="text-[11px] text-zinc-500 font-mono">
-                    (মাসের {selectedDay}তম দিন)
+                    ({language === 'bn' ? `মাসের ${selectedDay}তম দিন` : `Day ${selectedDay} of month`})
                   </span>
                 </div>
                 <button
                   disabled={selectedDay >= daysInMonth}
                   onClick={() => setSelectedDay(d => Math.min(daysInMonth, d + 1))}
                   className="p-1.5 rounded-lg border border-zinc-200 hover:bg-zinc-100 disabled:opacity-40 disabled:hover:bg-transparent transition-colors"
-                  title="পরবর্তী তারিখ"
+                  title={tr('পরবর্তী তারিখ', 'Next Date', language)}
                 >
                   <ChevronRight className="w-4 h-4 text-zinc-700" />
                 </button>
@@ -356,14 +347,14 @@ export const PeriodViewSystem: React.FC<PeriodViewSystemProps> = ({
                 className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold text-zinc-900 bg-zinc-100 hover:bg-zinc-200 rounded-lg transition-colors border border-zinc-300 self-start sm:self-auto"
               >
                 <CalendarPlus className="w-3.5 h-3.5" />
-                <span>{selectedDay} তারিখের ডাটা এন্ট্রি / এডিট করুন</span>
+                <span>{tr(`${selectedDay} তারিখের ডাটা এন্ট্রি / এডিট করুন`, `Entry / Edit Data for Day ${selectedDay}`, language)}</span>
               </button>
             </div>
 
             {/* Horizontal Date Pills */}
             <div>
               <div className="text-[11px] font-semibold text-zinc-500 mb-1.5">
-                📅 ক্যালেন্ডার তারিখ নির্বাচন করুন (১লা থেকে {formatNumber(daysInMonth)} তারিখ):
+                📅 {tr(`ক্যালেন্ডার তারিখ নির্বাচন করুন (১লা থেকে ${formatNumber(daysInMonth, language)} তারিখ):`, `Select Calendar Date (Day 1 to ${formatNumber(daysInMonth, language)}):`, language)}
               </div>
               <div className="flex items-center gap-1.5 overflow-x-auto pb-1 pt-0.5">
                 {Array.from({ length: daysInMonth }, (_, i) => i + 1).map(dateNum => {
@@ -381,8 +372,8 @@ export const PeriodViewSystem: React.FC<PeriodViewSystemProps> = ({
                           : 'bg-white text-zinc-500 border-zinc-200 hover:bg-zinc-50'
                       }`}
                     >
-                      <span className="text-[11px] font-bold">{dateNum} তাং</span>
-                      <span className="text-[9px] opacity-75">{daySales > 0 ? `${daySales}টি` : '—'}</span>
+                      <span className="text-[11px] font-bold">{language === 'bn' ? `${dateNum} তাং` : `D${dateNum}`}</span>
+                      <span className="text-[9px] opacity-75">{daySales > 0 ? `${daySales}` : '—'}</span>
                     </button>
                   );
                 })}
@@ -393,75 +384,77 @@ export const PeriodViewSystem: React.FC<PeriodViewSystemProps> = ({
           {/* Selected Date Metric Cards */}
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
             <div className="bg-white p-3.5 rounded-xl border border-zinc-200 shadow-xs">
-              <span className="text-[11px] text-zinc-500 block font-medium">{selectedDay} তারিখে বিক্রি</span>
-              <span className="text-xl font-bold text-zinc-900">{formatNumber(dayData.totalSold)} কপি</span>
+              <span className="text-[11px] text-zinc-500 block font-medium">{tr(`${selectedDay} তারিখে বিক্রি`, `Day ${selectedDay} Sold`, language)}</span>
+              <span className="text-xl font-bold text-zinc-900">{formatNumber(dayData.totalSold, language)} {tr('কপি', 'copies', language)}</span>
               <span className="text-[10px] text-zinc-600 block mt-0.5">
-                অনলাইন {dayData.onlineSold} • অফলাইন {dayData.offlineSold}
+                {tr('অনলাইন', 'Online', language)} {formatNumber(dayData.onlineSold, language)} • {tr('অফলাইন', 'Offline', language)} {formatNumber(dayData.offlineSold, language)}
               </span>
             </div>
 
             <div className="bg-white p-3.5 rounded-xl border border-zinc-200 shadow-xs">
-              <span className="text-[11px] text-zinc-500 block font-medium">আজকের রাজস্ব</span>
-              <span className="text-xl font-bold text-zinc-900">{formatBDT(dayData.revenue)}</span>
-              <span className="text-[10px] text-zinc-400 block mt-0.5">বিক্রয়মূল্য</span>
+              <span className="text-[11px] text-zinc-500 block font-medium">{tr('আজকের রাজস্ব', 'Revenue', language)}</span>
+              <span className="text-xl font-bold text-zinc-900">{formatBDT(dayData.revenue, language)}</span>
+              <span className="text-[10px] text-zinc-400 block mt-0.5">{tr('বিক্রয়মূল্য', 'Gross Sales', language)}</span>
             </div>
 
             <div className="bg-white p-3.5 rounded-xl border border-zinc-200 shadow-xs">
-              <span className="text-[11px] text-zinc-500 block font-medium">আজকের নিট লাভ</span>
-              <span className="text-xl font-bold text-zinc-900">+{formatBDT(dayData.profit)}</span>
-              <span className="text-[10px] text-zinc-400 block mt-0.5">উৎপাদন ও বিজ্ঞাপন বাদে</span>
+              <span className="text-[11px] text-zinc-500 block font-medium">{tr('আজকের নিট লাভ', 'Net Profit', language)}</span>
+              <span className="text-xl font-bold text-zinc-900">+{formatBDT(dayData.profit, language)}</span>
+              <span className="text-[10px] text-zinc-400 block mt-0.5">{tr('খরচ বাদে মুনাফা', 'Net of costs', language)}</span>
             </div>
 
             <div className="bg-white p-3.5 rounded-xl border border-zinc-200 shadow-xs">
-              <span className="text-[11px] text-zinc-500 block font-medium">প্রেস থেকে প্রাপ্ত</span>
-              <span className="text-xl font-bold text-zinc-900">{formatNumber(dayData.pressReceived)} কপি</span>
-              <span className="text-[10px] text-zinc-400 block mt-0.5">হেড অফিসে ডেলিভারি</span>
+              <span className="text-[11px] text-zinc-500 block font-medium">{tr('প্রেস থেকে প্রাপ্ত', 'Press Receipts', language)}</span>
+              <span className="text-xl font-bold text-zinc-900">{formatNumber(dayData.pressReceived, language)} {tr('কপি', 'copies', language)}</span>
+              <span className="text-[10px] text-zinc-400 block mt-0.5">{tr('হেড অফিসে ডেলিভারি', 'Delivered to HO', language)}</span>
             </div>
 
             <div className="bg-white p-3.5 rounded-xl border border-zinc-200 shadow-xs">
-              <span className="text-[11px] text-zinc-500 block font-medium">আজকের রিটার্ন</span>
-              <span className="text-xl font-bold text-zinc-900">{formatNumber(dayData.returns)} কপি</span>
-              <span className="text-[10px] text-zinc-400 block mt-0.5">স্টকে যুক্ত</span>
+              <span className="text-[11px] text-zinc-500 block font-medium">{tr('আজকের রিটার্ন', 'Daily Returns', language)}</span>
+              <span className="text-xl font-bold text-zinc-900">{formatNumber(dayData.returns, language)} {tr('কপি', 'copies', language)}</span>
+              <span className="text-[10px] text-zinc-400 block mt-0.5">{tr('স্টকে যুক্ত', 'Restocked', language)}</span>
             </div>
 
             <div className="bg-white p-3.5 rounded-xl border border-zinc-200 shadow-xs">
-              <span className="text-[11px] text-zinc-500 block font-medium">অনলাইন চ্যানেল</span>
-              <span className="text-xl font-bold text-zinc-900 font-mono">{formatNumber(dayData.onlineSold)} কপি</span>
-              <span className="text-[10px] text-zinc-400 block mt-0.5">বইবাড়ি: {dayData.channels.boibari}</span>
+              <span className="text-[11px] text-zinc-500 block font-medium">{tr('অনলাইন চ্যানেল', 'Online Channels', language)}</span>
+              <span className="text-xl font-bold text-zinc-900 font-mono">{formatNumber(dayData.onlineSold, language)} {tr('কপি', 'copies', language)}</span>
+              <span className="text-[10px] text-zinc-400 block mt-0.5">{tr('বইবাড়ি:', 'Boibari:', language)} {formatNumber(dayData.channels.boibari, language)}</span>
             </div>
           </div>
 
           {/* Book-by-Book breakdown for selected day */}
           <div className="bg-white rounded-2xl border border-zinc-200 shadow-xs overflow-hidden">
             <div className="p-4 border-b border-zinc-100 flex items-center justify-between">
-              <h3 className="font-bold text-zinc-900 text-sm">{selectedDay} তারিখের বইভিত্তিক বিক্রয় খতিয়ান</h3>
-              <span className="text-xs text-zinc-500">{dayData.bookBreakdown.length} টি বই</span>
+              <h3 className="font-bold text-zinc-900 text-sm">
+                {tr(`${selectedDay} তারিখের বইভিত্তিক বিক্রয় খতিয়ান`, `Book-wise Sales Breakdown for Day ${selectedDay}`, language)}
+              </h3>
+              <span className="text-xs text-zinc-500">{formatNumber(dayData.bookBreakdown.length, language)} {tr('টি বই', 'Books', language)}</span>
             </div>
 
             <div className="overflow-x-auto w-full">
               <table className="w-full text-left border-collapse text-xs min-w-[550px]">
                 <thead>
                   <tr className="bg-zinc-50 text-zinc-800 font-semibold border-b border-zinc-200">
-                    <th className="py-2.5 px-3">বইয়ের নাম</th>
-                    <th className="py-2.5 px-3 text-center">বিক্রিত কপি</th>
-                    <th className="py-2.5 px-3 text-right">রাজস্ব (Revenue)</th>
-                    <th className="py-2.5 px-3 text-right">নিট লাভ (Profit)</th>
-                    <th className="py-2.5 px-3 text-center">অ্যাকশন</th>
+                    <th className="py-2.5 px-3">{tr('বইয়ের নাম', 'Book Name', language)}</th>
+                    <th className="py-2.5 px-3 text-center">{tr('বিক্রিত কপি', 'Sold Copies', language)}</th>
+                    <th className="py-2.5 px-3 text-right">{tr('রাজস্ব (Revenue)', 'Revenue', language)}</th>
+                    <th className="py-2.5 px-3 text-right">{tr('নিট লাভ (Profit)', 'Net Profit', language)}</th>
+                    <th className="py-2.5 px-3 text-center">{tr('অ্যাকশন', 'Action', language)}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-zinc-100">
                   {dayData.bookBreakdown.map((item) => (
                     <tr key={item.bookId} className="hover:bg-zinc-50/70 transition-colors">
                       <td className="py-3 px-3 font-bold text-zinc-900">{item.bookName}</td>
-                      <td className="py-3 px-3 text-center font-mono font-bold">{formatNumber(item.sold)} কপি</td>
-                      <td className="py-3 px-3 text-right font-mono text-zinc-900">{formatBDT(item.revenue)}</td>
-                      <td className="py-3 px-3 text-right font-mono font-bold text-zinc-900">+{formatBDT(item.profit)}</td>
+                      <td className="py-3 px-3 text-center font-mono font-bold">{formatNumber(item.sold, language)} {tr('কপি', 'copies', language)}</td>
+                      <td className="py-3 px-3 text-right font-mono text-zinc-900">{formatBDT(item.revenue, language)}</td>
+                      <td className="py-3 px-3 text-right font-mono font-bold text-zinc-900">+{formatBDT(item.profit, language)}</td>
                       <td className="py-3 px-3 text-center">
                         <button
                           onClick={() => onOpenDailyEntryForBookAndDay(item.bookId, selectedDay)}
                           className="text-[11px] font-semibold text-zinc-800 hover:text-black bg-zinc-100 hover:bg-zinc-200 px-2.5 py-1 rounded-lg border border-zinc-200 transition-colors"
                         >
-                          এডিট
+                          {tr('এডিট', 'Edit', language)}
                         </button>
                       </td>
                     </tr>
@@ -483,7 +476,7 @@ export const PeriodViewSystem: React.FC<PeriodViewSystemProps> = ({
           {/* Week Selector Bar */}
           <div className="bg-white p-4 rounded-2xl border border-zinc-200 shadow-xs flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-2">
-              <span className="text-xs font-bold text-zinc-800">সপ্তাহ নির্বাচন:</span>
+              <span className="text-xs font-bold text-zinc-800">{tr('সপ্তাহ নির্বাচন:', 'Select Week:', language)}</span>
               <div className="flex items-center gap-1.5">
                 {weekDataList.map((w) => (
                   <button
@@ -495,52 +488,52 @@ export const PeriodViewSystem: React.FC<PeriodViewSystemProps> = ({
                         : 'bg-zinc-50 text-zinc-700 border-zinc-200 hover:bg-zinc-100'
                     }`}
                   >
-                    {w.name}
+                    {language === 'bn' ? w.name : `Week ${w.weekNumber}`}
                   </button>
                 ))}
               </div>
             </div>
 
             <div className="text-xs font-mono text-zinc-500">
-              {currentWeekData.startDay} - {currentWeekData.endDay} {formatMonthYearBengali(selectedMonth, selectedYear)}
+              {currentWeekData.startDay} - {currentWeekData.endDay} {formatMonthYearBengali(selectedMonth, selectedYear, language)}
             </div>
           </div>
 
           {/* Week Metrics */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             <div className="bg-white p-4 rounded-2xl border border-zinc-200 shadow-xs">
-              <span className="text-xs text-zinc-500 block">সাপ্তাহিক মোট বিক্রয়</span>
+              <span className="text-xs text-zinc-500 block">{tr('সাপ্তাহিক মোট বিক্রয়', 'Weekly Total Sold', language)}</span>
               <span className="text-2xl font-black text-zinc-900 mt-1 block">
-                {formatNumber(currentWeekData.totalSold)} কপি
+                {formatNumber(currentWeekData.totalSold, language)} {tr('কপি', 'copies', language)}
               </span>
               <div className="text-xs text-zinc-500 mt-1">
-                অনলাইন {formatNumber(currentWeekData.onlineSold)} • অফলাইন {formatNumber(currentWeekData.offlineSold)}
+                {tr('অনলাইন', 'Online', language)} {formatNumber(currentWeekData.onlineSold, language)} • {tr('অফলাইন', 'Offline', language)} {formatNumber(currentWeekData.offlineSold, language)}
               </div>
             </div>
 
             <div className="bg-white p-4 rounded-2xl border border-zinc-200 shadow-xs">
-              <span className="text-xs text-zinc-500 block">সাপ্তাহিক রাজস্ব</span>
+              <span className="text-xs text-zinc-500 block">{tr('সাপ্তাহিক রাজস্ব', 'Weekly Revenue', language)}</span>
               <span className="text-2xl font-black text-zinc-900 mt-1 block">
-                {formatBDT(currentWeekData.revenue)}
+                {formatBDT(currentWeekData.revenue, language)}
               </span>
-              <div className="text-xs text-zinc-500 mt-1">বিক্রয়মূল্য</div>
+              <div className="text-xs text-zinc-500 mt-1">{tr('বিক্রয়মূল্য', 'Gross Sales', language)}</div>
             </div>
 
             <div className="bg-white p-4 rounded-2xl border border-zinc-200 shadow-xs">
-              <span className="text-xs text-zinc-500 block">সাপ্তাহিক নিট লাভ</span>
+              <span className="text-xs text-zinc-500 block">{tr('সাপ্তাহিক নিট লাভ', 'Weekly Net Profit', language)}</span>
               <span className="text-2xl font-black text-zinc-900 mt-1 block">
-                +{formatBDT(currentWeekData.profit)}
+                +{formatBDT(currentWeekData.profit, language)}
               </span>
-              <div className="text-xs text-zinc-500 mt-1">মুনাফা</div>
+              <div className="text-xs text-zinc-500 mt-1">{tr('মুনাফা', 'Profit', language)}</div>
             </div>
 
             <div className="bg-white p-4 rounded-2xl border border-zinc-200 shadow-xs">
-              <span className="text-xs text-zinc-500 block">সেরা বিক্রির দিন</span>
+              <span className="text-xs text-zinc-500 block">{tr('সেরা বিক্রির দিন', 'Best Sales Day', language)}</span>
               <span className="text-xl font-bold text-zinc-900 mt-1 block">
-                {currentWeekData.bestDay.day} তারিখ
+                {language === 'bn' ? `${currentWeekData.bestDay.day} তারিখ` : `Day ${currentWeekData.bestDay.day}`}
               </span>
               <div className="text-xs text-zinc-500 mt-1">
-                ঐ দিনে বিক্রি: {formatNumber(currentWeekData.bestDay.sold)} কপি
+                {tr('ঐ দিনে বিক্রি:', 'Sold that day:', language)} {formatNumber(currentWeekData.bestDay.sold, language)} {tr('কপি', 'copies', language)}
               </div>
             </div>
           </div>
@@ -557,42 +550,42 @@ export const PeriodViewSystem: React.FC<PeriodViewSystemProps> = ({
           {/* Monthly KPI Overview */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="bg-white p-5 rounded-2xl border border-zinc-200 shadow-xs">
-              <span className="text-xs font-semibold text-zinc-500 block">মাসিক সর্বমোট বিক্রয়</span>
+              <span className="text-xs font-semibold text-zinc-500 block">{tr('মাসিক সর্বমোট বিক্রয়', 'Monthly Total Sold', language)}</span>
               <span className="text-2xl font-black text-zinc-900 mt-1 block">
-                {formatNumber(monthTotals.totalSold)} কপি
+                {formatNumber(monthTotals.totalSold, language)} {tr('কপি', 'copies', language)}
               </span>
               <div className="mt-2 text-xs text-zinc-600 font-medium">
-                অনলাইন {formatNumber(monthTotals.onlineSold)} • অফলাইন {formatNumber(monthTotals.offlineSold)}
+                {tr('অনলাইন', 'Online', language)} {formatNumber(monthTotals.onlineSold, language)} • {tr('অফলাইন', 'Offline', language)} {formatNumber(monthTotals.offlineSold, language)}
               </div>
             </div>
 
             <div className="bg-white p-5 rounded-2xl border border-zinc-200 shadow-xs">
-              <span className="text-xs font-semibold text-zinc-500 block">মাসিক সর্বমোট রাজস্ব</span>
+              <span className="text-xs font-semibold text-zinc-500 block">{tr('মাসিক সর্বমোট রাজস্ব', 'Monthly Total Revenue', language)}</span>
               <span className="text-2xl font-black text-zinc-900 mt-1 block">
-                {formatBDT(monthTotals.revenue)}
+                {formatBDT(monthTotals.revenue, language)}
               </span>
               <div className="mt-2 text-xs text-zinc-500 font-medium">
-                অনলাইন ও অফলাইন সম্মিলিত আয়
+                {tr('অনলাইন ও অফলাইন সম্মিলিত আয়', 'Combined Online & Offline Sales', language)}
               </div>
             </div>
 
             <div className="bg-white p-5 rounded-2xl border border-zinc-200 shadow-xs">
-              <span className="text-xs font-semibold text-zinc-500 block">মাসিক সর্বমোট নিট লাভ</span>
+              <span className="text-xs font-semibold text-zinc-500 block">{tr('মাসিক সর্বমোট নিট লাভ', 'Monthly Total Net Profit', language)}</span>
               <span className="text-2xl font-black text-zinc-900 mt-1 block">
-                +{formatBDT(monthTotals.profit)}
+                +{formatBDT(monthTotals.profit, language)}
               </span>
               <div className="mt-2 text-xs text-zinc-500 font-medium">
-                প্রডাকশন ও বিজ্ঞাপন বাদে আয়
+                {tr('প্রডাকশন ও বিজ্ঞাপন বাদে আয়', 'Net Earnings after production & ads', language)}
               </div>
             </div>
 
             <div className="bg-white p-5 rounded-2xl border border-zinc-200 shadow-xs">
-              <span className="text-xs font-semibold text-zinc-500 block">মাস শেষে হেড অফিস স্টক</span>
+              <span className="text-xs font-semibold text-zinc-500 block">{tr('মাস শেষে হেড অফিস স্টক', 'Head Office Stock at Month End', language)}</span>
               <span className="text-2xl font-black text-zinc-900 mt-1 block">
-                {formatNumber(monthTotals.hoStock)} কপি
+                {formatNumber(monthTotals.hoStock, language)} {tr('কপি', 'copies', language)}
               </span>
               <div className="mt-2 text-xs text-zinc-500 font-medium">
-                ফরিদ ভাই প্রেসে স্টক: {formatNumber(monthTotals.pressStock)} কপি
+                {tr('ফরিদ ভাই প্রেসে স্টক:', 'Stock at Farid Bhai Press:', language)} {formatNumber(monthTotals.pressStock, language)} {tr('কপি', 'copies', language)}
               </div>
             </div>
           </div>
@@ -600,9 +593,15 @@ export const PeriodViewSystem: React.FC<PeriodViewSystemProps> = ({
           {/* Month Weeks Comparison */}
           <div className="bg-white p-5 rounded-2xl border border-zinc-200 shadow-xs">
             <h3 className="font-bold text-zinc-900 text-base mb-1">
-              {formatMonthYearBengali(selectedMonth, selectedYear)} মাসের সপ্তাহের তুলনা
+              {formatMonthYearBengali(selectedMonth, selectedYear, language)} {tr('মাসের সপ্তাহের তুলনা', 'Weekly Comparison', language)}
             </h3>
-            <p className="text-xs text-zinc-500 mb-4">১ থেকে {formatNumber(daysInMonth)} তারিখের {formatNumber(weekDataList.length)}টি সপ্তাহের সেলস ও লাভের তুলনামূলক অগ্রগতি</p>
+            <p className="text-xs text-zinc-500 mb-4">
+              {tr(
+                `১ থেকে ${formatNumber(daysInMonth, language)} তারিখের ${formatNumber(weekDataList.length, language)}টি সপ্তাহের সেলস ও লাভের তুলনামূলক অগ্রগতি`,
+                `Weekly sales and profit comparison across ${formatNumber(daysInMonth, language)} days`,
+                language
+              )}
+            </p>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
               {weekDataList.map((w) => {
@@ -612,8 +611,8 @@ export const PeriodViewSystem: React.FC<PeriodViewSystemProps> = ({
                 return (
                   <div key={w.weekNumber} className="bg-zinc-50 p-4 rounded-xl border border-zinc-200 flex flex-col justify-between">
                     <div>
-                      <span className="font-bold text-xs text-zinc-900 block">{w.name.split(' (')[0]}</span>
-                      <span className="text-[10px] text-zinc-500 block mb-2">{w.startDay} - {w.endDay} তারিখ</span>
+                      <span className="font-bold text-xs text-zinc-900 block">{language === 'bn' ? w.name.split(' (')[0] : `Week ${w.weekNumber}`}</span>
+                      <span className="text-[10px] text-zinc-500 block mb-2">{w.startDay} - {w.endDay} {tr('তারিখ', '', language)}</span>
                     </div>
 
                     <div className="h-24 flex items-end justify-center py-2">
@@ -626,8 +625,8 @@ export const PeriodViewSystem: React.FC<PeriodViewSystemProps> = ({
                     </div>
 
                     <div className="pt-2 border-t border-zinc-200 text-center">
-                      <span className="text-xs font-bold text-zinc-900 block">+{formatBDT(w.profit)}</span>
-                      <span className="text-[10px] text-zinc-500">নিট লাভ</span>
+                      <span className="text-xs font-bold text-zinc-900 block">+{formatBDT(w.profit, language)}</span>
+                      <span className="text-[10px] text-zinc-500">{tr('নিট লাভ', 'Net Profit', language)}</span>
                     </div>
                   </div>
                 );
@@ -647,7 +646,7 @@ export const PeriodViewSystem: React.FC<PeriodViewSystemProps> = ({
           {/* Quarter Selector Bar */}
           <div className="bg-white p-4 rounded-2xl border border-zinc-200 shadow-xs flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-2">
-              <span className="text-xs font-bold text-zinc-800">কোয়ার্টার নির্বাচন:</span>
+              <span className="text-xs font-bold text-zinc-800">{tr('কোয়ার্টার নির্বাচন:', 'Select Quarter:', language)}</span>
               <div className="flex flex-wrap gap-1.5">
                 {QUARTER_OPTIONS.map(q => (
                   <button
@@ -659,14 +658,14 @@ export const PeriodViewSystem: React.FC<PeriodViewSystemProps> = ({
                         : 'bg-zinc-50 text-zinc-700 border-zinc-200 hover:bg-zinc-100'
                     }`}
                   >
-                    {q.label}
+                    {language === 'bn' ? q.label : q.key.toUpperCase()}
                   </button>
                 ))}
               </div>
             </div>
 
             <div className="flex items-center gap-2">
-              <span className="text-xs font-semibold text-zinc-500">বছর:</span>
+              <span className="text-xs font-semibold text-zinc-500">{tr('বছর:', 'Year:', language)}</span>
               <select
                 value={reportYear}
                 onChange={(e) => setReportYear(Number(e.target.value))}
@@ -682,38 +681,38 @@ export const PeriodViewSystem: React.FC<PeriodViewSystemProps> = ({
           {/* Quarter KPI Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="bg-white p-5 rounded-2xl border border-zinc-200 shadow-xs">
-              <span className="text-xs text-zinc-500 block">{currentQuarterConfig.label} মোট বিক্রয়</span>
+              <span className="text-xs text-zinc-500 block">{language === 'bn' ? currentQuarterConfig.label : currentQuarterConfig.key.toUpperCase()} {tr('মোট বিক্রয়', 'Total Sold', language)}</span>
               <span className="text-2xl font-black text-zinc-900 mt-1 block">
-                {formatNumber(quarterData.totalSold)} কপি
+                {formatNumber(quarterData.totalSold, language)} {tr('কপি', 'copies', language)}
               </span>
               <span className="text-xs text-zinc-500 mt-1 block">
-                অনলাইন {formatNumber(quarterData.onlineSold)} • অফলাইন {formatNumber(quarterData.offlineSold)}
+                {tr('অনলাইন', 'Online', language)} {formatNumber(quarterData.onlineSold, language)} • {tr('অফলাইন', 'Offline', language)} {formatNumber(quarterData.offlineSold, language)}
               </span>
             </div>
 
             <div className="bg-white p-5 rounded-2xl border border-zinc-200 shadow-xs">
-              <span className="text-xs text-zinc-500 block">৩ মাসের মোট রাজস্ব</span>
+              <span className="text-xs text-zinc-500 block">{tr('৩ মাসের মোট রাজস্ব', 'Quarterly Revenue', language)}</span>
               <span className="text-2xl font-black text-zinc-900 mt-1 block">
-                {formatBDT(quarterData.revenue)}
+                {formatBDT(quarterData.revenue, language)}
               </span>
-              <span className="text-xs text-zinc-500 mt-1 block">বিক্রয়মূল্য</span>
+              <span className="text-xs text-zinc-500 mt-1 block">{tr('বিক্রয়মূল্য', 'Gross Sales', language)}</span>
             </div>
 
             <div className="bg-white p-5 rounded-2xl border border-zinc-200 shadow-xs">
-              <span className="text-xs text-zinc-500 block">৩ মাসের মোট নিট লাভ</span>
+              <span className="text-xs text-zinc-500 block">{tr('৩ মাসের মোট নিট লাভ', 'Quarterly Net Profit', language)}</span>
               <span className="text-2xl font-black text-zinc-900 mt-1 block">
-                +{formatBDT(quarterData.profit)}
+                +{formatBDT(quarterData.profit, language)}
               </span>
-              <span className="text-xs text-zinc-500 mt-1 block">খরচ বাদে অর্জিত মুনাফা</span>
+              <span className="text-xs text-zinc-500 mt-1 block">{tr('খরচ বাদে অর্জিত মুনাফা', 'Net of all costs', language)}</span>
             </div>
 
             <div className="bg-white p-5 rounded-2xl border border-zinc-200 shadow-xs">
-              <span className="text-xs text-zinc-500 block">প্রেস প্রাপ্তি ও রিটার্ন</span>
+              <span className="text-xs text-zinc-500 block">{tr('প্রেস প্রাপ্তি ও রিটার্ন', 'Press Receipts & Returns', language)}</span>
               <span className="text-2xl font-black text-zinc-900 mt-1 block">
-                {formatNumber(quarterData.pressReceived)} কপি
+                {formatNumber(quarterData.pressReceived, language)} {tr('কপি', 'copies', language)}
               </span>
               <span className="text-xs text-zinc-500 mt-1 block">
-                রিটার্ন: {formatNumber(quarterData.returns)} কপি
+                {tr('রিটার্ন:', 'Returns:', language)} {formatNumber(quarterData.returns, language)} {tr('কপি', 'copies', language)}
               </span>
             </div>
           </div>
@@ -721,18 +720,20 @@ export const PeriodViewSystem: React.FC<PeriodViewSystemProps> = ({
           {/* Book Summary for Quarter */}
           <div className="bg-white rounded-2xl border border-zinc-200 shadow-xs overflow-hidden">
             <div className="p-4 border-b border-zinc-100 flex items-center justify-between">
-              <h3 className="font-bold text-zinc-900 text-sm">{currentQuarterConfig.label} ({reportYear}) - বই ভিত্তিক সারসংক্ষেপ</h3>
-              <span className="text-xs text-zinc-500">{quarterData.bookStats.length} টি বই</span>
+              <h3 className="font-bold text-zinc-900 text-sm">
+                {language === 'bn' ? currentQuarterConfig.label : currentQuarterConfig.key.toUpperCase()} ({reportYear}) - {tr('বই ভিত্তিক সারসংক্ষেপ', 'Book-wise Summary', language)}
+              </h3>
+              <span className="text-xs text-zinc-500">{formatNumber(quarterData.bookStats.length, language)} {tr('টি বই', 'Books', language)}</span>
             </div>
             <div className="overflow-x-auto w-full">
               <table className="w-full text-left border-collapse text-xs min-w-[550px]">
                 <thead>
                   <tr className="bg-zinc-50 font-bold border-b border-zinc-200 text-zinc-900">
                     <th className="py-2.5 px-3 w-12 text-center">SL</th>
-                    <th className="py-2.5 px-3">বইয়ের নাম</th>
-                    <th className="py-2.5 px-3 text-center">মোট বিক্রয়</th>
-                    <th className="py-2.5 px-3 text-right">৩ মাসের রাজস্ব</th>
-                    <th className="py-2.5 px-3 text-right">৩ মাসের নিট লাভ</th>
+                    <th className="py-2.5 px-3">{tr('বইয়ের নাম', 'Book Name', language)}</th>
+                    <th className="py-2.5 px-3 text-center">{tr('মোট বিক্রয়', 'Total Sold', language)}</th>
+                    <th className="py-2.5 px-3 text-right">{tr('৩ মাসের রাজস্ব', '3-Month Revenue', language)}</th>
+                    <th className="py-2.5 px-3 text-right">{tr('৩ মাসের নিট লাভ', '3-Month Profit', language)}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-zinc-100">
@@ -740,9 +741,9 @@ export const PeriodViewSystem: React.FC<PeriodViewSystemProps> = ({
                     <tr key={b.name} className="hover:bg-zinc-50/70">
                       <td className="py-3 px-3 text-center font-mono">{b.sl}</td>
                       <td className="py-3 px-3 font-bold text-zinc-900">{b.name}</td>
-                      <td className="py-3 px-3 text-center font-mono font-bold">{formatNumber(b.sold)} কপি</td>
-                      <td className="py-3 px-3 text-right font-mono font-bold text-zinc-900">{formatBDT(b.revenue)}</td>
-                      <td className="py-3 px-3 text-right font-mono font-bold text-zinc-900">+{formatBDT(b.profit)}</td>
+                      <td className="py-3 px-3 text-center font-mono font-bold">{formatNumber(b.sold, language)} {tr('কপি', 'copies', language)}</td>
+                      <td className="py-3 px-3 text-right font-mono font-bold text-zinc-900">{formatBDT(b.revenue, language)}</td>
+                      <td className="py-3 px-3 text-right font-mono font-bold text-zinc-900">+{formatBDT(b.profit, language)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -762,7 +763,7 @@ export const PeriodViewSystem: React.FC<PeriodViewSystemProps> = ({
           {/* Half-Year Selector Bar */}
           <div className="bg-white p-4 rounded-2xl border border-zinc-200 shadow-xs flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-2">
-              <span className="text-xs font-bold text-zinc-800">ষাণ্মাসিক নির্বাচন:</span>
+              <span className="text-xs font-bold text-zinc-800">{tr('ষাণ্মাসিক নির্বাচন:', 'Select Half-Year:', language)}</span>
               <div className="flex flex-wrap gap-1.5">
                 {HALF_YEAR_OPTIONS.map(h => (
                   <button
@@ -774,14 +775,14 @@ export const PeriodViewSystem: React.FC<PeriodViewSystemProps> = ({
                         : 'bg-zinc-50 text-zinc-700 border-zinc-200 hover:bg-zinc-100'
                     }`}
                   >
-                    {h.label}
+                    {language === 'bn' ? h.label : h.key.toUpperCase()}
                   </button>
                 ))}
               </div>
             </div>
 
             <div className="flex items-center gap-2">
-              <span className="text-xs font-semibold text-zinc-500">বছর:</span>
+              <span className="text-xs font-semibold text-zinc-500">{tr('বছর:', 'Year:', language)}</span>
               <select
                 value={reportYear}
                 onChange={(e) => setReportYear(Number(e.target.value))}
@@ -797,38 +798,38 @@ export const PeriodViewSystem: React.FC<PeriodViewSystemProps> = ({
           {/* Half-Year KPI Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="bg-white p-5 rounded-2xl border border-zinc-200 shadow-xs">
-              <span className="text-xs text-zinc-500 block">{currentHalfConfig.label} মোট বিক্রয়</span>
+              <span className="text-xs text-zinc-500 block">{language === 'bn' ? currentHalfConfig.label : currentHalfConfig.key.toUpperCase()} {tr('মোট বিক্রয়', 'Total Sold', language)}</span>
               <span className="text-2xl font-black text-zinc-900 mt-1 block">
-                {formatNumber(halfYearData.totalSold)} কপি
+                {formatNumber(halfYearData.totalSold, language)} {tr('কপি', 'copies', language)}
               </span>
               <span className="text-xs text-zinc-500 mt-1 block">
-                অনলাইন {formatNumber(halfYearData.onlineSold)} • অফলাইন {formatNumber(halfYearData.offlineSold)}
+                {tr('অনলাইন', 'Online', language)} {formatNumber(halfYearData.onlineSold, language)} • {tr('অফলাইন', 'Offline', language)} {formatNumber(halfYearData.offlineSold, language)}
               </span>
             </div>
 
             <div className="bg-white p-5 rounded-2xl border border-zinc-200 shadow-xs">
-              <span className="text-xs text-zinc-500 block">৬ মাসের মোট রাজস্ব</span>
+              <span className="text-xs text-zinc-500 block">{tr('৬ মাসের মোট রাজস্ব', '6-Month Revenue', language)}</span>
               <span className="text-2xl font-black text-zinc-900 mt-1 block">
-                {formatBDT(halfYearData.revenue)}
+                {formatBDT(halfYearData.revenue, language)}
               </span>
-              <span className="text-xs text-zinc-500 mt-1 block">বিক্রয়মূল্য</span>
+              <span className="text-xs text-zinc-500 mt-1 block">{tr('বিক্রয়মূল্য', 'Gross Sales', language)}</span>
             </div>
 
             <div className="bg-white p-5 rounded-2xl border border-zinc-200 shadow-xs">
-              <span className="text-xs text-zinc-500 block">৬ মাসের মোট নিট লাভ</span>
+              <span className="text-xs text-zinc-500 block">{tr('৬ মাসের মোট নিট লাভ', '6-Month Net Profit', language)}</span>
               <span className="text-2xl font-black text-zinc-900 mt-1 block">
-                +{formatBDT(halfYearData.profit)}
+                +{formatBDT(halfYearData.profit, language)}
               </span>
-              <span className="text-xs text-zinc-500 mt-1 block">মুনাফা</span>
+              <span className="text-xs text-zinc-500 mt-1 block">{tr('মুনাফা', 'Profit', language)}</span>
             </div>
 
             <div className="bg-white p-5 rounded-2xl border border-zinc-200 shadow-xs">
-              <span className="text-xs text-zinc-500 block">প্রেস প্রাপ্তি ও রিটার্ন</span>
+              <span className="text-xs text-zinc-500 block">{tr('প্রেস প্রাপ্তি ও রিটার্ন', 'Press Receipts & Returns', language)}</span>
               <span className="text-2xl font-black text-zinc-900 mt-1 block">
-                {formatNumber(halfYearData.pressReceived)} কপি
+                {formatNumber(halfYearData.pressReceived, language)} {tr('কপি', 'copies', language)}
               </span>
               <span className="text-xs text-zinc-500 mt-1 block">
-                রিটার্ন: {formatNumber(halfYearData.returns)} কপি
+                {tr('রিটার্ন:', 'Returns:', language)} {formatNumber(halfYearData.returns, language)} {tr('কপি', 'copies', language)}
               </span>
             </div>
           </div>
@@ -845,14 +846,14 @@ export const PeriodViewSystem: React.FC<PeriodViewSystemProps> = ({
           {/* Year Selector Bar */}
           <div className="bg-white p-4 rounded-2xl border border-zinc-200 shadow-xs flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <span className="text-xs font-bold text-zinc-800">রিপোর্ট বছর:</span>
+              <span className="text-xs font-bold text-zinc-800">{tr('রিপোর্ট বছর:', 'Report Year:', language)}</span>
               <select
                 value={reportYear}
                 onChange={(e) => setReportYear(Number(e.target.value))}
                 className="text-sm font-bold border border-zinc-300 rounded-xl px-3 py-1.5 bg-zinc-50 font-mono text-zinc-900"
               >
                 {AVAILABLE_YEARS.map(y => (
-                  <option key={y} value={y}>{y} সালের পূর্ণাঙ্গ বার্ষিক খতিয়ান</option>
+                  <option key={y} value={y}>{y} {tr('সালের পূর্ণাঙ্গ বার্ষিক খতিয়ান', 'Annual Ledger', language)}</option>
                 ))}
               </select>
             </div>
@@ -861,38 +862,38 @@ export const PeriodViewSystem: React.FC<PeriodViewSystemProps> = ({
           {/* Yearly Primary KPIs */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="bg-white p-5 rounded-2xl border border-zinc-200 shadow-xs">
-              <span className="text-xs text-zinc-500 block">{reportYear} সালের মোট বিক্রয়</span>
+              <span className="text-xs text-zinc-500 block">{reportYear} {tr('সালের মোট বিক্রয়', 'Total Sold', language)}</span>
               <span className="text-2xl font-black text-zinc-900 mt-1 block">
-                {formatNumber(yearlyData.totalSold)} কপি
+                {formatNumber(yearlyData.totalSold, language)} {tr('কপি', 'copies', language)}
               </span>
               <span className="text-xs text-zinc-500 mt-1 block">
-                অনলাইন {formatNumber(yearlyData.onlineSold)} • অফলাইন {formatNumber(yearlyData.offlineSold)}
+                {tr('অনলাইন', 'Online', language)} {formatNumber(yearlyData.onlineSold, language)} • {tr('অফলাইন', 'Offline', language)} {formatNumber(yearlyData.offlineSold, language)}
               </span>
             </div>
 
             <div className="bg-white p-5 rounded-2xl border border-zinc-200 shadow-xs">
-              <span className="text-xs text-zinc-500 block">বাৎসরিক মোট রাজস্ব</span>
+              <span className="text-xs text-zinc-500 block">{tr('বাৎসরিক মোট রাজস্ব', 'Annual Revenue', language)}</span>
               <span className="text-2xl font-black text-zinc-900 mt-1 block">
-                {formatBDT(yearlyData.revenue)}
+                {formatBDT(yearlyData.revenue, language)}
               </span>
-              <span className="text-xs text-zinc-500 mt-1 block">১২ মাসের সমন্বিত বিক্রয়মূল্য</span>
+              <span className="text-xs text-zinc-500 mt-1 block">{tr('১২ মাসের সমন্বিত বিক্রয়মূল্য', '12-Month Combined Sales', language)}</span>
             </div>
 
             <div className="bg-white p-5 rounded-2xl border border-zinc-200 shadow-xs">
-              <span className="text-xs text-zinc-500 block">বাৎসরিক মোট নিট লাভ</span>
+              <span className="text-xs text-zinc-500 block">{tr('বাৎসরিক মোট নিট লাভ', 'Annual Net Profit', language)}</span>
               <span className="text-2xl font-black text-zinc-900 mt-1 block">
-                +{formatBDT(yearlyData.profit)}
+                +{formatBDT(yearlyData.profit, language)}
               </span>
-              <span className="text-xs text-zinc-500 mt-1 block">প্রডাকশন ও বিজ্ঞাপন বাদে মুনাফা</span>
+              <span className="text-xs text-zinc-500 mt-1 block">{tr('প্রডাকশন ও বিজ্ঞাপন বাদে মুনাফা', 'Net after production & ads', language)}</span>
             </div>
 
             <div className="bg-white p-5 rounded-2xl border border-zinc-200 shadow-xs">
-              <span className="text-xs text-zinc-500 block">বাৎসরিক প্রেস চালান প্রাপ্তি</span>
+              <span className="text-xs text-zinc-500 block">{tr('বাৎসরিক প্রেস চালান প্রাপ্তি', 'Annual Press Deliveries', language)}</span>
               <span className="text-2xl font-black text-zinc-900 mt-1 block">
-                {formatNumber(yearlyData.pressReceived)} কপি
+                {formatNumber(yearlyData.pressReceived, language)} {tr('কপি', 'copies', language)}
               </span>
               <span className="text-xs text-zinc-500 mt-1 block">
-                মোট রিটার্ন: {formatNumber(yearlyData.returns)} কপি
+                {tr('মোট রিটার্ন:', 'Total Returns:', language)} {formatNumber(yearlyData.returns, language)} {tr('কপি', 'copies', language)}
               </span>
             </div>
           </div>
@@ -900,7 +901,7 @@ export const PeriodViewSystem: React.FC<PeriodViewSystemProps> = ({
           {/* Month-by-Month Progress Bar Cards */}
           <div className="bg-white p-5 rounded-2xl border border-zinc-200 shadow-xs">
             <h3 className="font-bold text-zinc-900 text-sm mb-4">
-              {reportYear} সালের ১২টি মাসের বিক্রয় চিত্র
+              {reportYear} {tr('সালের ১২টি মাসের বিক্রয় চিত্র', 'Monthly Sales Breakdown', language)}
             </h3>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
               {yearlyMonthlyBreakdown.map(m => {
@@ -916,8 +917,8 @@ export const PeriodViewSystem: React.FC<PeriodViewSystemProps> = ({
                       />
                     </div>
                     <div className="pt-1 border-t border-zinc-200 text-center">
-                      <span className="font-mono text-xs font-bold text-zinc-900 block">{formatNumber(m.sold)} কপি</span>
-                      <span className="text-[10px] text-zinc-500">+{formatBDT(m.profit)}</span>
+                      <span className="font-mono text-xs font-bold text-zinc-900 block">{formatNumber(m.sold, language)} {tr('কপি', 'copies', language)}</span>
+                      <span className="text-[10px] text-zinc-500">+{formatBDT(m.profit, language)}</span>
                     </div>
                   </div>
                 );
@@ -938,7 +939,7 @@ export const PeriodViewSystem: React.FC<PeriodViewSystemProps> = ({
           <div className="bg-white p-4 rounded-2xl border border-zinc-200 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div className="flex flex-wrap items-center gap-3">
               <div>
-                <label className="block text-[11px] font-bold text-zinc-700 mb-0.5">শুরুর তারিখ (From):</label>
+                <label className="block text-[11px] font-bold text-zinc-700 mb-0.5">{tr('শুরুর তারিখ (From):', 'From Date:', language)}</label>
                 <input
                   type="date"
                   value={customStartDate}
@@ -948,7 +949,7 @@ export const PeriodViewSystem: React.FC<PeriodViewSystemProps> = ({
               </div>
 
               <div>
-                <label className="block text-[11px] font-bold text-zinc-700 mb-0.5">শেষের তারিখ (To):</label>
+                <label className="block text-[11px] font-bold text-zinc-700 mb-0.5">{tr('শেষের তারিখ (To):', 'To Date:', language)}</label>
                 <input
                   type="date"
                   value={customEndDate}
@@ -959,45 +960,45 @@ export const PeriodViewSystem: React.FC<PeriodViewSystemProps> = ({
             </div>
 
             <div className="text-xs font-bold text-zinc-800 bg-zinc-100 px-3 py-1.5 rounded-xl border border-zinc-200 self-start sm:self-auto">
-              ক্যালেন্ডার রেঞ্জ: {customStartDate} থেকে {customEndDate}
+              {tr(`ক্যালেন্ডার রেঞ্জ: ${customStartDate} থেকে ${customEndDate}`, `Date Range: ${customStartDate} to ${customEndDate}`, language)}
             </div>
           </div>
 
           {/* Custom Range KPIs */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="bg-white p-5 rounded-2xl border border-zinc-200 shadow-xs">
-              <span className="text-xs text-zinc-500 block">নির্বাচিত রেঞ্জে মোট বিক্রয়</span>
+              <span className="text-xs text-zinc-500 block">{tr('নির্বাচিত রেঞ্জে মোট বিক্রয়', 'Total Sold in Range', language)}</span>
               <span className="text-2xl font-black text-zinc-900 mt-1 block">
-                {formatNumber(customRangeData.totalSold)} কপি
+                {formatNumber(customRangeData.totalSold, language)} {tr('কপি', 'copies', language)}
               </span>
               <span className="text-xs text-zinc-500 mt-1 block">
-                অনলাইন {formatNumber(customRangeData.onlineSold)} • অফলাইন {formatNumber(customRangeData.offlineSold)}
+                {tr('অনলাইন', 'Online', language)} {formatNumber(customRangeData.onlineSold, language)} • {tr('অফলাইন', 'Offline', language)} {formatNumber(customRangeData.offlineSold, language)}
               </span>
             </div>
 
             <div className="bg-white p-5 rounded-2xl border border-zinc-200 shadow-xs">
-              <span className="text-xs text-zinc-500 block">নির্বাচিত রেঞ্জে রাজস্ব</span>
+              <span className="text-xs text-zinc-500 block">{tr('নির্বাচিত রেঞ্জে রাজস্ব', 'Revenue in Range', language)}</span>
               <span className="text-2xl font-black text-zinc-900 mt-1 block">
-                {formatBDT(customRangeData.revenue)}
+                {formatBDT(customRangeData.revenue, language)}
               </span>
-              <span className="text-xs text-zinc-500 mt-1 block">বিক্রয়মূল্য</span>
+              <span className="text-xs text-zinc-500 mt-1 block">{tr('বিক্রয়মূল্য', 'Gross Sales', language)}</span>
             </div>
 
             <div className="bg-white p-5 rounded-2xl border border-zinc-200 shadow-xs">
-              <span className="text-xs text-zinc-500 block">নির্বাচিত রেঞ্জে নিট লাভ</span>
+              <span className="text-xs text-zinc-500 block">{tr('নির্বাচিত রেঞ্জে নিট লাভ', 'Net Profit in Range', language)}</span>
               <span className="text-2xl font-black text-zinc-900 mt-1 block">
-                +{formatBDT(customRangeData.profit)}
+                +{formatBDT(customRangeData.profit, language)}
               </span>
-              <span className="text-xs text-zinc-500 mt-1 block">অর্জিত মুনাফা</span>
+              <span className="text-xs text-zinc-500 mt-1 block">{tr('অর্জিত মুনাফা', 'Net Profit', language)}</span>
             </div>
 
             <div className="bg-white p-5 rounded-2xl border border-zinc-200 shadow-xs">
-              <span className="text-xs text-zinc-500 block">প্রেস প্রাপ্তি ও রিটার্ন</span>
+              <span className="text-xs text-zinc-500 block">{tr('প্রেস প্রাপ্তি ও রিটার্ন', 'Press Receipts & Returns', language)}</span>
               <span className="text-2xl font-black text-zinc-900 mt-1 block">
-                {formatNumber(customRangeData.pressReceived)} কপি
+                {formatNumber(customRangeData.pressReceived, language)} {tr('কপি', 'copies', language)}
               </span>
               <span className="text-xs text-zinc-500 mt-1 block">
-                রিটার্ন: {formatNumber(customRangeData.returns)} কপি
+                {tr('রিটার্ন:', 'Returns:', language)} {formatNumber(customRangeData.returns, language)} {tr('কপি', 'copies', language)}
               </span>
             </div>
           </div>
@@ -1005,18 +1006,18 @@ export const PeriodViewSystem: React.FC<PeriodViewSystemProps> = ({
           {/* Books in custom range */}
           <div className="bg-white rounded-2xl border border-zinc-200 shadow-xs overflow-hidden">
             <div className="p-4 border-b border-zinc-100 flex items-center justify-between">
-              <h3 className="font-bold text-zinc-900 text-sm">বই ভিত্তিক সেলস খতিয়ান ({customStartDate} থেকে {customEndDate})</h3>
-              <span className="text-xs text-zinc-500">{customRangeData.bookStats.length} টি বই</span>
+              <h3 className="font-bold text-zinc-900 text-sm">{tr(`বই ভিত্তিক সেলস খতিয়ান (${customStartDate} থেকে ${customEndDate})`, `Book-wise Sales (${customStartDate} to ${customEndDate})`, language)}</h3>
+              <span className="text-xs text-zinc-500">{formatNumber(customRangeData.bookStats.length, language)} {tr('টি বই', 'Books', language)}</span>
             </div>
             <div className="overflow-x-auto w-full">
               <table className="w-full text-left border-collapse text-xs min-w-[550px]">
                 <thead>
                   <tr className="bg-zinc-50 font-bold border-b border-zinc-200 text-zinc-900">
                     <th className="py-2.5 px-3 w-12 text-center">SL</th>
-                    <th className="py-2.5 px-3">বইয়ের নাম</th>
-                    <th className="py-2.5 px-3 text-center">বিক্রিত কপি</th>
-                    <th className="py-2.5 px-3 text-right">রাজস্ব</th>
-                    <th className="py-2.5 px-3 text-right">নিট লাভ</th>
+                    <th className="py-2.5 px-3">{tr('বইয়ের নাম', 'Book Name', language)}</th>
+                    <th className="py-2.5 px-3 text-center">{tr('বিক্রিত কপি', 'Sold Copies', language)}</th>
+                    <th className="py-2.5 px-3 text-right">{tr('রাজস্ব', 'Revenue', language)}</th>
+                    <th className="py-2.5 px-3 text-right">{tr('নিট লাভ', 'Net Profit', language)}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-zinc-100">
@@ -1024,9 +1025,9 @@ export const PeriodViewSystem: React.FC<PeriodViewSystemProps> = ({
                     <tr key={b.name} className="hover:bg-zinc-50/70">
                       <td className="py-3 px-3 text-center font-mono">{b.sl}</td>
                       <td className="py-3 px-3 font-bold text-zinc-900">{b.name}</td>
-                      <td className="py-3 px-3 text-center font-mono font-bold">{formatNumber(b.sold)} কপি</td>
-                      <td className="py-3 px-3 text-right font-mono font-bold text-zinc-900">{formatBDT(b.revenue)}</td>
-                      <td className="py-3 px-3 text-right font-mono font-bold text-zinc-900">+{formatBDT(b.profit)}</td>
+                      <td className="py-3 px-3 text-center font-mono font-bold">{formatNumber(b.sold, language)} {tr('কপি', 'copies', language)}</td>
+                      <td className="py-3 px-3 text-right font-mono font-bold text-zinc-900">{formatBDT(b.revenue, language)}</td>
+                      <td className="py-3 px-3 text-right font-mono font-bold text-zinc-900">+{formatBDT(b.profit, language)}</td>
                     </tr>
                   ))}
                 </tbody>

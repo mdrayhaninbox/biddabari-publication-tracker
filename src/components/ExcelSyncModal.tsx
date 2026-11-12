@@ -2,12 +2,14 @@ import React, { useState } from 'react';
 import { X, Upload, Download, FileSpreadsheet, AlertCircle, CheckCircle } from 'lucide-react';
 import { BookRecord } from '../types/book';
 import { importBooksFromExcel, exportBooksToExcel } from '../utils/excelHandler';
+import { Language, tr } from '../utils/i18n';
 
 interface ExcelSyncModalProps {
   isOpen: boolean;
   onClose: () => void;
   books: BookRecord[];
   onImportSuccess: (importedBooks: BookRecord[]) => void;
+  language?: Language;
 }
 
 export const ExcelSyncModal: React.FC<ExcelSyncModalProps> = ({
@@ -15,6 +17,7 @@ export const ExcelSyncModal: React.FC<ExcelSyncModalProps> = ({
   onClose,
   books,
   onImportSuccess,
+  language = 'bn',
 }) => {
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
@@ -33,12 +36,12 @@ export const ExcelSyncModal: React.FC<ExcelSyncModalProps> = ({
     try {
       const imported = await importBooksFromExcel(file);
       onImportSuccess(imported);
-      setSuccessMsg(`সফলভাবে ${imported.length} টি বই ইমপোর্ট করা হয়েছে!`);
+      setSuccessMsg(tr(`সফলভাবে ${imported.length} টি বই ইমপোর্ট করা হয়েছে!`, `Successfully imported ${imported.length} books!`, language));
       setTimeout(() => {
         onClose();
       }, 1800);
     } catch (err: any) {
-      setErrorMsg(err.message || 'এক্সেল ফাইল পড়তে সমস্যা হয়েছে। দয়া করে সঠিক ফরম্যাট দিন।');
+      setErrorMsg(err.message || tr('এক্সেল ফাইল পড়তে সমস্যা হয়েছে। দয়া করে সঠিক ফরম্যাট দিন।', 'Failed to read Excel file. Please check format.', language));
     } finally {
       setLoading(false);
     }
@@ -55,8 +58,12 @@ export const ExcelSyncModal: React.FC<ExcelSyncModalProps> = ({
               <FileSpreadsheet className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-base font-bold">এক্সেল সিঙ্ক ও ডেটা ট্রান্সফার</h3>
-              <p className="text-xs text-zinc-400">এক্সেল ইমপোর্ট ও এক্সপোর্ট পরিচালনা করুন</p>
+              <h3 className="text-base font-bold">
+                {tr('এক্সেল সিঙ্ক ও ডেটা ট্রান্সফার', 'Excel Sync & Data Transfer', language)}
+              </h3>
+              <p className="text-xs text-zinc-400">
+                {tr('এক্সেল ইমপোর্ট ও এক্সপোর্ট পরিচালনা করুন', 'Manage Excel import and export', language)}
+              </p>
             </div>
           </div>
           <button
@@ -88,18 +95,22 @@ export const ExcelSyncModal: React.FC<ExcelSyncModalProps> = ({
           <div className="border border-zinc-200 rounded-xl p-4 bg-zinc-50/50">
             <h4 className="text-xs font-bold text-zinc-900 mb-1 flex items-center gap-2">
               <Upload className="w-4 h-4 text-zinc-700" />
-              <span>এক্সেল ফাইল ইমপোর্ট করুন</span>
+              <span>{tr('এক্সেল ফাইল ইমপোর্ট করুন', 'Import Excel File', language)}</span>
             </h4>
             <p className="text-xs text-zinc-500 mb-3">
-              আপনার কাছে থাকা `biddabari publication all books data.xlsx` ফাইলটি আপলোড করে ডাটা আপডেট করুন।
+              {tr(
+                'আপনার কাছে থাকা `biddabari publication all books data.xlsx` ফাইলটি আপলোড করে ডাটা আপডেট করুন।',
+                'Upload your `biddabari publication all books data.xlsx` file to sync data.',
+                language
+              )}
             </p>
 
             <label className="flex flex-col items-center justify-center border-2 border-dashed border-zinc-300 hover:border-zinc-900 bg-white rounded-xl p-4 cursor-pointer transition-colors">
               <FileSpreadsheet className="w-7 h-7 text-zinc-400 mb-1" />
               <span className="text-xs font-bold text-zinc-900">
-                {loading ? 'ডাটা প্রসেস হচ্ছে...' : 'কম্পিউটার থেকে এক্সেল (.xlsx) নির্বাচন করুন'}
+                {loading ? tr('ডাটা প্রসেস হচ্ছে...', 'Processing data...', language) : tr('কম্পিউটার থেকে এক্সেল (.xlsx) নির্বাচন করুন', 'Select Excel (.xlsx) from computer', language)}
               </span>
-              <span className="text-[10px] text-zinc-400 mt-0.5">(.xlsx বা .xls ফাইল)</span>
+              <span className="text-[10px] text-zinc-400 mt-0.5">(.xlsx {tr('বা', 'or', language)} .xls)</span>
               <input
                 type="file"
                 accept=".xlsx, .xls"
@@ -113,8 +124,12 @@ export const ExcelSyncModal: React.FC<ExcelSyncModalProps> = ({
           {/* Option 2: Export Current State */}
           <div className="border border-zinc-200 rounded-xl p-4 bg-white flex items-center justify-between">
             <div>
-              <h4 className="text-xs font-bold text-zinc-900">বর্তমান ডাটা এক্সপোর্ট</h4>
-              <p className="text-[11px] text-zinc-500">৩৭১ কলামের ফুল এক্সেল (.xlsx) ফাইল</p>
+              <h4 className="text-xs font-bold text-zinc-900">
+                {tr('বর্তমান ডাটা এক্সপোর্ট', 'Export Current Data', language)}
+              </h4>
+              <p className="text-[11px] text-zinc-500">
+                {tr('৩৭১ কলামের ফুল এক্সেল (.xlsx) ফাইল', 'Full 371-column Excel (.xlsx) file', language)}
+              </p>
             </div>
             <button
               onClick={() => {
@@ -124,15 +139,19 @@ export const ExcelSyncModal: React.FC<ExcelSyncModalProps> = ({
               className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-white bg-zinc-900 hover:bg-black rounded-lg shadow-xs transition-colors"
             >
               <Download className="w-4 h-4" />
-              <span>ডাউনলোড</span>
+              <span>{tr('ডাউনলোড', 'Download', language)}</span>
             </button>
           </div>
 
           {/* Option 3: Download Original Template */}
           <div className="border border-zinc-200 rounded-xl p-4 bg-white flex items-center justify-between">
             <div>
-              <h4 className="text-xs font-bold text-zinc-900">মূল এক্সেল টেমপ্লেট</h4>
-              <p className="text-[11px] text-zinc-500">অরিজিনাল আনটাচড এক্সেল ফাইল</p>
+              <h4 className="text-xs font-bold text-zinc-900">
+                {tr('মূল এক্সেল টেমপ্লেট', 'Original Excel Template', language)}
+              </h4>
+              <p className="text-[11px] text-zinc-500">
+                {tr('অরিজিনাল আনটাচড এক্সেল ফাইল', 'Original untouched Excel file', language)}
+              </p>
             </div>
             <a
               href="/biddabari_publication_books_data.xlsx"
@@ -140,7 +159,7 @@ export const ExcelSyncModal: React.FC<ExcelSyncModalProps> = ({
               className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-zinc-800 bg-zinc-100 hover:bg-zinc-200 rounded-lg transition-colors border border-zinc-200"
             >
               <Download className="w-4 h-4 text-zinc-500" />
-              <span>মূল ফাইল</span>
+              <span>{tr('মূল ফাইল', 'Original File', language)}</span>
             </a>
           </div>
 
@@ -152,7 +171,7 @@ export const ExcelSyncModal: React.FC<ExcelSyncModalProps> = ({
             onClick={onClose}
             className="px-4 py-1.5 text-xs font-medium text-zinc-600 hover:text-zinc-900 transition-colors"
           >
-            বন্ধ করুন
+            {tr('বন্ধ করুন', 'Close', language)}
           </button>
         </div>
 

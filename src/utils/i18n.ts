@@ -1,5 +1,5 @@
 export type Language = 'bn' | 'en';
-export type Theme = 'classic' | 'dark' | 'navy' | 'emerald';
+export type Theme = 'classic' | 'navy' | 'emerald';
 
 export interface ThemeOption {
   key: Theme;
@@ -18,13 +18,6 @@ export const THEME_OPTIONS: ThemeOption[] = [
     accentClass: 'bg-zinc-900 text-white',
   },
   {
-    key: 'dark',
-    nameBn: 'মিডনাইট ডার্ক মোড',
-    nameEn: 'Midnight Dark Mode',
-    iconBg: '#0f172a',
-    accentClass: 'bg-slate-900 text-sky-400',
-  },
-  {
     key: 'navy',
     nameBn: 'রয়্যাল নেভি ব্লু',
     nameEn: 'Royal Navy Blue',
@@ -39,6 +32,25 @@ export const THEME_OPTIONS: ThemeOption[] = [
     accentClass: 'bg-emerald-900 text-white',
   },
 ];
+
+let globalAppLanguage: Language = 'bn';
+
+export function setGlobalLanguage(lang: Language) {
+  globalAppLanguage = lang;
+}
+
+export function getGlobalLanguage(): Language {
+  return globalAppLanguage;
+}
+
+/**
+ * Universal bilingual translator helper
+ * Returns English text if active language is 'en', otherwise Bengali text.
+ */
+export function tr(bnText: string, enText: string, lang?: Language): string {
+  const active = lang || globalAppLanguage;
+  return active === 'en' ? enText : bnText;
+}
 
 export const translations = {
   // Brand

@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import { BookRecord } from '../types/book';
 import { calculateBookMetrics, formatBDT, formatNumber, sumDaily, formatMonthYearBengali } from '../utils/calculations';
+import { Language, tr } from '../utils/i18n';
 
 interface BookDetailMatrixProps {
   books: BookRecord[];
@@ -15,6 +16,7 @@ interface BookDetailMatrixProps {
   selectedMonth?: number;
   selectedYear?: number;
   daysInMonth?: number;
+  language?: Language;
 }
 
 export const BookDetailMatrix: React.FC<BookDetailMatrixProps> = ({
@@ -26,6 +28,7 @@ export const BookDetailMatrix: React.FC<BookDetailMatrixProps> = ({
   selectedMonth = 11,
   selectedYear = 2026,
   daysInMonth = 30,
+  language = 'bn',
 }) => {
   const currentBook = books.find(b => b.id === selectedBookId) || books[0];
 
@@ -36,7 +39,7 @@ export const BookDetailMatrix: React.FC<BookDetailMatrixProps> = ({
   if (!currentBook) {
     return (
       <div className="p-8 text-center text-zinc-500 bg-white rounded-xl border border-zinc-200">
-        কোনো বই পাওয়া যায়নি।
+        {tr('কোনো বই পাওয়া যায়নি।', 'No book found.', language)}
       </div>
     );
   }
@@ -69,67 +72,67 @@ export const BookDetailMatrix: React.FC<BookDetailMatrixProps> = ({
   const matrixRows = [
     {
       key: 'pressDailyReceipts',
-      title: 'ফরিদ ভাই থেকে হেড অফিসে প্রাপ্ত (Press)',
+      title: tr('ফরিদ ভাই থেকে হেড অফিসে প্রাপ্ত (Press)', 'Press to Head Office (Chalan)', language),
       salesMap: currentBook.pressDailyReceipts,
       bgHeader: 'bg-zinc-100 text-zinc-900',
     },
     {
       key: 'boibari',
-      title: 'বইবাড়ি (Boibari Online)',
+      title: tr('বইবাড়ি (Boibari Online)', 'Boibari Online', language),
       salesMap: currentBook.boibari,
       bgHeader: 'bg-white text-zinc-800',
     },
     {
       key: 'rokomari',
-      title: 'রকমারি (Rokomari Online)',
+      title: tr('রকমারি (Rokomari Online)', 'Rokomari Online', language),
       salesMap: currentBook.rokomari,
       bgHeader: 'bg-white text-zinc-800',
     },
     {
       key: 'wafilife',
-      title: 'ওয়াফিলাইফ (Wafilife Online)',
+      title: tr('ওয়াফিলাইফ (Wafilife Online)', 'Wafilife Online', language),
       salesMap: currentBook.wafilife,
       bgHeader: 'bg-white text-zinc-800',
     },
     {
       key: 'othersOnline',
-      title: 'অন্যান্য অনলাইন লাইব্রেরি',
+      title: tr('অন্যান্য অনলাইন লাইব্রেরি', 'Other Online Channels', language),
       salesMap: currentBook.othersOnline,
       bgHeader: 'bg-white text-zinc-800',
     },
     {
       key: 'headOfficeSellOffline',
-      title: 'হেড অফিস সেল অফলাইন (HO)',
+      title: tr('হেড অফিস সেল অফলাইন (HO)', 'Head Office Offline', language),
       salesMap: currentBook.headOfficeSellOffline,
       bgHeader: 'bg-white text-zinc-800',
     },
     {
       key: 'nilkhetLibrary',
-      title: 'নীলক্ষেত লাইব্রেরি (Nilkhet)',
+      title: tr('নীলক্ষেত লাইব্রেরি (Nilkhet)', 'Nilkhet Library', language),
       salesMap: currentBook.nilkhetLibrary,
       bgHeader: 'bg-white text-zinc-800',
     },
     {
       key: 'sumonaLibrary',
-      title: 'সুমনা লাইব্রেরি (Sumona - প্রেস)',
+      title: tr('সুমনা লাইব্রেরি (Sumona - প্রেস)', 'Sumona Library', language),
       salesMap: currentBook.sumonaLibrary,
       bgHeader: 'bg-white text-zinc-800',
     },
     {
       key: 'promiseLibrary',
-      title: 'প্রমিজ লাইব্রেরি (Promise - প্রেস)',
+      title: tr('প্রমিজ লাইব্রেরি (Promise - প্রেস)', 'Promise Library', language),
       salesMap: currentBook.promiseLibrary,
       bgHeader: 'bg-white text-zinc-800',
     },
     {
       key: 'joystarLibrary',
-      title: 'জয়স্টার লাইব্রেরি (Joystar - প্রেস)',
+      title: tr('জয়স্টার লাইব্রেরি (Joystar - প্রেস)', 'Joystar Library', language),
       salesMap: currentBook.joystarLibrary,
       bgHeader: 'bg-white text-zinc-800',
     },
     {
       key: 'dailyReturns',
-      title: 'দৈনিক রিটার্ন (Daily Return to HO)',
+      title: tr('দৈনিক রিটার্ন (Daily Return to HO)', 'Daily Return to Head Office', language),
       salesMap: currentBook.dailyReturns,
       bgHeader: 'bg-zinc-100 text-zinc-900',
     },
@@ -144,7 +147,7 @@ export const BookDetailMatrix: React.FC<BookDetailMatrixProps> = ({
           <button
             onClick={onBackToDashboard}
             className="p-2 text-zinc-600 hover:text-black hover:bg-zinc-100 rounded-lg transition-colors border border-zinc-200"
-            title="ড্যাশবোর্ডে ফিরে যান"
+            title={tr('ড্যাশবোর্ডে ফিরে যান', 'Back to Dashboard', language)}
           >
             <ArrowLeft className="w-4 h-4" />
           </button>
@@ -152,17 +155,25 @@ export const BookDetailMatrix: React.FC<BookDetailMatrixProps> = ({
             <div className="flex items-center gap-2">
               <FileSpreadsheet className="w-5 h-5 text-zinc-900" />
               <h2 className="text-lg font-bold text-zinc-900">
-                ১ থেকে {formatNumber(daysInMonth)} তারিখের সম্পূর্ণ ম্যাট্রিক্স ভিউ ({formatMonthYearBengali(selectedMonth, selectedYear)})
+                {tr(
+                  `১ থেকে ${formatNumber(daysInMonth, language)} তারিখের সম্পূর্ণ ম্যাট্রিক্স ভিউ (${formatMonthYearBengali(selectedMonth, selectedYear, language)})`,
+                  `Full 31-Day Matrix View (${formatMonthYearBengali(selectedMonth, selectedYear, language)})`,
+                  language
+                )}
               </h2>
             </div>
             <p className="text-xs text-zinc-500">
-              ক্যালেন্ডার তারিখের যেকোনো ঘরে ক্লিক করে সরাসরি মান পরিবর্তন করতে পারেন
+              {tr(
+                'ক্যালেন্ডার তারিখের যেকোনো ঘরে ক্লিক করে সরাসরি মান পরিবর্তন করতে পারেন',
+                'Click any date cell directly to edit sales values',
+                language
+              )}
             </p>
           </div>
         </div>
 
         <div className="flex items-center gap-2">
-          <span className="text-xs font-bold text-zinc-700">বই নির্বাচন:</span>
+          <span className="text-xs font-bold text-zinc-700">{tr('বই নির্বাচন:', 'Select Book:', language)}</span>
           <select
             value={currentBook.id}
             onChange={(e) => onSelectBook(e.target.value)}
@@ -180,49 +191,49 @@ export const BookDetailMatrix: React.FC<BookDetailMatrixProps> = ({
       {/* Book Quick Metrics Summary (Clean Black & White) */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
         <div className="bg-white p-3 rounded-xl border border-zinc-200 shadow-xs">
-          <span className="text-[11px] text-zinc-500 block">বিক্রয় মূল্য (MRP)</span>
-          <span className="text-base font-bold text-zinc-900">{formatBDT(m.perBookAmount)}</span>
+          <span className="text-[11px] text-zinc-500 block">{tr('বিক্রয় মূল্য (MRP)', 'MRP', language)}</span>
+          <span className="text-base font-bold text-zinc-900">{formatBDT(m.perBookAmount, language)}</span>
         </div>
         <div className="bg-white p-3 rounded-xl border border-zinc-200 shadow-xs">
-          <span className="text-[11px] text-zinc-500 block">কপি প্রতি লাভ</span>
-          <span className="text-base font-bold text-zinc-900">+{formatBDT(m.profitPerBook)}</span>
+          <span className="text-[11px] text-zinc-500 block">{tr('কপি প্রতি লাভ', 'Profit / Copy', language)}</span>
+          <span className="text-base font-bold text-zinc-900">+{formatBDT(m.profitPerBook, language)}</span>
         </div>
         <div className="bg-white p-3 rounded-xl border border-zinc-200 shadow-xs">
-          <span className="text-[11px] text-zinc-500 block">প্রেস অর্ডার</span>
-          <span className="text-base font-bold text-zinc-900 font-mono">{formatNumber(m.totalOrderFaridBhai)}</span>
+          <span className="text-[11px] text-zinc-500 block">{tr('প্রেস অর্ডার', 'Press Orders', language)}</span>
+          <span className="text-base font-bold text-zinc-900 font-mono">{formatNumber(m.totalOrderFaridBhai, language)}</span>
         </div>
         <div className="bg-white p-3 rounded-xl border border-zinc-200 shadow-xs">
-          <span className="text-[11px] text-zinc-500 block">হেড অফিস স্টক</span>
-          <span className="text-base font-bold text-zinc-900 font-mono">{formatNumber(m.totalPresentStockHO)}</span>
+          <span className="text-[11px] text-zinc-500 block">{tr('হেড অফিস স্টক', 'Head Office Stock', language)}</span>
+          <span className="text-base font-bold text-zinc-900 font-mono">{formatNumber(m.totalPresentStockHO, language)}</span>
         </div>
         <div className="bg-white p-3 rounded-xl border border-zinc-200 shadow-xs">
-          <span className="text-[11px] text-zinc-500 block">প্রেস স্টক (Farid Bhai)</span>
-          <span className="text-base font-bold text-zinc-800 font-mono">{formatNumber(m.stockToFaridBhai)}</span>
+          <span className="text-[11px] text-zinc-500 block">{tr('প্রেস স্টক (Farid Bhai)', 'Press Stock (Farid Bhai)', language)}</span>
+          <span className="text-base font-bold text-zinc-800 font-mono">{formatNumber(m.stockToFaridBhai, language)}</span>
         </div>
         <div className="bg-white p-3 rounded-xl border border-zinc-200 shadow-xs">
-          <span className="text-[11px] text-zinc-500 block">সর্বমোট বিক্রি</span>
-          <span className="text-base font-bold text-zinc-900 font-mono">{formatNumber(m.totalSold)}</span>
+          <span className="text-[11px] text-zinc-500 block">{tr('সর্বমোট বিক্রি', 'Total Sold', language)}</span>
+          <span className="text-base font-bold text-zinc-900 font-mono">{formatNumber(m.totalSold, language)}</span>
         </div>
       </div>
 
       {/* 31-Day Date Matrix Table */}
       <div className="bg-white rounded-2xl border border-zinc-200 shadow-xs overflow-hidden">
         <div className="text-[11px] text-zinc-500 font-medium px-4 py-2 sm:hidden border-b border-zinc-100 bg-zinc-50 flex items-center justify-between">
-          <span>👉 ১ থেকে {formatNumber(daysInMonth)} তারিখ দেখতে ডানে স্ক্রোল করুন</span>
+          <span>👉 {tr(`১ থেকে ${formatNumber(daysInMonth, language)} তারিখ দেখতে ডানে স্ক্রোল করুন`, 'Scroll right to view all dates', language)}</span>
         </div>
         <div className="overflow-x-auto w-full">
           <table className="w-full text-left border-collapse text-xs">
             <thead>
               <tr className="bg-zinc-100 text-zinc-800 border-b border-zinc-200 font-semibold">
                 <th className="py-2.5 px-3 sticky left-0 z-20 bg-zinc-100 min-w-[220px] shadow-xs">
-                  চ্যানেল / খাত
+                  {tr('চ্যানেল / খাত', 'Channel / Account', language)}
                 </th>
                 <th className="py-2.5 px-3 text-center bg-zinc-200 font-bold min-w-[70px]">
-                  মোট
+                  {tr('মোট', 'Total', language)}
                 </th>
                 {Array.from({ length: daysInMonth }, (_, i) => i + 1).map(dateNum => (
                   <th key={dateNum} className="py-2 px-1 text-center min-w-[44px] font-mono text-[11px]">
-                    {dateNum} তাং
+                    {language === 'bn' ? `${dateNum} তাং` : `D${dateNum}`}
                   </th>
                 ))}
               </tr>
@@ -239,7 +250,7 @@ export const BookDetailMatrix: React.FC<BookDetailMatrixProps> = ({
 
                     {/* Channel Total */}
                     <td className="py-2 px-3 text-center font-bold bg-zinc-100 border-r border-zinc-200 text-zinc-900 font-mono">
-                      {total ? formatNumber(total) : '-'}
+                      {total ? formatNumber(total, language) : '-'}
                     </td>
 
                     {/* Dates 1 to 31 */}
@@ -283,10 +294,10 @@ export const BookDetailMatrix: React.FC<BookDetailMatrixProps> = ({
               {/* Aggregates Row: Daily Total Sales (Online + Offline) */}
               <tr className="bg-zinc-100 font-bold text-zinc-900 border-t-2 border-zinc-300">
                 <td className="py-2.5 px-3 sticky left-0 z-10 bg-zinc-100 shadow-xs border-r border-zinc-200">
-                  সর্বমোট দৈনিক বিক্রয় (Online + Offline)
+                  {tr('সর্বমোট দৈনিক বিক্রয় (Online + Offline)', 'Grand Total Daily Sales (Online + Offline)', language)}
                 </td>
                 <td className="py-2.5 px-3 text-center bg-zinc-200 border-r border-zinc-200 text-zinc-900 text-sm font-mono">
-                  {formatNumber(m.totalSold)}
+                  {formatNumber(m.totalSold, language)}
                 </td>
                 {Array.from({ length: daysInMonth }, (_, i) => i + 1).map(dateNum => {
                   const dayTotal = 
@@ -313,8 +324,8 @@ export const BookDetailMatrix: React.FC<BookDetailMatrixProps> = ({
       </div>
 
       <div className="bg-zinc-50 p-4 rounded-xl border border-zinc-200 text-xs text-zinc-600 flex flex-wrap items-center justify-between gap-2">
-        <span>💡 টিপস: যেকোনো তারিখের ঘরে ক্লিক করে সরাসরি সংখ্যা পরিবর্তন করতে পারেন।</span>
-        <span className="font-medium">মার্কেটিং ও উপহার কপি: {m.totalPromo} কপি</span>
+        <span>💡 {tr('টিপস: যেকোনো তারিখের ঘরে ক্লিক করে সরাসরি সংখ্যা পরিবর্তন করতে পারেন।', 'Tip: Click any date cell to edit values directly.', language)}</span>
+        <span className="font-medium">{tr('মার্কেটিং ও উপহার কপি:', 'Marketing & Gift Copies:', language)} {formatNumber(m.totalPromo, language)} {tr('কপি', 'copies', language)}</span>
       </div>
 
     </div>

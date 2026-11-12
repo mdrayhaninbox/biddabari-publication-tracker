@@ -9,12 +9,11 @@ import {
   Store, 
   Warehouse, 
   RotateCcw,
-  Sparkles,
-  ArrowRight,
   BookOpen
 } from 'lucide-react';
 import { BookRecord } from '../types/book';
 import { calculateBookMetrics, formatBDT, formatNumber, formatMonthYearBengali } from '../utils/calculations';
+import { Language, tr } from '../utils/i18n';
 
 interface QuickDataEntryProps {
   books: BookRecord[];
@@ -45,6 +44,7 @@ interface QuickDataEntryProps {
   selectedMonth?: number;
   selectedYear?: number;
   daysInMonth?: number;
+  language?: Language;
 }
 
 export const QuickDataEntry: React.FC<QuickDataEntryProps> = ({
@@ -55,6 +55,7 @@ export const QuickDataEntry: React.FC<QuickDataEntryProps> = ({
   selectedMonth = 11,
   selectedYear = 2026,
   daysInMonth = 30,
+  language = 'bn',
 }) => {
   const [entryMode, setEntryMode] = useState<'single' | 'sheet'>('single');
 
@@ -214,9 +215,9 @@ export const QuickDataEntry: React.FC<QuickDataEntryProps> = ({
     return (
       <div className="bg-white p-12 rounded-2xl border border-zinc-200 shadow-xs text-center space-y-3">
         <BookOpen className="w-12 h-12 text-zinc-300 mx-auto" />
-        <h3 className="text-base font-bold text-zinc-900">বর্তমানে কোনো বইয়ের তালিকা নেই</h3>
+        <h3 className="text-base font-bold text-zinc-900">{tr('বর্তমানে কোনো বইয়ের তালিকা নেই', 'No books catalogued yet', language)}</h3>
         <p className="text-xs text-zinc-500 max-w-md mx-auto">
-          দৈনিক ও মাসিক ডেটা এন্ট্রি করার জন্য প্রথমে উপরে <b>"+ নতুন বই"</b> বাটনে ক্লিক করে বই যুক্ত করুন।
+          {tr('দৈনিক ও মাসিক ডেটা এন্ট্রি করার জন্য প্রথমে উপরে "+ নতুন বই" বাটনে ক্লিক করে বই যুক্ত করুন।', 'Please click "+ New Book" above to add books before making entries.', language)}
         </p>
       </div>
     );
@@ -233,11 +234,15 @@ export const QuickDataEntry: React.FC<QuickDataEntryProps> = ({
               <CalendarPlus className="w-5 h-5" />
             </div>
             <h2 className="text-lg font-bold text-zinc-900">
-              সহজ ডেটা এন্ট্রি সিস্টেম
+              {tr('সহজ ডেটা এন্ট্রি সিস্টেম', 'Quick Data Entry System', language)}
             </h2>
           </div>
           <p className="text-xs text-zinc-500 mt-1">
-            মাসের যেকোনো তারিখের (১ থেকে ৩১ তারিখ) সেলস, চালান ও রিটার্ন দ্রুত লিপিবদ্ধ করুন
+            {tr(
+              'মাসের যেকোনো তারিখের (১ থেকে ৩১ তারিখ) সেলস, চালান ও রিটার্ন দ্রুত লিপিবদ্ধ করুন',
+              'Quickly record sales, press receipts, and returns for any date of the month',
+              language
+            )}
           </p>
         </div>
 
@@ -252,7 +257,7 @@ export const QuickDataEntry: React.FC<QuickDataEntryProps> = ({
             }`}
           >
             <Layers className="w-3.5 h-3.5" />
-            <span>একক বই এন্ট্রি</span>
+            <span>{tr('একক বই এন্ট্রি', 'Single Book Entry', language)}</span>
           </button>
 
           <button
@@ -264,7 +269,7 @@ export const QuickDataEntry: React.FC<QuickDataEntryProps> = ({
             }`}
           >
             <TableProperties className="w-3.5 h-3.5" />
-            <span>সকল বই দৈনিক শিট এন্ট্রি</span>
+            <span>{tr('সকল বই দৈনিক শিট এন্ট্রি', 'All Books Daily Sheet Entry', language)}</span>
           </button>
         </div>
       </div>
@@ -273,7 +278,7 @@ export const QuickDataEntry: React.FC<QuickDataEntryProps> = ({
       {saveSuccess && (
         <div className="p-3 bg-zinc-900 text-white rounded-xl text-xs font-semibold flex items-center gap-2 animate-in fade-in shadow-xs">
           <CheckCircle2 className="w-5 h-5 text-white" />
-          <span>ডাটা সফলভাবে সংরক্ষিত হয়েছে এবং ইনভেন্টরি ও লাভ তাৎক্ষণিক আপডেট হয়েছে!</span>
+          <span>{tr('ডাটা সফলভাবে সংরক্ষিত হয়েছে এবং ইনভেন্টরি ও লাভ তাৎক্ষণিক আপডেট হয়েছে!', 'Data saved successfully and inventory metrics updated immediately!', language)}</span>
         </div>
       )}
 
@@ -287,7 +292,7 @@ export const QuickDataEntry: React.FC<QuickDataEntryProps> = ({
           <div className="bg-white p-5 rounded-2xl border border-zinc-200 shadow-xs grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-bold text-zinc-800 mb-1.5">
-                ১. বই নির্বাচন করুন
+                {tr('১. বই নির্বাচন করুন', '1. Select Book', language)}
               </label>
               <select
                 value={selectedBookId}
@@ -296,7 +301,7 @@ export const QuickDataEntry: React.FC<QuickDataEntryProps> = ({
               >
                 {books.map(b => (
                   <option key={b.id} value={b.id}>
-                    {b.sl}. {b.bookName} (MRP: {b.perBookAmount}৳ | লাভ: +{b.profitPerBook}৳)
+                    {b.sl}. {b.bookName} (MRP: {b.perBookAmount}৳ | {tr('লাভ:', 'Profit:', language)} +{b.profitPerBook}৳)
                   </option>
                 ))}
               </select>
@@ -304,7 +309,11 @@ export const QuickDataEntry: React.FC<QuickDataEntryProps> = ({
 
             <div>
               <label className="block text-xs font-bold text-zinc-800 mb-1.5">
-                ২. তারিখ নির্বাচন করুন (১লা থেকে {formatNumber(daysInMonth)} তারিখ - {formatMonthYearBengali(selectedMonth, selectedYear)})
+                {tr(
+                  `২. তারিখ নির্বাচন করুন (১লা থেকে ${formatNumber(daysInMonth, language)} তারিখ - ${formatMonthYearBengali(selectedMonth, selectedYear, language)})`,
+                  `2. Select Date (Day 1 to ${formatNumber(daysInMonth, language)} - ${formatMonthYearBengali(selectedMonth, selectedYear, language)})`,
+                  language
+                )}
               </label>
               <select
                 value={day}
@@ -313,7 +322,7 @@ export const QuickDataEntry: React.FC<QuickDataEntryProps> = ({
               >
                 {Array.from({ length: daysInMonth }, (_, i) => i + 1).map(d => (
                   <option key={d} value={d}>
-                    {d} তারিখ ({d}তম দিন)
+                    {language === 'bn' ? `${d} তারিখ (${d}তম দিন)` : `Day ${d}`}
                   </option>
                 ))}
               </select>
@@ -324,13 +333,13 @@ export const QuickDataEntry: React.FC<QuickDataEntryProps> = ({
           <div className="bg-zinc-100 border border-zinc-200 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-3 text-xs">
             <div className="flex items-center gap-2">
               <span className="font-bold text-zinc-900">
-                "{currentBook?.bookName}" — {day} তারিখের হিসাব:
+                "{currentBook?.bookName}" — {language === 'bn' ? `${day} তারিখের হিসাব:` : `Day ${day} Summary:`}
               </span>
             </div>
             <div className="flex items-center gap-4 text-zinc-800">
-              <span>আজকের বিক্রি: <b className="text-zinc-900 text-sm font-bold">{formatNumber(singleTotalSold)}</b> কপি</span>
-              <span>সম্ভাব্য রাজস্ব: <b className="text-zinc-900 text-sm font-bold">{formatBDT(singleRevenue)}</b></span>
-              <span>নিট লাভ: <b className="text-zinc-900 text-sm font-bold">+{formatBDT(singleProfit)}</b></span>
+              <span>{tr('আজকের বিক্রি:', 'Today Sold:', language)} <b className="text-zinc-900 text-sm font-bold">{formatNumber(singleTotalSold, language)}</b> {tr('কপি', 'copies', language)}</span>
+              <span>{tr('সম্ভাব্য রাজস্ব:', 'Revenue:', language)} <b className="text-zinc-900 text-sm font-bold">{formatBDT(singleRevenue, language)}</b></span>
+              <span>{tr('নিট লাভ:', 'Net Profit:', language)} <b className="text-zinc-900 text-sm font-bold">+{formatBDT(singleProfit, language)}</b></span>
             </div>
           </div>
 
@@ -338,12 +347,12 @@ export const QuickDataEntry: React.FC<QuickDataEntryProps> = ({
           <div className="bg-white p-5 rounded-2xl border border-zinc-200 shadow-xs">
             <h3 className="text-xs font-bold text-zinc-900 mb-3 flex items-center gap-2">
               <Warehouse className="w-4 h-4 text-zinc-700" />
-              <span>প্রেস চালান (ফরিদ ভাই থেকে হেড অফিসে প্রাপ্ত বই)</span>
+              <span>{tr('প্রেস চালান (ফরিদ ভাই থেকে হেড অফিসে প্রাপ্ত বই)', 'Press Receipt (Books received from Farid Bhai Press)', language)}</span>
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center">
               <div>
                 <label className="block text-xs text-zinc-600 mb-1">
-                  {day} তারিখে ফরিদ ভাই প্রেস থেকে হেড অফিসে আসা বই
+                  {tr(`${day} তারিখে ফরিদ ভাই প্রেস থেকে হেড অফিসে আসা বই`, `Books received on Day ${day} from Farid Bhai Press`, language)}
                 </label>
                 <input
                   type="number"
@@ -355,8 +364,8 @@ export const QuickDataEntry: React.FC<QuickDataEntryProps> = ({
                 />
               </div>
               <div className="p-3 bg-zinc-50 rounded-xl text-xs text-zinc-800 border border-zinc-200">
-                <span className="block font-medium">প্রেসের মোট অর্ডার: <b>{formatNumber(m?.totalOrderFaridBhai || 0)}</b> কপি</span>
-                <span className="block mt-0.5 text-zinc-600">বর্তমান প্রেস ব্যালেন্স: <b>{formatNumber(m?.stockToFaridBhai || 0)}</b> কপি</span>
+                <span className="block font-medium">{tr('প্রেসের মোট অর্ডার:', 'Total Press Orders:', language)} <b>{formatNumber(m?.totalOrderFaridBhai || 0, language)}</b> {tr('কপি', 'copies', language)}</span>
+                <span className="block mt-0.5 text-zinc-600">{tr('বর্তমান প্রেস ব্যালেন্স:', 'Remaining at Press:', language)} <b>{formatNumber(m?.stockToFaridBhai || 0, language)}</b> {tr('কপি', 'copies', language)}</span>
               </div>
             </div>
           </div>
@@ -365,11 +374,11 @@ export const QuickDataEntry: React.FC<QuickDataEntryProps> = ({
           <div className="bg-white p-5 rounded-2xl border border-zinc-200 shadow-xs">
             <h3 className="text-xs font-bold text-zinc-900 mb-3 flex items-center gap-2">
               <Globe className="w-4 h-4 text-zinc-700" />
-              <span>অনলাইন ডেলিভারি ({day} তারিখের অনলাইন বিক্রি)</span>
+              <span>{tr(`অনলাইন ডেলিভারি (${day} তারিখের অনলাইন বিক্রি)`, `Online Deliveries (Day ${day})`, language)}</span>
             </h3>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               <div>
-                <label className="block text-xs text-zinc-700 mb-1 font-semibold">বইবাড়ি</label>
+                <label className="block text-xs text-zinc-700 mb-1 font-semibold">{tr('বইবাড়ি', 'Boibari', language)}</label>
                 <input
                   type="number"
                   min="0"
@@ -380,7 +389,7 @@ export const QuickDataEntry: React.FC<QuickDataEntryProps> = ({
                 />
               </div>
               <div>
-                <label className="block text-xs text-zinc-700 mb-1 font-semibold">রকমারি</label>
+                <label className="block text-xs text-zinc-700 mb-1 font-semibold">{tr('রকমারি', 'Rokomari', language)}</label>
                 <input
                   type="number"
                   min="0"
@@ -391,7 +400,7 @@ export const QuickDataEntry: React.FC<QuickDataEntryProps> = ({
                 />
               </div>
               <div>
-                <label className="block text-xs text-zinc-700 mb-1 font-semibold">ওয়াফিলাইফ</label>
+                <label className="block text-xs text-zinc-700 mb-1 font-semibold">{tr('ওয়াফিলাইফ', 'Wafilife', language)}</label>
                 <input
                   type="number"
                   min="0"
@@ -402,7 +411,7 @@ export const QuickDataEntry: React.FC<QuickDataEntryProps> = ({
                 />
               </div>
               <div>
-                <label className="block text-xs text-zinc-700 mb-1 font-semibold">অন্যান্য অনলাইন</label>
+                <label className="block text-xs text-zinc-700 mb-1 font-semibold">{tr('অন্যান্য অনলাইন', 'Others Online', language)}</label>
                 <input
                   type="number"
                   min="0"
@@ -419,11 +428,11 @@ export const QuickDataEntry: React.FC<QuickDataEntryProps> = ({
           <div className="bg-white p-5 rounded-2xl border border-zinc-200 shadow-xs">
             <h3 className="text-xs font-bold text-zinc-900 mb-3 flex items-center gap-2">
               <Store className="w-4 h-4 text-zinc-700" />
-              <span>অফলাইন ও লাইব্রেরি ডেলিভারি ({day} তারিখের অফলাইন বিক্রি)</span>
+              <span>{tr(`অফলাইন ও লাইব্রেরি ডেলিভারি (${day} তারিখের অফলাইন বিক্রি)`, `Offline & Library Deliveries (Day ${day})`, language)}</span>
             </h3>
             <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
               <div>
-                <label className="block text-xs text-zinc-700 mb-1 font-semibold">হেড অফিস সেল</label>
+                <label className="block text-xs text-zinc-700 mb-1 font-semibold">{tr('হেড অফিস সেল', 'Head Office', language)}</label>
                 <input
                   type="number"
                   min="0"
@@ -434,7 +443,7 @@ export const QuickDataEntry: React.FC<QuickDataEntryProps> = ({
                 />
               </div>
               <div>
-                <label className="block text-xs text-zinc-700 mb-1 font-semibold">নীলক্ষেত লাইব্রেরি</label>
+                <label className="block text-xs text-zinc-700 mb-1 font-semibold">{tr('নীলক্ষেত লাইব্রেরি', 'Nilkhet', language)}</label>
                 <input
                   type="number"
                   min="0"
@@ -445,7 +454,7 @@ export const QuickDataEntry: React.FC<QuickDataEntryProps> = ({
                 />
               </div>
               <div>
-                <label className="block text-xs text-zinc-700 mb-1 font-semibold">সুমনা (প্রেস থেকে)</label>
+                <label className="block text-xs text-zinc-700 mb-1 font-semibold">{tr('সুমনা (প্রেস থেকে)', 'Sumona', language)}</label>
                 <input
                   type="number"
                   min="0"
@@ -456,7 +465,7 @@ export const QuickDataEntry: React.FC<QuickDataEntryProps> = ({
                 />
               </div>
               <div>
-                <label className="block text-xs text-zinc-700 mb-1 font-semibold">প্রমিজ (প্রেস থেকে)</label>
+                <label className="block text-xs text-zinc-700 mb-1 font-semibold">{tr('প্রমিজ (প্রেস থেকে)', 'Promise', language)}</label>
                 <input
                   type="number"
                   min="0"
@@ -467,7 +476,7 @@ export const QuickDataEntry: React.FC<QuickDataEntryProps> = ({
                 />
               </div>
               <div>
-                <label className="block text-xs text-zinc-700 mb-1 font-semibold">জয়স্টার (প্রেস থেকে)</label>
+                <label className="block text-xs text-zinc-700 mb-1 font-semibold">{tr('জয়স্টার (প্রেস থেকে)', 'Joystar', language)}</label>
                 <input
                   type="number"
                   min="0"
@@ -484,7 +493,7 @@ export const QuickDataEntry: React.FC<QuickDataEntryProps> = ({
           <div className="bg-white p-5 rounded-2xl border border-zinc-200 shadow-xs">
             <h3 className="text-xs font-bold text-zinc-900 mb-2 flex items-center gap-2">
               <RotateCcw className="w-4 h-4 text-zinc-700" />
-              <span>দৈনিক রিটার্ন ({day} তারিখে ফেরত আসা বই)</span>
+              <span>{tr(`দৈনিক রিটার্ন (${day} তারিখে ফেরত আসা বই)`, `Daily Returns (Day ${day})`, language)}</span>
             </h3>
             <div className="max-w-xs">
               <input
@@ -506,7 +515,7 @@ export const QuickDataEntry: React.FC<QuickDataEntryProps> = ({
                 onClick={() => setDay(d => Math.min(daysInMonth, d + 1))}
                 className="text-xs font-semibold text-zinc-700 hover:text-black bg-zinc-100 hover:bg-zinc-200 px-3 py-2 rounded-xl transition-colors border border-zinc-200"
               >
-                পরবর্তী তারিখ ({Math.min(daysInMonth, day + 1)} তারিখ) ➔
+                {language === 'bn' ? `পরবর্তী তারিখ (${Math.min(daysInMonth, day + 1)} তারিখ) ➔` : `Next Day (Day ${Math.min(daysInMonth, day + 1)}) ➔`}
               </button>
             </div>
 
@@ -515,7 +524,7 @@ export const QuickDataEntry: React.FC<QuickDataEntryProps> = ({
               className="inline-flex items-center gap-2 px-6 py-2.5 text-xs font-bold text-white bg-zinc-900 hover:bg-black rounded-xl shadow-xs transition-all"
             >
               <Save className="w-4 h-4" />
-              <span>{day} তারিখের ডাটা সংরক্ষণ করুন</span>
+              <span>{tr(`${day} তারিখের ডাটা সংরক্ষণ করুন`, `Save Day ${day} Data`, language)}</span>
             </button>
           </div>
 
@@ -531,7 +540,7 @@ export const QuickDataEntry: React.FC<QuickDataEntryProps> = ({
           {/* Day Picker & Bulk Save Bar */}
           <div className="bg-white p-4 rounded-2xl border border-zinc-200 shadow-xs flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div className="flex items-center gap-3">
-              <span className="text-xs font-bold text-zinc-800">তারিখ নির্বাচন:</span>
+              <span className="text-xs font-bold text-zinc-800">{tr('তারিখ নির্বাচন:', 'Select Date:', language)}</span>
               <select
                 value={sheetDay}
                 onChange={(e) => setSheetDay(Number(e.target.value))}
@@ -539,11 +548,13 @@ export const QuickDataEntry: React.FC<QuickDataEntryProps> = ({
               >
                 {Array.from({ length: daysInMonth }, (_, i) => i + 1).map(d => (
                   <option key={d} value={d}>
-                    {d} তারিখ ({d}তম দিন)
+                    {language === 'bn' ? `${d} তারিখ (${d}তম দিন)` : `Day ${d}`}
                   </option>
                 ))}
               </select>
-              <span className="text-xs text-zinc-500">({books.length} টি বইয়ের জন্য একযোগে এন্ট্রি)</span>
+              <span className="text-xs text-zinc-500">
+                ({books.length} {tr('টি বইয়ের জন্য একযোগে এন্ট্রি', 'Books Bulk Entry', language)})
+              </span>
             </div>
 
             <button
@@ -551,32 +562,32 @@ export const QuickDataEntry: React.FC<QuickDataEntryProps> = ({
               className="inline-flex items-center gap-2 px-5 py-2 text-xs font-bold text-white bg-zinc-900 hover:bg-black rounded-xl shadow-xs transition-colors self-end sm:self-auto"
             >
               <Save className="w-4 h-4" />
-              <span>{sheetDay} তারিখে সব বইয়ের ডাটা সেভ করুন</span>
+              <span>{tr(`${sheetDay} তারিখে সব বইয়ের ডাটা সেভ করুন`, `Save All Books for Day ${sheetDay}`, language)}</span>
             </button>
           </div>
 
           {/* Bulk Spreadsheet Table */}
           <div className="bg-white rounded-2xl border border-zinc-200 shadow-xs overflow-hidden">
             <div className="text-[11px] text-zinc-500 font-medium px-4 py-2 sm:hidden border-b border-zinc-100 bg-zinc-50 flex items-center justify-between">
-              <span>👉 সম্পূর্ণ শিট দেখতে ডানে স্ক্রোল করুন</span>
+              <span>👉 {tr('সম্পূর্ণ শিট দেখতে ডানে স্ক্রোল করুন', 'Scroll right to view full sheet', language)}</span>
             </div>
             <div className="overflow-x-auto w-full">
               <table className="w-full text-left border-collapse text-xs min-w-[900px]">
                 <thead>
                   <tr className="bg-zinc-100 text-zinc-700 font-semibold border-b border-zinc-200">
-                    <th className="py-2.5 px-3 min-w-[180px] sticky left-0 z-10 bg-zinc-100">বইয়ের নাম</th>
-                    <th className="py-2.5 px-2 text-center bg-zinc-50 min-w-[70px]">প্রেস প্রাপ্ত</th>
-                    <th className="py-2.5 px-2 text-center bg-zinc-50 min-w-[65px]">বইবাড়ি</th>
-                    <th className="py-2.5 px-2 text-center bg-zinc-50 min-w-[65px]">রকমারি</th>
-                    <th className="py-2.5 px-2 text-center bg-zinc-50 min-w-[65px]">ওয়াফিলাইফ</th>
-                    <th className="py-2.5 px-2 text-center bg-zinc-50 min-w-[65px]">অন্যান্য</th>
-                    <th className="py-2.5 px-2 text-center bg-zinc-50 min-w-[65px]">HO কাউন্টার</th>
-                    <th className="py-2.5 px-2 text-center bg-zinc-50 min-w-[65px]">নীলক্ষেত</th>
-                    <th className="py-2.5 px-2 text-center bg-zinc-50 min-w-[65px]">সুমনা</th>
-                    <th className="py-2.5 px-2 text-center bg-zinc-50 min-w-[65px]">প্রমিজ</th>
-                    <th className="py-2.5 px-2 text-center bg-zinc-50 min-w-[65px]">জয়স্টার</th>
-                    <th className="py-2.5 px-2 text-center bg-zinc-50 min-w-[65px]">রিটার্ন</th>
-                    <th className="py-2.5 px-3 text-center font-bold bg-zinc-200 text-zinc-900 min-w-[80px]">আজকের বিক্রি</th>
+                    <th className="py-2.5 px-3 min-w-[180px] sticky left-0 z-10 bg-zinc-100">{tr('বইয়ের নাম', 'Book Name', language)}</th>
+                    <th className="py-2.5 px-2 text-center bg-zinc-50 min-w-[70px]">{tr('প্রেস প্রাপ্ত', 'Press Rcvd', language)}</th>
+                    <th className="py-2.5 px-2 text-center bg-zinc-50 min-w-[65px]">{tr('বইবাড়ি', 'Boibari', language)}</th>
+                    <th className="py-2.5 px-2 text-center bg-zinc-50 min-w-[65px]">{tr('রকমারি', 'Rokomari', language)}</th>
+                    <th className="py-2.5 px-2 text-center bg-zinc-50 min-w-[65px]">{tr('ওয়াফিলাইফ', 'Wafilife', language)}</th>
+                    <th className="py-2.5 px-2 text-center bg-zinc-50 min-w-[65px]">{tr('অন্যান্য', 'Others', language)}</th>
+                    <th className="py-2.5 px-2 text-center bg-zinc-50 min-w-[65px]">{tr('HO কাউন্টার', 'Head Office', language)}</th>
+                    <th className="py-2.5 px-2 text-center bg-zinc-50 min-w-[65px]">{tr('নীলক্ষেত', 'Nilkhet', language)}</th>
+                    <th className="py-2.5 px-2 text-center bg-zinc-50 min-w-[65px]">{tr('সুমনা', 'Sumona', language)}</th>
+                    <th className="py-2.5 px-2 text-center bg-zinc-50 min-w-[65px]">{tr('প্রমিজ', 'Promise', language)}</th>
+                    <th className="py-2.5 px-2 text-center bg-zinc-50 min-w-[65px]">{tr('জয়স্টার', 'Joystar', language)}</th>
+                    <th className="py-2.5 px-2 text-center bg-zinc-50 min-w-[65px]">{tr('রিটার্ন', 'Returns', language)}</th>
+                    <th className="py-2.5 px-3 text-center font-bold bg-zinc-200 text-zinc-900 min-w-[80px]">{tr('আজকের বিক্রি', 'Total Sold', language)}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-zinc-100">
@@ -746,7 +757,7 @@ export const QuickDataEntry: React.FC<QuickDataEntryProps> = ({
 
                         {/* Row Total */}
                         <td className="py-2 px-3 text-center font-bold text-zinc-900 bg-zinc-100">
-                          {rowTotal > 0 ? `${rowTotal}টি` : '-'}
+                          {rowTotal > 0 ? `${rowTotal}` : '-'}
                         </td>
                       </tr>
                     );
@@ -762,7 +773,7 @@ export const QuickDataEntry: React.FC<QuickDataEntryProps> = ({
               className="inline-flex items-center gap-2 px-6 py-2.5 text-xs font-bold text-white bg-zinc-900 hover:bg-black rounded-xl shadow-xs transition-colors"
             >
               <Save className="w-4 h-4" />
-              <span>{sheetDay} তারিখে সব বইয়ের ডাটা সেভ করুন</span>
+              <span>{tr(`${sheetDay} তারিখে সব বইয়ের ডাটা সেভ করুন`, `Save All Books for Day ${sheetDay}`, language)}</span>
             </button>
           </div>
 

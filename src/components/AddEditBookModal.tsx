@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X, BookPlus, Save } from 'lucide-react';
 import { BookRecord } from '../types/book';
 import { formatBDT } from '../utils/calculations';
+import { Language, tr } from '../utils/i18n';
 
 interface AddEditBookModalProps {
   isOpen: boolean;
@@ -9,6 +10,7 @@ interface AddEditBookModalProps {
   editingBook?: BookRecord | null;
   onSaveBook: (bookData: Partial<BookRecord>) => void;
   nextSl: number;
+  language?: Language;
 }
 
 export const AddEditBookModal: React.FC<AddEditBookModalProps> = ({
@@ -17,6 +19,7 @@ export const AddEditBookModal: React.FC<AddEditBookModalProps> = ({
   editingBook,
   onSaveBook,
   nextSl,
+  language = 'bn',
 }) => {
   const [bookName, setBookName] = useState('');
   const [adCost, setAdCost] = useState<number>(30);
@@ -74,10 +77,13 @@ export const AddEditBookModal: React.FC<AddEditBookModalProps> = ({
             </div>
             <div>
               <h3 className="text-base font-bold">
-                {editingBook ? 'বইয়ের তথ্য সম্পাদন করুন' : 'নতুন বই যুক্ত করুন'}
+                {editingBook 
+                  ? tr('বইয়ের তথ্য সম্পাদন করুন', 'Edit Book Details', language)
+                  : tr('নতুন বই যুক্ত করুন', 'Add New Book', language)
+                }
               </h3>
               <p className="text-xs text-zinc-400">
-                {editingBook ? `SL: ${editingBook.sl}` : `নতুন ক্রমিক নং: ${nextSl}`}
+                {editingBook ? `SL: ${editingBook.sl}` : tr(`নতুন ক্রমিক নং: ${nextSl}`, `New Serial No: ${nextSl}`, language)}
               </p>
             </div>
           </div>
@@ -95,14 +101,14 @@ export const AddEditBookModal: React.FC<AddEditBookModalProps> = ({
             {/* Book Name */}
             <div>
               <label className="block text-xs font-bold text-zinc-800 mb-1.5">
-                বইয়ের নাম (Book Name) *
+                {tr('বইয়ের নাম (Book Name) *', 'Book Name *', language)}
               </label>
               <input
                 type="text"
                 required
                 value={bookName}
                 onChange={(e) => setBookName(e.target.value)}
-                placeholder="যেমন: ৪৭তম বিসিএস প্রিলিমিনারি গাইড"
+                placeholder={tr('যেমন: ৪৭তম বিসিএস প্রিলিমিনারি গাইড', 'e.g. 47th BCS Preliminary Guide', language)}
                 className="w-full text-xs font-semibold border border-zinc-300 rounded-lg p-2.5 focus:ring-2 focus:ring-zinc-900"
               />
             </div>
@@ -111,7 +117,14 @@ export const AddEditBookModal: React.FC<AddEditBookModalProps> = ({
             <div className="p-3 bg-zinc-50 border border-zinc-200 rounded-xl flex items-start gap-2.5 text-xs text-zinc-600">
               <div className="w-2 h-2 rounded-full bg-zinc-900 mt-1 shrink-0" />
               <div>
-                <span className="font-bold text-zinc-900">প্রেস অর্ডার ব্যবস্থাপনা:</span> প্রেসে মোট অর্ডার কপি সংখ্যা ও চালান ভাউচার এখন <span className="font-semibold text-zinc-900">"প্রেস ও ডিউ হিসাব &gt; প্রেস অর্ডার ম্যানেজমেন্ট"</span> ট্যাব থেকে বই ভিত্তিক তারিখ ও ভাউচার অনুযায়ী সম্পূর্ণভাবে নিয়ন্ত্রণ করা হবে।
+                <span className="font-bold text-zinc-900">
+                  {tr('প্রেস অর্ডার ব্যবস্থাপনা:', 'Press Order Management:', language)}
+                </span>{' '}
+                {tr(
+                  'প্রেসে মোট অর্ডার কপি সংখ্যা ও চালান ভাউচার এখন "প্রেস ও ডিউ হিসাব > প্রেস অর্ডার ম্যানেজমেন্ট" ট্যাব থেকে বই ভিত্তিক তারিখ ও ভাউচার অনুযায়ী সম্পূর্ণভাবে নিয়ন্ত্রণ করা হবে।',
+                  'Press order copies and chalan vouchers are now managed under "Accounts & Dues > Press Order Management" tab by book, date, and voucher.',
+                  language
+                )}
               </div>
             </div>
 
@@ -119,7 +132,7 @@ export const AddEditBookModal: React.FC<AddEditBookModalProps> = ({
             <div className="grid grid-cols-3 gap-3">
               <div>
                 <label className="block text-xs text-zinc-700 mb-1 font-semibold">
-                  বিক্রয় মূল্য (MRP) *
+                  {tr('বিক্রয় মূল্য (MRP) *', 'Selling Price (MRP) *', language)}
                 </label>
                 <input
                   type="number"
@@ -133,7 +146,7 @@ export const AddEditBookModal: React.FC<AddEditBookModalProps> = ({
 
               <div>
                 <label className="block text-xs text-zinc-700 mb-1 font-semibold">
-                  উৎপাদন খরচ *
+                  {tr('উৎপাদন খরচ *', 'Printing Cost *', language)}
                 </label>
                 <input
                   type="number"
@@ -147,7 +160,7 @@ export const AddEditBookModal: React.FC<AddEditBookModalProps> = ({
 
               <div>
                 <label className="block text-xs text-zinc-700 mb-1 font-semibold">
-                  বিজ্ঞাপন খরচ *
+                  {tr('বিজ্ঞাপন খরচ *', 'Ad Cost *', language)}
                 </label>
                 <input
                   type="number"
@@ -162,22 +175,24 @@ export const AddEditBookModal: React.FC<AddEditBookModalProps> = ({
 
             {/* Profit Margin Preview Banner */}
             <div className="bg-zinc-100 border border-zinc-200 rounded-xl p-3 flex items-center justify-between text-xs">
-              <span className="text-zinc-700 font-medium">কপি প্রতি লাভ (Profit Margin):</span>
+              <span className="text-zinc-700 font-medium">
+                {tr('কপি প্রতি লাভ (Profit Margin):', 'Profit Margin per Copy:', language)}
+              </span>
               <span className="font-bold text-sm text-zinc-900 font-mono">
-                +{formatBDT(profitPerBook)}
+                +{formatBDT(profitPerBook, language)}
               </span>
             </div>
 
             {/* Remarks */}
             <div>
               <label className="block text-xs font-bold text-zinc-800 mb-1.5">
-                মন্তব্য (Remarks)
+                {tr('মন্তব্য (Remarks)', 'Remarks (Optional)', language)}
               </label>
               <textarea
                 rows={2}
                 value={remarks}
                 onChange={(e) => setRemarks(e.target.value)}
-                placeholder="বই সম্পর্কিত বিশেষ তথ্য বা সংস্করণ..."
+                placeholder={tr('বই সম্পর্কিত বিশেষ তথ্য বা সংস্করণ...', 'Special notes or edition info...', language)}
                 className="w-full text-xs border border-zinc-300 rounded-lg p-2.5 focus:ring-2 focus:ring-zinc-900"
               />
             </div>
@@ -191,14 +206,19 @@ export const AddEditBookModal: React.FC<AddEditBookModalProps> = ({
               onClick={onClose}
               className="px-4 py-2 text-xs font-semibold text-zinc-700 hover:bg-zinc-200 rounded-lg transition-colors"
             >
-              বাতিল
+              {tr('বাতিল', 'Cancel', language)}
             </button>
             <button
               type="submit"
               className="inline-flex items-center gap-1.5 px-5 py-2 text-xs font-bold text-white bg-zinc-900 hover:bg-black rounded-lg shadow-xs transition-colors"
             >
               <Save className="w-4 h-4" />
-              <span>{editingBook ? 'হালনাগাদ করুন' : 'যুক্ত করুন'}</span>
+              <span>
+                {editingBook 
+                  ? tr('হালনাগাদ করুন', 'Update Book', language)
+                  : tr('যুক্ত করুন', 'Add Book', language)
+                }
+              </span>
             </button>
           </div>
         </form>

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Truck, Save } from 'lucide-react';
 import { BookRecord, PressDeliveryRecord } from '../types/book';
+import { Language, tr } from '../utils/i18n';
 
 interface AddPressDeliveryModalProps {
   isOpen: boolean;
@@ -8,6 +9,7 @@ interface AddPressDeliveryModalProps {
   books: BookRecord[];
   onAddDelivery: (delivery: Omit<PressDeliveryRecord, 'id' | 'createdAt'>) => void;
   preSelectedBookId?: string;
+  language?: Language;
 }
 
 export const AddPressDeliveryModal: React.FC<AddPressDeliveryModalProps> = ({
@@ -16,6 +18,7 @@ export const AddPressDeliveryModal: React.FC<AddPressDeliveryModalProps> = ({
   books,
   onAddDelivery,
   preSelectedBookId,
+  language = 'bn',
 }) => {
   const [selectedBookId, setSelectedBookId] = useState<string>(
     preSelectedBookId || books[0]?.id || ''
@@ -49,7 +52,7 @@ export const AddPressDeliveryModal: React.FC<AddPressDeliveryModalProps> = ({
 
     onAddDelivery({
       bookId: selectedBookId,
-      bookName: currentBook?.bookName || 'অজানা বই',
+      bookName: currentBook?.bookName || tr('অজানা বই', 'Unknown Book', language),
       deliveryDate,
       quantity: Number(quantity),
       chalanNo: chalanNo.trim() || `CH-${Date.now()}`,
@@ -72,8 +75,12 @@ export const AddPressDeliveryModal: React.FC<AddPressDeliveryModalProps> = ({
               <Truck className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-base font-bold">প্রেস থেকে বই চালান গ্রহণ</h3>
-              <p className="text-xs text-zinc-400">ফরিদ ভাই প্রেস থেকে হেড অফিসে বই সরবরাহ চালান এন্ট্রি করুন</p>
+              <h3 className="text-base font-bold">
+                {tr('প্রেস থেকে বই চালান গ্রহণ', 'Receive Book Delivery from Press', language)}
+              </h3>
+              <p className="text-xs text-zinc-400">
+                {tr('ফরিদ ভাই প্রেস থেকে হেড অফিসে বই সরবরাহ চালান এন্ট্রি করুন', 'Enter delivery chalan of books received from Farid Bhai Press to Head Office', language)}
+              </p>
             </div>
           </div>
           <button
@@ -90,7 +97,7 @@ export const AddPressDeliveryModal: React.FC<AddPressDeliveryModalProps> = ({
             {/* Book Selection (Bookwise) */}
             <div>
               <label className="block text-xs font-bold text-zinc-800 mb-1.5">
-                বই নির্বাচন করুন (Book Selection) *
+                {tr('বই নির্বাচন করুন (Book Selection) *', 'Select Book *', language)}
               </label>
               <select
                 value={selectedBookId}
@@ -110,7 +117,7 @@ export const AddPressDeliveryModal: React.FC<AddPressDeliveryModalProps> = ({
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="block text-xs font-bold text-zinc-800 mb-1.5">
-                  চালান / গ্রহণের তারিখ (Receipt Date) *
+                  {tr('চালান / গ্রহণের তারিখ (Receipt Date) *', 'Receipt Date *', language)}
                 </label>
                 <input
                   type="date"
@@ -123,14 +130,14 @@ export const AddPressDeliveryModal: React.FC<AddPressDeliveryModalProps> = ({
 
               <div>
                 <label className="block text-xs font-bold text-zinc-800 mb-1.5">
-                  প্রেস চালান / ভাউচার নং (Chalan No) *
+                  {tr('প্রেস চালান / ভাউচার নং (Chalan No) *', 'Chalan / Voucher No *', language)}
                 </label>
                 <input
                   type="text"
                   required
                   value={chalanNo}
                   onChange={(e) => setChalanNo(e.target.value)}
-                  placeholder="যেমন: CH-2026-004"
+                  placeholder={tr('যেমন: CH-2026-004', 'e.g. CH-2026-004', language)}
                   className="w-full text-xs border border-zinc-300 rounded-lg p-2.5 focus:ring-2 focus:ring-zinc-900 font-mono"
                 />
               </div>
@@ -140,7 +147,7 @@ export const AddPressDeliveryModal: React.FC<AddPressDeliveryModalProps> = ({
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="block text-xs font-bold text-zinc-800 mb-1.5">
-                  গ্রহণকৃত বই সংখ্যা / কপি (Quantity) *
+                  {tr('গ্রহণকৃত বই সংখ্যা / কপি (Quantity) *', 'Received Quantity (Copies) *', language)}
                 </label>
                 <input
                   type="number"
@@ -148,20 +155,20 @@ export const AddPressDeliveryModal: React.FC<AddPressDeliveryModalProps> = ({
                   required
                   value={quantity}
                   onChange={(e) => setQuantity(parseInt(e.target.value) || 0)}
-                  placeholder="যেমন: ১০০০"
+                  placeholder={tr('যেমন: ১০০০', 'e.g. 1000', language)}
                   className="w-full text-xs font-bold border border-zinc-300 rounded-lg p-2.5 focus:ring-2 focus:ring-zinc-900 font-mono"
                 />
               </div>
 
               <div>
                 <label className="block text-xs font-bold text-zinc-800 mb-1.5">
-                  মুদ্রণ সংস্করণ / লটের রেফারেন্স
+                  {tr('মুদ্রণ সংস্করণ / লটের রেফারেন্স', 'Edition / Lot Reference', language)}
                 </label>
                 <input
                   type="text"
                   value={lotName}
                   onChange={(e) => setLotName(e.target.value)}
-                  placeholder="যেমন: ১ম মুদ্রণ (লট-১)"
+                  placeholder={tr('যেমন: ১ম মুদ্রণ (লট-১)', 'e.g. 1st Edition (Lot-1)', language)}
                   className="w-full text-xs font-semibold border border-zinc-300 rounded-lg p-2.5 focus:ring-2 focus:ring-zinc-900"
                 />
               </div>
@@ -170,13 +177,13 @@ export const AddPressDeliveryModal: React.FC<AddPressDeliveryModalProps> = ({
             {/* Received By */}
             <div>
               <label className="block text-xs font-bold text-zinc-800 mb-1.5">
-                গ্রহীতার নাম / ওয়্যারহাউস স্থান
+                {tr('গ্রহীতার নাম / ওয়্যারহাউস স্থান', 'Receiver / Warehouse Location', language)}
               </label>
               <input
                 type="text"
                 value={receivedBy}
                 onChange={(e) => setReceivedBy(e.target.value)}
-                placeholder="যেমন: হেড অফিস ওয়্যারহাউস / স্টোর"
+                placeholder={tr('যেমন: হেড অফিস ওয়্যারহাউস / স্টোর', 'e.g. Head Office Warehouse / Store', language)}
                 className="w-full text-xs border border-zinc-300 rounded-lg p-2.5 focus:ring-2 focus:ring-zinc-900"
               />
             </div>
@@ -184,13 +191,13 @@ export const AddPressDeliveryModal: React.FC<AddPressDeliveryModalProps> = ({
             {/* Notes / Remarks */}
             <div>
               <label className="block text-xs font-bold text-zinc-800 mb-1.5">
-                নোট / মন্তব্য (ঐচ্ছিক)
+                {tr('নোট / মন্তব্য (ঐচ্ছিক)', 'Notes / Remarks (Optional)', language)}
               </label>
               <textarea
                 rows={2}
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                placeholder="চালান গ্রহণ সম্পর্কিত বিশেষ বিবরণ..."
+                placeholder={tr('চালান গ্রহণ সম্পর্কিত বিশেষ বিবরণ...', 'Special notes about delivery receipt...', language)}
                 className="w-full text-xs border border-zinc-300 rounded-lg p-2.5 focus:ring-2 focus:ring-zinc-900"
               />
             </div>
@@ -204,14 +211,14 @@ export const AddPressDeliveryModal: React.FC<AddPressDeliveryModalProps> = ({
               onClick={onClose}
               className="px-4 py-2 text-xs font-semibold text-zinc-700 hover:bg-zinc-200 rounded-lg transition-colors"
             >
-              বাতিল
+              {tr('বাতিল', 'Cancel', language)}
             </button>
             <button
               type="submit"
               className="inline-flex items-center gap-1.5 px-5 py-2 text-xs font-bold text-white bg-zinc-900 hover:bg-black rounded-lg shadow-xs transition-colors"
             >
               <Save className="w-4 h-4" />
-              <span>চালান গ্রহণ নিশ্চিত করুন</span>
+              <span>{tr('চালান গ্রহণ নিশ্চিত করুন', 'Confirm Delivery Receipt', language)}</span>
             </button>
           </div>
         </form>

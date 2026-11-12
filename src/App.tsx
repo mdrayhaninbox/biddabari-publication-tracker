@@ -106,7 +106,7 @@ export const App: React.FC = () => {
   const [theme, setTheme] = useState<Theme>(() => {
     try {
       const saved = localStorage.getItem(THEME_STORAGE_KEY) as Theme;
-      if (saved && ['classic', 'dark', 'navy', 'emerald'].includes(saved)) {
+      if (saved && ['classic', 'navy', 'emerald'].includes(saved)) {
         return saved;
       }
     } catch (e) {
@@ -747,6 +747,7 @@ export const App: React.FC = () => {
             selectedMonth={selectedMonth}
             selectedYear={selectedYear}
             daysInMonth={daysInMonth}
+            language={language}
           />
         )}
 
@@ -761,6 +762,7 @@ export const App: React.FC = () => {
             daysInMonth={daysInMonth}
             pressPayments={pressPayments}
             channelCollections={channelCollections}
+            language={language}
           />
         )}
 
@@ -782,6 +784,7 @@ export const App: React.FC = () => {
             onDeleteChannelCollection={handleDeleteChannelCollection}
             selectedMonth={selectedMonth}
             selectedYear={selectedYear}
+            language={language}
           />
         )}
 
@@ -795,6 +798,7 @@ export const App: React.FC = () => {
             selectedMonth={selectedMonth}
             selectedYear={selectedYear}
             daysInMonth={daysInMonth}
+            language={language}
           />
         )}
 
@@ -811,6 +815,7 @@ export const App: React.FC = () => {
               setEditingBook(null);
               setIsAddEditOpen(true);
             }}
+            language={language}
           />
         )}
 
@@ -825,6 +830,7 @@ export const App: React.FC = () => {
             selectedMonth={selectedMonth}
             selectedYear={selectedYear}
             daysInMonth={daysInMonth}
+            language={language}
           />
         )}
 
@@ -840,6 +846,7 @@ export const App: React.FC = () => {
             pressDeliveries={pressDeliveries}
             channelCollections={channelCollections}
             initialSelectedBookId={reportPreSelectedBookId}
+            language={language}
           />
         )}
       </main>
@@ -881,6 +888,7 @@ export const App: React.FC = () => {
         selectedMonth={selectedMonth}
         selectedYear={selectedYear}
         daysInMonth={daysInMonth}
+        language={language}
       />
 
       <AddEditBookModal
@@ -892,6 +900,7 @@ export const App: React.FC = () => {
         editingBook={editingBook}
         onSaveBook={handleSaveBook}
         nextSl={books.length + 1}
+        language={language}
       />
 
       <ExcelSyncModal
@@ -899,6 +908,7 @@ export const App: React.FC = () => {
         onClose={() => setIsExcelSyncOpen(false)}
         books={books}
         onImportSuccess={(newBooks) => setBooks(newBooks)}
+        language={language}
       />
 
       {/* Press Payment Voucher Modal */}
@@ -907,6 +917,7 @@ export const App: React.FC = () => {
         onClose={() => setIsPressPaymentModalOpen(false)}
         books={books}
         onSavePayment={handleAddPressPayment}
+        language={language}
       />
 
       {/* Press Order Modal (Multi-order / Edition lot management) */}
@@ -916,6 +927,7 @@ export const App: React.FC = () => {
         books={books}
         onAddOrder={handleAddPressOrder}
         preSelectedBookId={pressOrderPreSelectedBookId}
+        language={language}
       />
 
       {/* Press Delivery Modal (Received books chalan voucher) */}
@@ -925,6 +937,7 @@ export const App: React.FC = () => {
         books={books}
         onAddDelivery={handleAddPressDelivery}
         preSelectedBookId={pressDeliveryPreSelectedBookId}
+        language={language}
       />
 
       {/* Channel Collection Receipt Modal */}
@@ -933,6 +946,7 @@ export const App: React.FC = () => {
         onClose={() => setIsChannelCollectionModalOpen(false)}
         onSaveCollection={handleAddChannelCollection}
         initialChannelKey={selectedChannelForCollection}
+        language={language}
       />
 
     </div>

@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { BookRecord } from '../types/book';
 import { calculateBookMetrics, formatBDT, formatNumber, formatMonthYearBengali } from '../utils/calculations';
+import { Language, tr } from '../utils/i18n';
 
 interface DashboardProps {
   books: BookRecord[];
@@ -21,6 +22,7 @@ interface DashboardProps {
   selectedMonth?: number;
   selectedYear?: number;
   daysInMonth?: number;
+  language?: Language;
 }
 
 export const Dashboard: React.FC<DashboardProps> = ({
@@ -30,6 +32,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   selectedMonth = 11,
   selectedYear = 2026,
   daysInMonth = 30,
+  language = 'bn',
 }) => {
   const [selectedBookFilter, setSelectedBookFilter] = useState<string>('all');
 
@@ -113,8 +116,12 @@ export const Dashboard: React.FC<DashboardProps> = ({
       {/* Book Filter Dropdown & Header Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-white p-4 rounded-2xl border border-zinc-200 shadow-xs">
         <div>
-          <h2 className="text-lg font-bold text-zinc-900">সার্বিক সেলস ও স্টক ওভারভিউ</h2>
-          <p className="text-xs text-zinc-500">{formatMonthYearBengali(selectedMonth, selectedYear)} এর সামগ্রিক বিক্রয় ও স্টক চিত্র</p>
+          <h2 className="text-lg font-bold text-zinc-900">
+            {tr('সার্বিক সেলস ও স্টক ওভারভিউ', 'Overall Sales & Inventory Overview', language)}
+          </h2>
+          <p className="text-xs text-zinc-500">
+            {formatMonthYearBengali(selectedMonth, selectedYear, language)} {tr('এর সামগ্রিক বিক্রয় ও স্টক চিত্র', 'Sales and stock summary', language)}
+          </p>
         </div>
 
         <div className="flex items-center gap-2">
@@ -124,7 +131,9 @@ export const Dashboard: React.FC<DashboardProps> = ({
             onChange={(e) => setSelectedBookFilter(e.target.value)}
             className="text-xs font-semibold border border-zinc-300 rounded-xl px-3 py-2 bg-white text-zinc-800 focus:outline-hidden focus:ring-2 focus:ring-zinc-900"
           >
-            <option value="all">সবগুলো বই একনজরে ({books.length})</option>
+            <option value="all">
+              {tr('সবগুলো বই একনজরে', 'All Books at a Glance', language)} ({books.length})
+            </option>
             {books.map(b => (
               <option key={b.id} value={b.id}>
                 {b.sl}. {b.bookName}
@@ -140,100 +149,100 @@ export const Dashboard: React.FC<DashboardProps> = ({
         {/* Head Office Stock */}
         <div className="bg-white p-3.5 sm:p-4 rounded-xl border border-zinc-200 shadow-xs hover:border-zinc-400 transition-all">
           <div className="flex items-center justify-between text-zinc-500 text-[11px] sm:text-xs font-semibold">
-            <span>হেড অফিস স্টক</span>
+            <span>{tr('হেড অফিস স্টক', 'Head Office Stock', language)}</span>
             <div className="p-1.5 sm:p-2 bg-zinc-100 rounded-lg text-zinc-900 border border-zinc-200">
               <Boxes className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </div>
           </div>
           <div className="mt-1.5 sm:mt-2 flex items-baseline gap-1">
-            <span className="text-xl sm:text-2xl font-bold text-zinc-900 font-mono">{formatNumber(totals.totalHOStock)}</span>
-            <span className="text-[10px] sm:text-xs text-zinc-500">কপি</span>
+            <span className="text-xl sm:text-2xl font-bold text-zinc-900 font-mono">{formatNumber(totals.totalHOStock, language)}</span>
+            <span className="text-[10px] sm:text-xs text-zinc-500">{tr('কপি', 'copies', language)}</span>
           </div>
           <div className="mt-1 text-[10px] sm:text-[11px] text-zinc-600 font-medium">
-            তাৎক্ষণিক ডেলিভারি প্রস্তুত
+            {tr('তাৎক্ষণিক ডেলিভারি প্রস্তুত', 'Ready for Dispatch', language)}
           </div>
         </div>
 
         {/* Farid Bhai Press Stock */}
         <div className="bg-white p-3.5 sm:p-4 rounded-xl border border-zinc-200 shadow-xs hover:border-zinc-400 transition-all">
           <div className="flex items-center justify-between text-zinc-500 text-[11px] sm:text-xs font-semibold">
-            <span>ফরিদ ভাই (প্রেস) স্টক</span>
+            <span>{tr('ফরিদ ভাই (প্রেস) স্টক', 'Press Stock (Farid)', language)}</span>
             <div className="p-1.5 sm:p-2 bg-zinc-100 rounded-lg text-zinc-900 border border-zinc-200">
               <Warehouse className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </div>
           </div>
           <div className="mt-1.5 sm:mt-2 flex items-baseline gap-1">
-            <span className="text-xl sm:text-2xl font-bold text-zinc-900 font-mono">{formatNumber(totals.totalPressStock)}</span>
-            <span className="text-[10px] sm:text-xs text-zinc-500">কপি</span>
+            <span className="text-xl sm:text-2xl font-bold text-zinc-900 font-mono">{formatNumber(totals.totalPressStock, language)}</span>
+            <span className="text-[10px] sm:text-xs text-zinc-500">{tr('কপি', 'copies', language)}</span>
           </div>
           <div className="mt-1 text-[10px] sm:text-[11px] text-zinc-500 font-medium font-mono">
-            মোট অর্ডার: {formatNumber(totals.totalPressOrder)}
+            {tr('মোট অর্ডার:', 'Total Orders:', language)} {formatNumber(totals.totalPressOrder, language)}
           </div>
         </div>
 
         {/* Total Sold */}
         <div className="bg-white p-3.5 sm:p-4 rounded-xl border border-zinc-200 shadow-xs hover:border-zinc-400 transition-all">
           <div className="flex items-center justify-between text-zinc-500 text-[11px] sm:text-xs font-semibold">
-            <span>মোট বিক্রয়</span>
+            <span>{tr('মোট বিক্রয়', 'Total Sold', language)}</span>
             <div className="p-1.5 sm:p-2 bg-zinc-100 rounded-lg text-zinc-900 border border-zinc-200">
               <ShoppingBag className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </div>
           </div>
           <div className="mt-1.5 sm:mt-2 flex items-baseline gap-1">
-            <span className="text-xl sm:text-2xl font-bold text-zinc-900 font-mono">{formatNumber(totals.totalSold)}</span>
-            <span className="text-[10px] sm:text-xs text-zinc-500">কপি</span>
+            <span className="text-xl sm:text-2xl font-bold text-zinc-900 font-mono">{formatNumber(totals.totalSold, language)}</span>
+            <span className="text-[10px] sm:text-xs text-zinc-500">{tr('কপি', 'copies', language)}</span>
           </div>
           <div className="mt-1 text-[10px] sm:text-[11px] text-zinc-600 font-medium">
-            অনলাইন {Math.round((totals.totalOnlineSold / (totals.totalSold || 1)) * 100)}% • অফলাইন {Math.round((totals.totalOfflineSold / (totals.totalSold || 1)) * 100)}%
+            {tr('অনলাইন', 'Online', language)} {Math.round((totals.totalOnlineSold / (totals.totalSold || 1)) * 100)}% • {tr('অফলাইন', 'Offline', language)} {Math.round((totals.totalOfflineSold / (totals.totalSold || 1)) * 100)}%
           </div>
         </div>
 
         {/* Total Revenue */}
         <div className="bg-white p-3.5 sm:p-4 rounded-xl border border-zinc-200 shadow-xs hover:border-zinc-400 transition-all">
           <div className="flex items-center justify-between text-zinc-500 text-[11px] sm:text-xs font-semibold">
-            <span>মোট রাজস্ব (Revenue)</span>
+            <span>{tr('মোট রাজস্ব (Revenue)', 'Total Revenue', language)}</span>
             <div className="p-1.5 sm:p-2 bg-zinc-100 rounded-lg text-zinc-900 border border-zinc-200">
               <Wallet className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </div>
           </div>
           <div className="mt-1.5 sm:mt-2 flex items-baseline gap-1">
-            <span className="text-lg sm:text-xl font-bold text-zinc-900 font-mono">{formatBDT(totals.totalRevenue)}</span>
+            <span className="text-lg sm:text-xl font-bold text-zinc-900 font-mono">{formatBDT(totals.totalRevenue, language)}</span>
           </div>
           <div className="mt-1 text-[10px] sm:text-[11px] text-zinc-500 font-medium">
-            সর্বমোট বিক্রয়মূল্য
+            {tr('সর্বমোট বিক্রয়মূল্য', 'Gross Invoiced Value', language)}
           </div>
         </div>
 
         {/* Total Profit */}
         <div className="bg-white p-3.5 sm:p-4 rounded-xl border border-zinc-200 shadow-xs hover:border-zinc-400 transition-all">
           <div className="flex items-center justify-between text-zinc-500 text-[11px] sm:text-xs font-semibold">
-            <span>মোট নিট লাভ (Profit)</span>
+            <span>{tr('মোট নিট লাভ (Profit)', 'Total Net Profit', language)}</span>
             <div className="p-1.5 sm:p-2 bg-zinc-100 rounded-lg text-zinc-900 border border-zinc-200">
               <TrendingUp className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </div>
           </div>
           <div className="mt-1.5 sm:mt-2 flex items-baseline gap-1">
-            <span className="text-lg sm:text-xl font-bold text-zinc-900 font-mono">+{formatBDT(totals.totalProfit)}</span>
+            <span className="text-lg sm:text-xl font-bold text-zinc-900 font-mono">+{formatBDT(totals.totalProfit, language)}</span>
           </div>
           <div className="mt-1 text-[10px] sm:text-[11px] text-zinc-500 font-medium">
-            খরচ বাদে আনুমানিক মুনাফা
+            {tr('খরচ বাদে আনুমানিক মুনাফা', 'Net Profit Margin', language)}
           </div>
         </div>
 
         {/* Returns & Promos */}
         <div className="bg-white p-3.5 sm:p-4 rounded-xl border border-zinc-200 shadow-xs hover:border-zinc-400 transition-all">
           <div className="flex items-center justify-between text-zinc-500 text-[11px] sm:text-xs font-semibold">
-            <span>রিটার্ন ও প্রমোশন</span>
+            <span>{tr('রিটার্ন ও প্রমোশন', 'Returns & Promotion', language)}</span>
             <div className="p-1.5 sm:p-2 bg-zinc-100 rounded-lg text-zinc-900 border border-zinc-200">
               <RotateCcw className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </div>
           </div>
           <div className="mt-1.5 sm:mt-2 flex items-baseline gap-1">
-            <span className="text-xl sm:text-2xl font-bold text-zinc-900 font-mono">{formatNumber(totals.totalReturns)}</span>
-            <span className="text-[10px] sm:text-xs text-zinc-500">রিটার্ন / {formatNumber(totals.totalPromo)} প্রমো</span>
+            <span className="text-xl sm:text-2xl font-bold text-zinc-900 font-mono">{formatNumber(totals.totalReturns, language)}</span>
+            <span className="text-[10px] sm:text-xs text-zinc-500">{tr('রিটার্ন', 'Returns', language)} / {formatNumber(totals.totalPromo, language)} {tr('প্রমো', 'Promo', language)}</span>
           </div>
           <div className="mt-1 text-[10px] sm:text-[11px] text-zinc-500 font-medium">
-            মার্কেটিং ও উপহার কপি
+            {tr('মার্কেটিং ও উপহার কপি', 'Marketing & Promo copies', language)}
           </div>
         </div>
 
@@ -250,28 +259,28 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 <Globe className="w-4 h-4" />
               </div>
               <div>
-                <h3 className="font-bold text-zinc-900 text-sm">অনলাইন সেলস চ্যানেল</h3>
-                <p className="text-xs text-zinc-500">ই-কমার্স প্ল্যাটফর্ম ভিত্তিক বিক্রয় খতিয়ান</p>
+                <h3 className="font-bold text-zinc-900 text-sm">{tr('অনলাইন সেলস চ্যানেল', 'Online Sales Channels', language)}</h3>
+                <p className="text-xs text-zinc-500">{tr('ই-কমার্স প্ল্যাটফর্ম ভিত্তিক বিক্রয় খতিয়ান', 'E-commerce platform sales ledger', language)}</p>
               </div>
             </div>
             <span className="text-xs font-bold text-zinc-900 bg-zinc-100 px-2.5 py-1 rounded-full border border-zinc-200">
-              মোট: {formatNumber(totals.totalOnlineSold)} কপি
+              {tr('মোট:', 'Total:', language)} {formatNumber(totals.totalOnlineSold, language)} {tr('কপি', 'copies', language)}
             </span>
           </div>
 
           <div className="space-y-3">
             {[
-              { name: 'বইবাড়ি (Boibari)', count: totals.boibari, bar: 'bg-zinc-900' },
-              { name: 'রকমারি (Rokomari)', count: totals.rokomari, bar: 'bg-zinc-700' },
-              { name: 'ওয়াফিলাইফ (Wafilife)', count: totals.wafilife, bar: 'bg-zinc-500' },
-              { name: 'অন্যান্য অনলাইন লাইব্রেরি', count: totals.othersOnline, bar: 'bg-zinc-400' },
+              { name: tr('বইবাড়ি (Boibari)', 'Boibari', language), count: totals.boibari, bar: 'bg-zinc-900' },
+              { name: tr('রকমারি (Rokomari)', 'Rokomari', language), count: totals.rokomari, bar: 'bg-zinc-700' },
+              { name: tr('ওয়াফিলাইফ (Wafilife)', 'Wafilife', language), count: totals.wafilife, bar: 'bg-zinc-500' },
+              { name: tr('অন্যান্য অনলাইন লাইব্রেরি', 'Others Online', language), count: totals.othersOnline, bar: 'bg-zinc-400' },
             ].map(channel => {
               const pct = totals.totalOnlineSold > 0 ? (channel.count / totals.totalOnlineSold) * 100 : 0;
               return (
                 <div key={channel.name}>
                   <div className="flex justify-between text-xs font-semibold text-zinc-800 mb-1">
                     <span>{channel.name}</span>
-                    <span className="font-mono">{formatNumber(channel.count)} কপি ({pct.toFixed(1)}%)</span>
+                    <span className="font-mono">{formatNumber(channel.count, language)} {tr('কপি', 'copies', language)} ({pct.toFixed(1)}%)</span>
                   </div>
                   <div className="w-full bg-zinc-100 h-2 rounded-full overflow-hidden border border-zinc-200/50">
                     <div
@@ -293,22 +302,22 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 <Store className="w-4 h-4" />
               </div>
               <div>
-                <h3 className="font-bold text-zinc-900 text-sm">অফলাইন ও লাইব্রেরি সেলস</h3>
-                <p className="text-xs text-zinc-500">হেড অফিস ও ডিলার লাইব্রেরিভিত্তিক সরবরাহ</p>
+                <h3 className="font-bold text-zinc-900 text-sm">{tr('অফলাইন ও লাইব্রেরি সেলস', 'Offline & Library Sales', language)}</h3>
+                <p className="text-xs text-zinc-500">{tr('হেড অফিস ও ডিলার লাইব্রেরিভিত্তিক সরবরাহ', 'Head Office & library distribution', language)}</p>
               </div>
             </div>
             <span className="text-xs font-bold text-zinc-900 bg-zinc-100 px-2.5 py-1 rounded-full border border-zinc-200">
-              মোট: {formatNumber(totals.totalOfflineSold)} কপি
+              {tr('মোট:', 'Total:', language)} {formatNumber(totals.totalOfflineSold, language)} {tr('কপি', 'copies', language)}
             </span>
           </div>
 
           <div className="space-y-3">
             {[
-              { name: 'সুমনা লাইব্রেরি (Sumona Library)', count: totals.sumona, bar: 'bg-zinc-900', note: 'প্রেস থেকে সরাসরি' },
-              { name: 'প্রমিজ লাইব্রেরি (Promise Library)', count: totals.promise, bar: 'bg-zinc-700', note: 'প্রেস থেকে সরাসরি' },
-              { name: 'জয়স্টার লাইব্রেরি (Joystar Library)', count: totals.joystar, bar: 'bg-zinc-600', note: 'প্রেস থেকে সরাসরি' },
-              { name: 'নীলক্ষেত লাইব্রেরি (Nilkhet)', count: totals.nilkhet, bar: 'bg-zinc-500', note: 'হেড অফিস সরবরাহ' },
-              { name: 'হেড অফিস সরাসরি অফলাইন বিক্রয়', count: totals.hoOffline, bar: 'bg-zinc-400', note: 'হেড অফিস কাউন্টার' },
+              { name: tr('সুমনা লাইব্রেরি (Sumona Library)', 'Sumona Library', language), count: totals.sumona, bar: 'bg-zinc-900', note: tr('প্রেস থেকে সরাসরি', 'Direct from Press', language) },
+              { name: tr('প্রমিজ লাইব্রেরি (Promise Library)', 'Promise Library', language), count: totals.promise, bar: 'bg-zinc-700', note: tr('প্রেস থেকে সরাসরি', 'Direct from Press', language) },
+              { name: tr('জয়স্টার লাইব্রেরি (Joystar Library)', 'Joystar Library', language), count: totals.joystar, bar: 'bg-zinc-600', note: tr('প্রেস থেকে সরাসরি', 'Direct from Press', language) },
+              { name: tr('নীলক্ষেত লাইব্রেরি (Nilkhet)', 'Nilkhet Library', language), count: totals.nilkhet, bar: 'bg-zinc-500', note: tr('হেড অফিস সরবরাহ', 'Dispatched from HO', language) },
+              { name: tr('হেড অফিস সরাসরি অফলাইন বিক্রয়', 'Head Office Counter Sales', language), count: totals.hoOffline, bar: 'bg-zinc-400', note: tr('হেড অফিস কাউন্টার', 'HO Direct', language) },
             ].map(lib => {
               const pct = totals.totalOfflineSold > 0 ? (lib.count / totals.totalOfflineSold) * 100 : 0;
               return (
@@ -317,7 +326,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     <span>
                       {lib.name} <span className="text-[10px] text-zinc-400 font-normal">({lib.note})</span>
                     </span>
-                    <span className="font-mono">{formatNumber(lib.count)} কপি ({pct.toFixed(1)}%)</span>
+                    <span className="font-mono">{formatNumber(lib.count, language)} {tr('কপি', 'copies', language)} ({pct.toFixed(1)}%)</span>
                   </div>
                   <div className="w-full bg-zinc-100 h-2 rounded-full overflow-hidden border border-zinc-200/50">
                     <div
@@ -337,11 +346,19 @@ export const Dashboard: React.FC<DashboardProps> = ({
       <div className="bg-white p-5 rounded-2xl border border-zinc-200 shadow-xs">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h3 className="font-bold text-zinc-900 text-sm">১লা থেকে {formatNumber(daysInMonth)} তারিখের দৈনিক বিক্রয় গতিধারা</h3>
-            <p className="text-xs text-zinc-500">{formatMonthYearBengali(selectedMonth, selectedYear)} মাসের ক্যালেন্ডার তারিখ অনুযায়ী বিক্রিত কপির হিস্টোগ্রাম</p>
+            <h3 className="font-bold text-zinc-900 text-sm">
+              {tr(`১লা থেকে ${formatNumber(daysInMonth, language)} তারিখের দৈনিক বিক্রয় গতিধারা`, `Daily Sales Trend (Day 1 to ${formatNumber(daysInMonth, language)})`, language)}
+            </h3>
+            <p className="text-xs text-zinc-500">
+              {formatMonthYearBengali(selectedMonth, selectedYear, language)} {tr('মাসের ক্যালেন্ডার তারিখ অনুযায়ী বিক্রিত কপির হিস্টোগ্রাম', 'Calendar histogram of sold copies', language)}
+            </p>
           </div>
-          <span className="text-xs text-zinc-500 font-mono hidden sm:inline">১ - {formatNumber(daysInMonth)} তারিখ</span>
-          <span className="text-[11px] text-zinc-400 font-mono sm:hidden">👉 ডানে স্ক্রোল করুন</span>
+          <span className="text-xs text-zinc-500 font-mono hidden sm:inline">
+            1 - {formatNumber(daysInMonth, language)} {tr('তারিখ', 'Days', language)}
+          </span>
+          <span className="text-[11px] text-zinc-400 font-mono sm:hidden">
+            👉 {tr('ডানে স্ক্রোল করুন', 'Scroll right', language)}
+          </span>
         </div>
 
         <div className="overflow-x-auto pb-2 -mx-1 px-1">
@@ -353,7 +370,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 <div key={dateNum} className="flex flex-col items-center group relative h-full justify-end">
                   {/* Tooltip on hover */}
                   <div className="absolute -top-8 bg-zinc-900 text-white text-[10px] py-0.5 px-1.5 rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap z-20 shadow-md">
-                    {dateNum} তারিখ: {sales} কপি
+                    {tr(`তারিখ ${dateNum}: ${sales} কপি`, `Day ${dateNum}: ${sales} copies`, language)}
                   </div>
                   {/* Bar */}
                   <div
@@ -375,8 +392,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
       {/* Books Summary List with Quick Actions */}
       <div className="bg-white rounded-2xl border border-zinc-200 shadow-xs overflow-hidden">
         <div className="p-4 border-b border-zinc-100 flex items-center justify-between">
-          <h3 className="font-bold text-zinc-900 text-sm">বই ভিত্তিক পারফর্ম্যান্স ও স্টক স্ট্যাটাস</h3>
-          <span className="text-xs text-zinc-500 font-medium">{filteredBooks.length} টি বই</span>
+          <h3 className="font-bold text-zinc-900 text-sm">
+            {tr('বই ভিত্তিক পারফর্ম্যান্স ও স্টক স্ট্যাটাস', 'Book-wise Performance & Stock Status', language)}
+          </h3>
+          <span className="text-xs text-zinc-500 font-medium">{filteredBooks.length} {tr('টি বই', 'Books', language)}</span>
         </div>
 
         <div className="divide-y divide-zinc-100">
@@ -397,14 +416,14 @@ export const Dashboard: React.FC<DashboardProps> = ({
                       {book.bookName}
                       {isLowStock && (
                         <span className="text-[10px] bg-zinc-100 text-zinc-800 px-2 py-0.5 rounded font-semibold border border-zinc-300">
-                          লো স্টক
+                          {tr('লো স্টক', 'Low Stock', language)}
                         </span>
                       )}
                     </h4>
                     <div className="flex flex-wrap items-center gap-3 text-xs text-zinc-500 mt-1">
-                      <span>মূল্য: <b className="text-zinc-800">{formatBDT(m.perBookAmount)}</b></span>
-                      <span>উৎপাদন: {formatBDT(m.makingCost)}</span>
-                      <span>কপি প্রতি লাভ: <b className="text-zinc-900">+{formatBDT(m.profitPerBook)}</b></span>
+                      <span>{tr('মূল্য:', 'MRP:', language)} <b className="text-zinc-800">{formatBDT(m.perBookAmount, language)}</b></span>
+                      <span>{tr('উৎপাদন:', 'Cost:', language)} {formatBDT(m.makingCost, language)}</span>
+                      <span>{tr('কপি প্রতি লাভ:', 'Profit/unit:', language)} <b className="text-zinc-900">+{formatBDT(m.profitPerBook, language)}</b></span>
                       {book.remarks && (
                         <span className="text-zinc-400 italic">“{book.remarks}”</span>
                       )}
@@ -415,20 +434,20 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 {/* Stock & Sales stats */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 text-left sm:text-right w-full md:w-auto">
                   <div>
-                    <div className="text-[11px] text-zinc-400">হেড অফিস স্টক</div>
-                    <div className="text-sm font-bold text-zinc-900 font-mono">{formatNumber(m.totalPresentStockHO)} কপি</div>
+                    <div className="text-[11px] text-zinc-400">{tr('হেড অফিস স্টক', 'HO Stock', language)}</div>
+                    <div className="text-sm font-bold text-zinc-900 font-mono">{formatNumber(m.totalPresentStockHO, language)} {tr('কপি', 'copies', language)}</div>
                   </div>
                   <div>
-                    <div className="text-[11px] text-zinc-400">প্রেস স্টক</div>
-                    <div className="text-sm font-bold text-zinc-800 font-mono">{formatNumber(m.stockToFaridBhai)} কপি</div>
+                    <div className="text-[11px] text-zinc-400">{tr('প্রেস স্টক', 'Press Stock', language)}</div>
+                    <div className="text-sm font-bold text-zinc-800 font-mono">{formatNumber(m.stockToFaridBhai, language)} {tr('কপি', 'copies', language)}</div>
                   </div>
                   <div>
-                    <div className="text-[11px] text-zinc-400">মোট বিক্রয়</div>
-                    <div className="text-sm font-bold text-zinc-900 font-mono">{formatNumber(m.totalSold)} কপি</div>
+                    <div className="text-[11px] text-zinc-400">{tr('মোট বিক্রয়', 'Total Sold', language)}</div>
+                    <div className="text-sm font-bold text-zinc-900 font-mono">{formatNumber(m.totalSold, language)} {tr('কপি', 'copies', language)}</div>
                   </div>
                   <div>
-                    <div className="text-[11px] text-zinc-400">অর্জিত নিট লাভ</div>
-                    <div className="text-sm font-bold text-zinc-900 font-mono">+{formatBDT(m.totalNetProfit)}</div>
+                    <div className="text-[11px] text-zinc-400">{tr('অর্জিত নিট লাভ', 'Net Profit', language)}</div>
+                    <div className="text-sm font-bold text-zinc-900 font-mono">+{formatBDT(m.totalNetProfit, language)}</div>
                   </div>
                 </div>
 
@@ -438,13 +457,13 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     onClick={() => onOpenDailyEntryForBook(book.id)}
                     className="text-xs font-semibold text-zinc-800 hover:text-black bg-zinc-100 hover:bg-zinc-200 px-3 py-1.5 rounded-lg transition-colors border border-zinc-200"
                   >
-                    <span>এন্ট্রি দিন</span>
+                    <span>{tr('এন্ট্রি দিন', 'Quick Entry', language)}</span>
                   </button>
                   <button
                     onClick={() => onSelectBookForMatrix(book.id)}
                     className="text-xs font-semibold text-white bg-zinc-900 hover:bg-black px-3 py-1.5 rounded-lg transition-colors shadow-xs flex items-center gap-1"
                   >
-                    <span>{formatNumber(daysInMonth)} দিন ম্যাট্রিক্স</span>
+                    <span>{formatNumber(daysInMonth, language)} {tr('দিন ম্যাট্রিক্স', 'Days Matrix', language)}</span>
                     <ArrowUpRight className="w-3.5 h-3.5" />
                   </button>
                 </div>
