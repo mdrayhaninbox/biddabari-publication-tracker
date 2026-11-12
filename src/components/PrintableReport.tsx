@@ -20,7 +20,7 @@ import {
   Square,
   Settings2
 } from 'lucide-react';
-import { BookRecord, PressPaymentRecord, ChannelCollectionRecord } from '../types/book';
+import { BookRecord, PressPaymentRecord, ChannelCollectionRecord, PressOrderRecord, PressDeliveryRecord } from '../types/book';
 import { 
   calculateBookMetrics, 
   calculateDayBreakdown, 
@@ -43,6 +43,8 @@ interface PrintableReportProps {
   selectedYear?: number;
   daysInMonth?: number;
   pressPayments?: PressPaymentRecord[];
+  pressOrders?: PressOrderRecord[];
+  pressDeliveries?: PressDeliveryRecord[];
   channelCollections?: ChannelCollectionRecord[];
 }
 
@@ -56,6 +58,8 @@ export const PrintableReport: React.FC<PrintableReportProps> = ({
   selectedYear = 2026,
   daysInMonth = 30,
   pressPayments = [],
+  pressOrders = [],
+  pressDeliveries = [],
   channelCollections = [],
 }) => {
   // Time period filter state
@@ -126,7 +130,7 @@ export const PrintableReport: React.FC<PrintableReportProps> = ({
   });
 
   // Press accounts and Channel Dues
-  const pressAccounts = calculatePressAccounts(books, pressPayments);
+  const pressAccounts = calculatePressAccounts(books, pressPayments, pressOrders);
   const channelAccounts = calculateChannelDueAccounts(books, channelCollections);
 
   // Filtered Channels for Dues Section
@@ -921,7 +925,14 @@ export const PrintableReport: React.FC<PrintableReportProps> = ({
                 <tbody className="divide-y divide-zinc-100">
                   {pressAccounts.bookAccounts.map(b => (
                     <tr key={b.bookId}>
-                      <td className="py-2 px-3 font-semibold text-zinc-900">{b.bookName}</td>
+                      <td className="py-2 px-3">
+                        <div className="font-semibold text-zinc-900">{b.bookName}</div>
+                        {b.lots && b.lots.length > 0 && (
+                          <div className="text-[10px] text-zinc-500 font-mono mt-0.5">
+                            {b.lots.map((l) => `${l.lotName}: ${formatNumber(l.quantity)} কপি (${l.date})`).join(' • ')}
+                          </div>
+                        )}
+                      </td>
                       <td className="py-2 px-3 text-center font-mono">{formatNumber(b.orderQuantity)}</td>
                       <td className="py-2 px-3 text-right font-mono">{formatBDT(b.makingCost)}</td>
                       <td className="py-2 px-3 text-right font-mono font-bold">{formatBDT(b.totalOrderBill)}</td>

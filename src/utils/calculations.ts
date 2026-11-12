@@ -1,4 +1,4 @@
-import { BookRecord, DailyChannelSales, PressPaymentRecord, ChannelCollectionRecord, SALES_CHANNELS } from '../types/book';
+import { BookRecord, DailyChannelSales, PressPaymentRecord, ChannelCollectionRecord, PressOrderRecord, SALES_CHANNELS } from '../types/book';
 
 export function sumDaily(salesMap: DailyChannelSales = {}): number {
   if (!salesMap) return 0;
@@ -9,7 +9,7 @@ export function getDailyTotalForDay(salesMap: DailyChannelSales = {}, day: numbe
   return Number(salesMap[day]) || 0;
 }
 
-export function calculateBookMetrics(book: BookRecord) {
+export function calculateBookMetrics(book: BookRecord, pressOrders?: PressOrderRecord[]) {
   const adCost = Number(book.adCost) || 0;
   const makingCost = Number(book.makingCost) || 0;
   const perBookAmount = Number(book.perBookAmount) || 0;
@@ -48,8 +48,12 @@ export function calculateBookMetrics(book: BookRecord) {
   const totalPromo = marketing + service + adVideoMaking + rd + gift;
 
   // Stock at Farid Bhai (Press)
-  // Formula: Total Order - Sent to Head Office - Direct Libraries (Sumona + Promise + Joystar)
-  const totalOrderFaridBhai = Number(book.totalOrderFaridBhai) || 0;
+  // Multi-Press orders support: if pressOrders provided, sum order quantities for this book
+  const bookOrders = pressOrders ? pressOrders.filter(po => po.bookId === book.id) : [];
+  const totalOrderFaridBhai = bookOrders.length > 0
+    ? bookOrders.reduce((sum, o) => sum + (Number(o.orderQuantity) || 0), 0)
+    : (Number(book.totalOrderFaridBhai) || 0);
+
   const stockToFaridBhai = totalOrderFaridBhai - faridBhaiToHeadOffice - sumonaTotal - promiseTotal - joystarTotal;
 
   // Stock at Head Office
@@ -69,6 +73,8 @@ export function calculateBookMetrics(book: BookRecord) {
     perBookAmount,
     profitPerBook,
     totalOrderFaridBhai,
+    pressOrdersCount: bookOrders.length,
+    pressOrdersList: bookOrders,
     faridBhaiToHeadOffice,
     stockToFaridBhai,
     boibariTotal,
@@ -421,11 +427,24 @@ export function createFreshMonthBooks(catalog: BookRecord[]): BookRecord[] {
 // Press Financials & Balance Calculation
 // -------------------------------------------------------------
 
+export interface PressBookLot {
+  id?: string;
+  lotName: string;
+  date: string;
+  quantity: number;
+  makingCost: number;
+  totalBill: number;
+  orderNo?: string;
+  notes?: string;
+}
+
 export interface PressBookAccount {
   bookId: string;
   sl: number;
   bookName: string;
   orderQuantity: number;
+  orderCount: number;
+  lots: PressBookLot[];
   makingCost: number;
   totalOrderBill: number;
   receivedCopies: number;
@@ -449,7 +468,8 @@ export interface PressAccountsSummary {
 
 export function calculatePressAccounts(
   books: BookRecord[],
-  pressPayments: PressPaymentRecord[]
+  pressPayments: PressPaymentRecord[],
+  pressOrders?: PressOrderRecord[]
 ): PressAccountsSummary {
   let totalOrderBill = 0;
   let totalReceivedBill = 0;
@@ -459,9 +479,27 @@ export function calculatePressAccounts(
   totalPaidToPress = totalPaymentsSum;
 
   const bookAccounts: PressBookAccount[] = books.map(book => {
-    const orderQuantity = Number(book.totalOrderFaridBhai) || 0;
+    const bookOrders = pressOrders ? pressOrders.filter(po => po.bookId === book.id) : [];
+    const orderQuantity = bookOrders.length > 0
+      ? bookOrders.reduce((sum, o) => sum + (Number(o.orderQuantity) || 0), 0)
+      : (Number(book.totalOrderFaridBhai) || 0);
+
     const makingCost = Number(book.makingCost) || 0;
-    const bOrderBill = orderQuantity * makingCost;
+
+    const bOrderBill = bookOrders.length > 0
+      ? bookOrders.reduce((sum, o) => sum + ((Number(o.orderQuantity) || 0) * (Number(o.makingCost) || makingCost)), 0)
+      : (orderQuantity * makingCost);
+
+    const lots: PressBookLot[] = bookOrders.map(o => ({
+      id: o.id,
+      lotName: o.lotName || 'প্রেস অর্ডার',
+      date: o.orderDate,
+      quantity: Number(o.orderQuantity) || 0,
+      makingCost: Number(o.makingCost) || makingCost,
+      totalBill: Number(o.totalBill) || ((Number(o.orderQuantity) || 0) * (Number(o.makingCost) || makingCost)),
+      orderNo: o.orderNo,
+      notes: o.notes,
+    }));
 
     const receivedHO = sumDaily(book.pressDailyReceipts);
     const sumona = sumDaily(book.sumonaLibrary);
@@ -497,6 +535,8 @@ export function calculatePressAccounts(
       sl: book.sl,
       bookName: book.bookName,
       orderQuantity,
+      orderCount: bookOrders.length,
+      lots,
       makingCost,
       totalOrderBill: bOrderBill,
       receivedCopies,

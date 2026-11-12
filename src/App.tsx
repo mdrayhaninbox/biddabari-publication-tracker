@@ -1,7 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import { BookRecord, ActiveTab, PressPaymentRecord, ChannelCollectionRecord } from './types/book';
+import { 
+  BookRecord, 
+  ActiveTab, 
+  PressPaymentRecord, 
+  ChannelCollectionRecord, 
+  PressOrderRecord, 
+  PressDeliveryRecord 
+} from './types/book';
 import { INITIAL_BOOKS } from './data/initialBooks';
-import { INITIAL_PRESS_PAYMENTS, INITIAL_CHANNEL_COLLECTIONS } from './data/initialAccountsData';
+import { 
+  INITIAL_PRESS_PAYMENTS, 
+  INITIAL_CHANNEL_COLLECTIONS, 
+  INITIAL_PRESS_ORDERS, 
+  INITIAL_PRESS_DELIVERIES 
+} from './data/initialAccountsData';
 import { Header } from './components/Header';
 import { Dashboard } from './components/Dashboard';
 import { BooksTable } from './components/BooksTable';
@@ -14,6 +26,8 @@ import { PeriodViewSystem } from './components/PeriodViewSystem';
 import { QuickDataEntry } from './components/QuickDataEntry';
 import { AccountsDueLedger } from './components/AccountsDueLedger';
 import { AddPressPaymentModal } from './components/AddPressPaymentModal';
+import { AddPressOrderModal } from './components/AddPressOrderModal';
+import { AddPressDeliveryModal } from './components/AddPressDeliveryModal';
 import { AddChannelCollectionModal } from './components/AddChannelCollectionModal';
 import { exportBooksToExcel } from './utils/excelHandler';
 import { 
@@ -27,6 +41,8 @@ const ZOOM_STORAGE_KEY = 'biddabari_ui_zoom_v1';
 const MONTH_STORAGE_KEY = 'biddabari_selected_month_v1';
 const YEAR_STORAGE_KEY = 'biddabari_selected_year_v1';
 const PRESS_PAYMENTS_STORAGE_KEY = 'biddabari_press_payments_v1';
+const PRESS_ORDERS_STORAGE_KEY = 'biddabari_press_orders_v1';
+const PRESS_DELIVERIES_STORAGE_KEY = 'biddabari_press_deliveries_v1';
 const CHANNEL_COLLECTIONS_STORAGE_KEY = 'biddabari_channel_collections_v1';
 
 const getMonthlyStorageKey = (year: number, month: number) => 
@@ -164,6 +180,34 @@ export const App: React.FC = () => {
     return INITIAL_CHANNEL_COLLECTIONS;
   });
 
+  // State: Press Orders (Multi-press order management)
+  const [pressOrders, setPressOrders] = useState<PressOrderRecord[]>(() => {
+    try {
+      const saved = localStorage.getItem(PRESS_ORDERS_STORAGE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch (e) {
+      console.error(e);
+    }
+    return INITIAL_PRESS_ORDERS;
+  });
+
+  // State: Press Deliveries (Books received from Press)
+  const [pressDeliveries, setPressDeliveries] = useState<PressDeliveryRecord[]>(() => {
+    try {
+      const saved = localStorage.getItem(PRESS_DELIVERIES_STORAGE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch (e) {
+      console.error(e);
+    }
+    return INITIAL_PRESS_DELIVERIES;
+  });
+
   const [activeTab, setActiveTab] = useState<ActiveTab>('dashboard');
   const [selectedMatrixBookId, setSelectedMatrixBookId] = useState<string>(books[0]?.id || 'book-1');
 
@@ -180,8 +224,12 @@ export const App: React.FC = () => {
 
   const [isExcelSyncOpen, setIsExcelSyncOpen] = useState(false);
 
-  // Accounts Modals
+  // Accounts & Orders Modals
   const [isPressPaymentModalOpen, setIsPressPaymentModalOpen] = useState(false);
+  const [isPressOrderModalOpen, setIsPressOrderModalOpen] = useState(false);
+  const [pressOrderPreSelectedBookId, setPressOrderPreSelectedBookId] = useState<string | undefined>(undefined);
+  const [isPressDeliveryModalOpen, setIsPressDeliveryModalOpen] = useState(false);
+  const [pressDeliveryPreSelectedBookId, setPressDeliveryPreSelectedBookId] = useState<string | undefined>(undefined);
   const [isChannelCollectionModalOpen, setIsChannelCollectionModalOpen] = useState(false);
   const [selectedChannelForCollection, setSelectedChannelForCollection] = useState<string | undefined>(undefined);
 
@@ -213,6 +261,24 @@ export const App: React.FC = () => {
       console.error(e);
     }
   }, [pressPayments]);
+
+  // Auto-save Press Orders
+  useEffect(() => {
+    try {
+      localStorage.setItem(PRESS_ORDERS_STORAGE_KEY, JSON.stringify(pressOrders));
+    } catch (e) {
+      console.error(e);
+    }
+  }, [pressOrders]);
+
+  // Auto-save Press Deliveries
+  useEffect(() => {
+    try {
+      localStorage.setItem(PRESS_DELIVERIES_STORAGE_KEY, JSON.stringify(pressDeliveries));
+    } catch (e) {
+      console.error(e);
+    }
+  }, [pressDeliveries]);
 
   // Auto-save Channel Collections
   useEffect(() => {
@@ -391,6 +457,121 @@ export const App: React.FC = () => {
     setPressPayments(prev => prev.filter(p => p.id !== id));
   };
 
+  // Press Order Actions (Multi-press order management)
+  const handleAddPressOrder = (order: Omit<PressOrderRecord, 'id' | 'createdAt'>) => {
+    const newRecord: PressOrderRecord = {
+      ...order,
+      id: `po-${Date.now()}`,
+      createdAt: new Date().toISOString(),
+    };
+    const updatedOrders = [newRecord, ...pressOrders];
+    setPressOrders(updatedOrders);
+
+    // Synchronize the book's totalOrderFaridBhai to the exact sum of its press orders
+    setBooks(prev =>
+      prev.map(b => {
+        if (b.id !== order.bookId) return b;
+        const bookOrders = updatedOrders.filter(po => po.bookId === b.id);
+        const newTotal = bookOrders.reduce((sum, o) => sum + (Number(o.orderQuantity) || 0), 0);
+        return {
+          ...b,
+          totalOrderFaridBhai: newTotal,
+          updatedAt: new Date().toISOString(),
+        };
+      })
+    );
+  };
+
+  const handleDeletePressOrder = (id: string) => {
+    const orderToDelete = pressOrders.find(o => o.id === id);
+    if (!orderToDelete) return;
+    const remaining = pressOrders.filter(o => o.id !== id);
+    setPressOrders(remaining);
+
+    // Synchronize the book's totalOrderFaridBhai
+    setBooks(prev =>
+      prev.map(b => {
+        if (b.id !== orderToDelete.bookId) return b;
+        const bookOrders = remaining.filter(po => po.bookId === b.id);
+        const newTotal = bookOrders.reduce((sum, o) => sum + (Number(o.orderQuantity) || 0), 0);
+        return {
+          ...b,
+          totalOrderFaridBhai: newTotal,
+          updatedAt: new Date().toISOString(),
+        };
+      })
+    );
+  };
+
+  const handleOpenAddPressOrder = (bookId?: string) => {
+    setPressOrderPreSelectedBookId(bookId);
+    setIsPressOrderModalOpen(true);
+  };
+
+  // Press Delivery (Chalan) Actions (Books received from Press)
+  const handleAddPressDelivery = (delivery: Omit<PressDeliveryRecord, 'id' | 'createdAt'>) => {
+    const newRecord: PressDeliveryRecord = {
+      ...delivery,
+      id: `del-${Date.now()}`,
+      createdAt: new Date().toISOString(),
+    };
+    setPressDeliveries(prev => [newRecord, ...prev]);
+
+    // If delivery date falls in active month, update book's pressDailyReceipts
+    try {
+      const [delYear, delMonth, delDay] = delivery.deliveryDate.split('-').map(Number);
+      if (delYear === selectedYear && delMonth === selectedMonth && delDay >= 1 && delDay <= 31) {
+        setBooks(prev =>
+          prev.map(b => {
+            if (b.id !== delivery.bookId) return b;
+            const currentReceipts = { ...b.pressDailyReceipts };
+            currentReceipts[delDay] = (Number(currentReceipts[delDay]) || 0) + Number(delivery.quantity);
+            return {
+              ...b,
+              pressDailyReceipts: currentReceipts,
+              updatedAt: new Date().toISOString(),
+            };
+          })
+        );
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const handleDeletePressDelivery = (id: string) => {
+    const deliveryToDelete = pressDeliveries.find(d => d.id === id);
+    if (!deliveryToDelete) return;
+    setPressDeliveries(prev => prev.filter(d => d.id !== id));
+
+    // If delivery date falls in active month, reduce book's pressDailyReceipts
+    try {
+      const [delYear, delMonth, delDay] = deliveryToDelete.deliveryDate.split('-').map(Number);
+      if (delYear === selectedYear && delMonth === selectedMonth && delDay >= 1 && delDay <= 31) {
+        setBooks(prev =>
+          prev.map(b => {
+            if (b.id !== deliveryToDelete.bookId) return b;
+            const currentReceipts = { ...b.pressDailyReceipts };
+            const currentVal = Number(currentReceipts[delDay]) || 0;
+            currentReceipts[delDay] = Math.max(0, currentVal - Number(deliveryToDelete.quantity));
+            return {
+              ...b,
+              pressDailyReceipts: currentReceipts,
+              updatedAt: new Date().toISOString(),
+            };
+          })
+        );
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const handleOpenAddPressDelivery = (bookId?: string) => {
+    setPressDeliveryPreSelectedBookId(bookId);
+    setIsPressDeliveryModalOpen(true);
+  };
+
   // Channel Collection Actions
   const handleAddChannelCollection = (collection: Omit<ChannelCollectionRecord, 'id' | 'createdAt'>) => {
     const newRecord: ChannelCollectionRecord = {
@@ -494,14 +675,20 @@ export const App: React.FC = () => {
           />
         )}
 
-        {/* 3. Accounts & Due Ledger (প্রেস হিসাব ও অনলাইন-অফলাইন ডিউ খতিয়ান) */}
+        {/* 3. Accounts & Due Ledger (প্রেস হিসাব, প্রেস অর্ডার ম্যানেজমেন্ট ও অনলাইন-অফলাইন ডিউ খতিয়ান) */}
         {activeTab === 'accounts' && (
           <AccountsDueLedger
             books={books}
             pressPayments={pressPayments}
+            pressOrders={pressOrders}
+            pressDeliveries={pressDeliveries}
             channelCollections={channelCollections}
             onAddPressPayment={() => setIsPressPaymentModalOpen(true)}
             onDeletePressPayment={handleDeletePressPayment}
+            onAddPressOrder={handleOpenAddPressOrder}
+            onDeletePressOrder={handleDeletePressOrder}
+            onAddPressDelivery={handleOpenAddPressDelivery}
+            onDeletePressDelivery={handleDeletePressDelivery}
             onAddChannelCollection={handleOpenAddChannelCollection}
             onDeleteChannelCollection={handleDeleteChannelCollection}
             selectedMonth={selectedMonth}
@@ -559,6 +746,8 @@ export const App: React.FC = () => {
             selectedYear={selectedYear}
             daysInMonth={daysInMonth}
             pressPayments={pressPayments}
+            pressOrders={pressOrders}
+            pressDeliveries={pressDeliveries}
             channelCollections={channelCollections}
           />
         )}
@@ -627,6 +816,24 @@ export const App: React.FC = () => {
         onClose={() => setIsPressPaymentModalOpen(false)}
         books={books}
         onSavePayment={handleAddPressPayment}
+      />
+
+      {/* Press Order Modal (Multi-order / Edition lot management) */}
+      <AddPressOrderModal
+        isOpen={isPressOrderModalOpen}
+        onClose={() => setIsPressOrderModalOpen(false)}
+        books={books}
+        onAddOrder={handleAddPressOrder}
+        preSelectedBookId={pressOrderPreSelectedBookId}
+      />
+
+      {/* Press Delivery Modal (Received books chalan voucher) */}
+      <AddPressDeliveryModal
+        isOpen={isPressDeliveryModalOpen}
+        onClose={() => setIsPressDeliveryModalOpen(false)}
+        books={books}
+        onAddDelivery={handleAddPressDelivery}
+        preSelectedBookId={pressDeliveryPreSelectedBookId}
       />
 
       {/* Channel Collection Receipt Modal */}

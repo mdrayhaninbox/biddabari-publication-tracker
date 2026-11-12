@@ -22,7 +22,6 @@ export const AddEditBookModal: React.FC<AddEditBookModalProps> = ({
   const [adCost, setAdCost] = useState<number>(30);
   const [makingCost, setMakingCost] = useState<number>(250);
   const [perBookAmount, setPerBookAmount] = useState<number>(390);
-  const [totalOrderFaridBhai, setTotalOrderFaridBhai] = useState<number>(5000);
   const [remarks, setRemarks] = useState('');
 
   useEffect(() => {
@@ -31,14 +30,12 @@ export const AddEditBookModal: React.FC<AddEditBookModalProps> = ({
       setAdCost(editingBook.adCost);
       setMakingCost(editingBook.makingCost);
       setPerBookAmount(editingBook.perBookAmount);
-      setTotalOrderFaridBhai(editingBook.totalOrderFaridBhai);
       setRemarks(editingBook.remarks || '');
     } else {
       setBookName('');
       setAdCost(30);
       setMakingCost(250);
       setPerBookAmount(390);
-      setTotalOrderFaridBhai(5000);
       setRemarks('');
     }
   }, [editingBook, isOpen]);
@@ -58,7 +55,7 @@ export const AddEditBookModal: React.FC<AddEditBookModalProps> = ({
       makingCost: Number(makingCost) || 0,
       perBookAmount: Number(perBookAmount) || 0,
       profitPerBook,
-      totalOrderFaridBhai: Number(totalOrderFaridBhai) || 0,
+      totalOrderFaridBhai: editingBook ? editingBook.totalOrderFaridBhai : 0,
       remarks: remarks.trim(),
     });
 
@@ -110,19 +107,12 @@ export const AddEditBookModal: React.FC<AddEditBookModalProps> = ({
               />
             </div>
 
-            {/* Total Press Order */}
-            <div>
-              <label className="block text-xs font-bold text-zinc-800 mb-1.5">
-                ফরিদ ভাই প্রেসে মোট অর্ডার সংখ্যা (Press Order) *
-              </label>
-              <input
-                type="number"
-                min="1"
-                required
-                value={totalOrderFaridBhai}
-                onChange={(e) => setTotalOrderFaridBhai(parseInt(e.target.value) || 0)}
-                className="w-full text-xs font-bold border border-zinc-300 rounded-lg p-2.5 focus:ring-2 focus:ring-zinc-900 font-mono"
-              />
+            {/* Info note about Press Order Management */}
+            <div className="p-3 bg-zinc-50 border border-zinc-200 rounded-xl flex items-start gap-2.5 text-xs text-zinc-600">
+              <div className="w-2 h-2 rounded-full bg-zinc-900 mt-1 shrink-0" />
+              <div>
+                <span className="font-bold text-zinc-900">প্রেস অর্ডার ব্যবস্থাপনা:</span> প্রেসে মোট অর্ডার কপি সংখ্যা ও চালান ভাউচার এখন <span className="font-semibold text-zinc-900">"প্রেস ও ডিউ হিসাব &gt; প্রেস অর্ডার ম্যানেজমেন্ট"</span> ট্যাব থেকে বই ভিত্তিক তারিখ ও ভাউচার অনুযায়ী সম্পূর্ণভাবে নিয়ন্ত্রণ করা হবে।
+              </div>
             </div>
 
             {/* Financials: 3 columns */}

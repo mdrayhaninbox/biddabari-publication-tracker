@@ -43,11 +43,40 @@ export interface BookRecord {
 
   remarks?: string;
   updatedAt?: string;
+  initialOrderDate?: string;
+  initialLotName?: string;
 }
 
 export type ActiveTab = 'dashboard' | 'period' | 'accounts' | 'entry' | 'books' | 'matrix' | 'reports';
 
 export type PaymentMethod = 'cash' | 'bank' | 'check' | 'bkash' | 'nagad' | 'other';
+
+export interface PressOrderRecord {
+  id: string;
+  bookId: string;
+  bookName: string;
+  orderDate: string; // YYYY-MM-DD
+  orderQuantity: number;
+  lotName?: string; // e.g. "১ম মুদ্রণ", "২য় মুদ্রণ", "রি-অর্ডার লট-২"
+  makingCost?: number;
+  totalBill?: number;
+  orderNo?: string;
+  notes?: string;
+  createdAt: string;
+}
+
+export interface PressDeliveryRecord {
+  id: string;
+  bookId: string;
+  bookName: string;
+  deliveryDate: string; // YYYY-MM-DD
+  quantity: number;
+  chalanNo: string;
+  lotName?: string;
+  receivedBy?: string;
+  notes?: string;
+  createdAt: string;
+}
 
 export interface PressPaymentRecord {
   id: string;

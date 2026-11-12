@@ -1,4 +1,59 @@
-import { PressPaymentRecord, ChannelCollectionRecord } from '../types/book';
+import { PressPaymentRecord, ChannelCollectionRecord, PressOrderRecord, PressDeliveryRecord } from '../types/book';
+
+export const INITIAL_PRESS_ORDERS: PressOrderRecord[] = [
+  {
+    id: 'po-1',
+    bookId: 'book-1',
+    bookName: 'স্বাস্থ্য সহকারী নিয়োগ সহায়িকা',
+    orderDate: '2026-10-15',
+    orderQuantity: 5000,
+    lotName: '১ম মুদ্রণ (লট-১)',
+    makingCost: 250,
+    totalBill: 1250000,
+    orderNo: 'PO-2026-001',
+    notes: 'প্রাথমিক প্রেস অর্ডার (৫,০০০ কপি)',
+    createdAt: '2026-10-15T10:00:00Z',
+  },
+];
+
+export const INITIAL_PRESS_DELIVERIES: PressDeliveryRecord[] = [
+  {
+    id: 'del-1',
+    bookId: 'book-1',
+    bookName: 'স্বাস্থ্য সহকারী নিয়োগ সহায়িকা',
+    deliveryDate: '2026-11-01',
+    quantity: 283,
+    chalanNo: 'CH-2026-001',
+    lotName: '১ম মুদ্রণ (লট-১)',
+    receivedBy: 'হেড অফিস স্টোর',
+    notes: '১ম লটের আংশিক ডেলিভারি চালান',
+    createdAt: '2026-11-01T12:00:00Z',
+  },
+  {
+    id: 'del-2',
+    bookId: 'book-1',
+    bookName: 'স্বাস্থ্য সহকারী নিয়োগ সহায়িকা',
+    deliveryDate: '2026-11-02',
+    quantity: 1000,
+    chalanNo: 'CH-2026-002',
+    lotName: '১ম মুদ্রণ (লট-১)',
+    receivedBy: 'হেড অফিস স্টোর',
+    notes: '২য় চালান প্রাপ্তি (১,০০০ কপি)',
+    createdAt: '2026-11-02T14:30:00Z',
+  },
+  {
+    id: 'del-3',
+    bookId: 'book-1',
+    bookName: 'স্বাস্থ্য সহকারী নিয়োগ সহায়িকা',
+    deliveryDate: '2026-11-03',
+    quantity: 1000,
+    chalanNo: 'CH-2026-003',
+    lotName: '১ম মুদ্রণ (লট-১)',
+    receivedBy: 'হেড অফিস স্টোর',
+    notes: '৩য় চালান প্রাপ্তি (১,০০০ কপি)',
+    createdAt: '2026-11-03T16:00:00Z',
+  },
+];
 
 export const INITIAL_PRESS_PAYMENTS: PressPaymentRecord[] = [
   {
