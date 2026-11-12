@@ -18,7 +18,8 @@ import {
   Store,
   CheckSquare,
   Square,
-  Settings2
+  Settings2,
+  FileText
 } from 'lucide-react';
 import { BookRecord, PressPaymentRecord, ChannelCollectionRecord, PressOrderRecord, PressDeliveryRecord, ChannelConfig, DEFAULT_CHANNELS } from '../types/book';
 import { 
@@ -37,6 +38,7 @@ import {
   AVAILABLE_YEARS
 } from '../utils/calculations';
 import { exportBooksToExcel } from '../utils/excelHandler';
+import { exportReportToWord } from '../utils/wordHandler';
 import { Language, tr } from '../utils/i18n';
 
 interface PrintableReportProps {
@@ -137,6 +139,7 @@ export const PrintableReport: React.FC<PrintableReportProps> = ({
   const [includeOfflineDue, setIncludeOfflineDue] = useState<boolean>(true);
   const [includeSignatures, setIncludeSignatures] = useState<boolean>(true);
   const [showCustomSettings, setShowCustomSettings] = useState<boolean>(false);
+  const [isExportingWord, setIsExportingWord] = useState<boolean>(false);
 
   // Handler for Preset Scope Selection
   const handleSelectScope = (newScope: PrintScope) => {
@@ -312,6 +315,36 @@ export const PrintableReport: React.FC<PrintableReportProps> = ({
     return '';
   };
 
+  const handleExportWordDocx = async () => {
+    try {
+      setIsExportingWord(true);
+      await exportReportToWord({
+        books: effectiveBooks,
+        allBooksCount: books.length,
+        reportTitle: getReportScopeTitle(),
+        periodTitle: getReportPeriodTitle(),
+        currentDate,
+        language,
+        channels: effectiveChannels,
+        pressPayments: filteredPressPayments,
+        pressOrders,
+        pressDeliveries,
+        channelCollections,
+        salesMode,
+        includePressAccounts,
+        includePressPayments,
+        includeOnlineDue,
+        includeOfflineDue,
+        includeSignatures,
+      });
+    } catch (error) {
+      console.error('Failed to export Word document:', error);
+      alert(language === 'en' ? 'Failed to generate Word document. Please try again.' : 'ওয়ার্ড ফাইল তৈরি করতে সমস্যা হয়েছে। অনুগ্রহ করে আবার চেষ্টা করুন।');
+    } finally {
+      setIsExportingWord(false);
+    }
+  };
+
   return (
     <div className="space-y-6 w-full">
       
@@ -346,6 +379,20 @@ export const PrintableReport: React.FC<PrintableReportProps> = ({
             >
               <Download className="w-4 h-4 text-zinc-700" />
               <span>{tr('এক্সেল ফাইল', 'Excel File', language)}</span>
+            </button>
+
+            <button
+              onClick={handleExportWordDocx}
+              disabled={isExportingWord}
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-blue-900 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors border border-blue-200 shadow-2xs disabled:opacity-50"
+              title={tr('অফিসিয়াল ওয়ার্ড ফাইল ডাউনলোড (.docx)', 'Download Official Word Document (.docx)', language)}
+            >
+              <FileText className="w-4 h-4 text-blue-700" />
+              <span>
+                {isExportingWord
+                  ? tr('তৈরি হচ্ছে...', 'Exporting...', language)
+                  : tr('ওয়ার্ড ফাইল (.docx)', 'Word Doc (.docx)', language)}
+              </span>
             </button>
 
             <button
