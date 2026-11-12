@@ -384,14 +384,14 @@ export const PrintableReport: React.FC<PrintableReportProps> = ({
             <button
               onClick={handleExportWordDocx}
               disabled={isExportingWord}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-blue-900 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors border border-blue-200 shadow-2xs disabled:opacity-50"
-              title={tr('অফিসিয়াল ওয়ার্ড ফাইল ডাউনলোড (.docx)', 'Download Official Word Document (.docx)', language)}
+              className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-zinc-800 bg-white hover:bg-zinc-100 rounded-lg transition-colors border border-zinc-300 disabled:opacity-50"
+              title={tr('ওয়ার্ড ফাইল ডাউনলোড (.docx)', 'Download Word File (.docx)', language)}
             >
-              <FileText className="w-4 h-4 text-blue-700" />
+              <Download className="w-4 h-4 text-zinc-700" />
               <span>
                 {isExportingWord
-                  ? tr('তৈরি হচ্ছে...', 'Exporting...', language)
-                  : tr('ওয়ার্ড ফাইল (.docx)', 'Word Doc (.docx)', language)}
+                  ? tr('ডাউনলোড হচ্ছে...', 'Downloading...', language)
+                  : tr('ওয়ার্ড ফাইল', 'Word File', language)}
               </span>
             </button>
 
