@@ -13,7 +13,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Calendar,
-  Receipt
+  Receipt,
+  RotateCcw
 } from 'lucide-react';
 import { ActiveTab } from '../types/book';
 import { 
@@ -211,6 +212,18 @@ export const Header: React.FC<HeaderProps> = ({
               <Upload className="w-3.5 h-3.5 text-zinc-500" />
               <span>ইমপোর্ট</span>
             </button>
+
+            {onResetData && (
+              <button
+                type="button"
+                onClick={onResetData}
+                className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 text-xs font-semibold text-zinc-600 hover:text-black hover:bg-zinc-100 rounded-lg transition-colors border border-zinc-200"
+                title="সকল ডেটা মুছে সম্পূর্ণ শূন্য (০) থেকে শুরু করুন"
+              >
+                <RotateCcw className="w-3.5 h-3.5 text-zinc-500" />
+                <span>রিসেট (০)</span>
+              </button>
+            )}
 
             <button
               onClick={onPrint}

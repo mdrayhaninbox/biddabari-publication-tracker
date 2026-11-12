@@ -10,7 +10,8 @@ import {
   Warehouse, 
   RotateCcw,
   Sparkles,
-  ArrowRight
+  ArrowRight,
+  BookOpen
 } from 'lucide-react';
 import { BookRecord } from '../types/book';
 import { calculateBookMetrics, formatBDT, formatNumber, formatMonthYearBengali } from '../utils/calculations';
@@ -208,6 +209,18 @@ export const QuickDataEntry: React.FC<QuickDataEntryProps> = ({
       },
     }));
   };
+
+  if (books.length === 0) {
+    return (
+      <div className="bg-white p-12 rounded-2xl border border-zinc-200 shadow-xs text-center space-y-3">
+        <BookOpen className="w-12 h-12 text-zinc-300 mx-auto" />
+        <h3 className="text-base font-bold text-zinc-900">বর্তমানে কোনো বইয়ের তালিকা নেই</h3>
+        <p className="text-xs text-zinc-500 max-w-md mx-auto">
+          দৈনিক ও মাসিক ডেটা এন্ট্রি করার জন্য প্রথমে উপরে <b>"+ নতুন বই"</b> বাটনে ক্লিক করে বই যুক্ত করুন।
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

@@ -36,17 +36,35 @@ import {
   formatMonthYearBengali 
 } from './utils/calculations';
 
-const LEGACY_STORAGE_KEY = 'biddabari_books_data_v1';
+const CLEAN_SLATE_ZERO_KEY = 'biddabari_clean_slate_zero_v4';
+
 const ZOOM_STORAGE_KEY = 'biddabari_ui_zoom_v1';
-const MONTH_STORAGE_KEY = 'biddabari_selected_month_v1';
-const YEAR_STORAGE_KEY = 'biddabari_selected_year_v1';
-const PRESS_PAYMENTS_STORAGE_KEY = 'biddabari_press_payments_v1';
-const PRESS_ORDERS_STORAGE_KEY = 'biddabari_press_orders_v1';
-const PRESS_DELIVERIES_STORAGE_KEY = 'biddabari_press_deliveries_v1';
-const CHANNEL_COLLECTIONS_STORAGE_KEY = 'biddabari_channel_collections_v1';
+const MONTH_STORAGE_KEY = 'biddabari_selected_month_v4';
+const YEAR_STORAGE_KEY = 'biddabari_selected_year_v4';
+const PRESS_PAYMENTS_STORAGE_KEY = 'biddabari_press_payments_v4';
+const PRESS_ORDERS_STORAGE_KEY = 'biddabari_press_orders_v4';
+const PRESS_DELIVERIES_STORAGE_KEY = 'biddabari_press_deliveries_v4';
+const CHANNEL_COLLECTIONS_STORAGE_KEY = 'biddabari_channel_collections_v4';
 
 const getMonthlyStorageKey = (year: number, month: number) => 
-  `biddabari_books_data_v2_${year}-${String(month).padStart(2, '0')}`;
+  `biddabari_books_data_v4_${year}-${String(month).padStart(2, '0')}`;
+
+// Automatic clean slate initialization: wipes previous demo data across all browser keys once
+try {
+  if (typeof window !== 'undefined' && localStorage.getItem(CLEAN_SLATE_ZERO_KEY) !== 'true') {
+    const keysToRemove: string[] = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && k.startsWith('biddabari_') && k !== ZOOM_STORAGE_KEY) {
+        keysToRemove.push(k);
+      }
+    }
+    keysToRemove.forEach(k => localStorage.removeItem(k));
+    localStorage.setItem(CLEAN_SLATE_ZERO_KEY, 'true');
+  }
+} catch (e) {
+  console.error('Clean slate initialization error:', e);
+}
 
 export const App: React.FC = () => {
   // UI Zoom state: default 75% compact view on desktop as requested
@@ -117,30 +135,11 @@ export const App: React.FC = () => {
       const saved = localStorage.getItem(currentKey);
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) {
+        if (Array.isArray(parsed)) {
           return parsed;
         }
       }
-
-      // If it's November 2026 and legacy key exists, migrate seamlessly
-      if (year === 2026 && month === 11) {
-        const legacySaved = localStorage.getItem(LEGACY_STORAGE_KEY);
-        if (legacySaved) {
-          const parsedLegacy = JSON.parse(legacySaved);
-          if (Array.isArray(parsedLegacy) && parsedLegacy.length > 0) {
-            localStorage.setItem(currentKey, legacySaved);
-            return parsedLegacy;
-          }
-        }
-        return INITIAL_BOOKS;
-      }
-
-      // For any other month/year that has no saved data yet:
-      // Inherit book catalog definitions (names, prices, costs) with clean 0 sales/receipts
-      const fallbackSource = localStorage.getItem(getMonthlyStorageKey(2026, 11))
-        || localStorage.getItem(LEGACY_STORAGE_KEY);
-      const baseCatalog = fallbackSource ? JSON.parse(fallbackSource) : INITIAL_BOOKS;
-      return createFreshMonthBooks(baseCatalog);
+      return INITIAL_BOOKS;
     } catch (e) {
       console.error('Failed to load books for period:', e);
       return INITIAL_BOOKS;
@@ -572,6 +571,31 @@ export const App: React.FC = () => {
     setIsPressDeliveryModalOpen(true);
   };
 
+  // Reset all data to clean zero slate
+  const handleResetAllData = () => {
+    if (window.confirm('আপনি কি নিশ্চিত যে সমস্ত ডেটা মুছে সম্পূর্ণ শূন্য (০) থেকে শুরু করতে চান? এটি করলে বর্তমান সকল বই, প্রেস অর্ডার ও বিক্রয়ের খতিয়ান পরিষ্কার হয়ে যাবে।')) {
+      try {
+        const keysToRemove: string[] = [];
+        for (let i = 0; i < localStorage.length; i++) {
+          const k = localStorage.key(i);
+          if (k && k.startsWith('biddabari_') && k !== ZOOM_STORAGE_KEY) {
+            keysToRemove.push(k);
+          }
+        }
+        keysToRemove.forEach(k => localStorage.removeItem(k));
+        localStorage.setItem(CLEAN_SLATE_ZERO_KEY, 'true');
+      } catch (e) {
+        console.error(e);
+      }
+      setBooks([]);
+      setPressOrders([]);
+      setPressDeliveries([]);
+      setPressPayments([]);
+      setChannelCollections([]);
+      alert('সকল ডেমো ডেটা সফলভাবে মুছে শূন্য (০) করা হয়েছে। এখন নতুন বই যুক্ত করে হিসাব শুরু করুন।');
+    }
+  };
+
   // Channel Collection Actions
   const handleAddChannelCollection = (collection: Omit<ChannelCollectionRecord, 'id' | 'createdAt'>) => {
     const newRecord: ChannelCollectionRecord = {
@@ -635,6 +659,7 @@ export const App: React.FC = () => {
         }}
         onExportExcel={() => exportBooksToExcel(books, selectedMonth, selectedYear)}
         onOpenImport={() => setIsExcelSyncOpen(true)}
+        onResetData={handleResetAllData}
         onPrint={() => setActiveTab('reports')}
         bookCount={books.length}
         zoom={uiZoom}

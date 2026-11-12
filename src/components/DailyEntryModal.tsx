@@ -111,6 +111,23 @@ export const DailyEntryModal: React.FC<DailyEntryModalProps> = ({
 
   if (!isOpen) return null;
 
+  if (books.length === 0) {
+    return (
+      <div className="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+        <div className="bg-white rounded-2xl p-6 max-w-sm w-full text-center space-y-3 shadow-2xl border border-zinc-200">
+          <h3 className="font-bold text-zinc-900 text-sm">কোনো বই পাওয়া যায়নি</h3>
+          <p className="text-xs text-zinc-500">ডেটা এন্ট্রি করার আগে অনুগ্রহ করে "+ নতুন বই" বাটনে ক্লিক করে বই যুক্ত করুন।</p>
+          <button
+            onClick={onClose}
+            className="w-full py-2 bg-zinc-900 text-white rounded-lg text-xs font-bold hover:bg-black transition-colors"
+          >
+            বন্ধ করুন
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   const currentBook = books.find(b => b.id === selectedBookId);
   const currentMetrics = currentBook ? calculateBookMetrics(currentBook) : null;
 
