@@ -279,13 +279,6 @@ export const AccountsDueLedger: React.FC<AccountsDueLedgerProps> = ({
 
               <div className="flex items-center gap-2 flex-wrap self-start sm:self-auto">
                 <button
-                  onClick={() => onAddPressOrder()}
-                  className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-zinc-900 bg-zinc-100 hover:bg-zinc-200 border border-zinc-300 rounded-xl transition-all shadow-xs"
-                >
-                  <Layers className="w-3.5 h-3.5" />
-                  <span>{tr('+ নতুন প্রেস অর্ডার', '+ New Press Order', language)}</span>
-                </button>
-                <button
                   onClick={onAddPressPayment}
                   className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-white bg-zinc-900 hover:bg-black rounded-xl transition-all shadow-xs"
                 >
