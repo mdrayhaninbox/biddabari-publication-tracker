@@ -281,6 +281,9 @@ export const App: React.FC = () => {
   const [isChannelCollectionModalOpen, setIsChannelCollectionModalOpen] = useState(false);
   const [selectedChannelForCollection, setSelectedChannelForCollection] = useState<string | undefined>(undefined);
 
+  // Single Book Printing Pre-selection
+  const [reportPreSelectedBookId, setReportPreSelectedBookId] = useState<string | undefined>(undefined);
+
   // Auto-save month & year selection
   useEffect(() => {
     try {
@@ -680,6 +683,11 @@ export const App: React.FC = () => {
     setIsAddEditOpen(true);
   };
 
+  const handlePrintSingleBook = (bookId: string) => {
+    setReportPreSelectedBookId(bookId);
+    setActiveTab('reports');
+  };
+
   // Navigation handlers from Period View to Quick Data Entry
   const handleOpenDailyEntryForDay = (day: number) => {
     setEntrySelectedDay(day);
@@ -709,7 +717,10 @@ export const App: React.FC = () => {
         onExportExcel={() => exportBooksToExcel(books, selectedMonth, selectedYear)}
         onOpenImport={() => setIsExcelSyncOpen(true)}
         onResetData={handleResetAllData}
-        onPrint={() => setActiveTab('reports')}
+        onPrint={() => {
+          setReportPreSelectedBookId(undefined);
+          setActiveTab('reports');
+        }}
         bookCount={books.length}
         zoom={uiZoom}
         onSetZoom={setUiZoom}
@@ -795,6 +806,7 @@ export const App: React.FC = () => {
             onOpenDailyEntryForBook={handleOpenDailyEntryForBook}
             onOpenEditBook={handleOpenEditBook}
             onDeleteBook={handleDeleteBook}
+            onPrintSingleBook={handlePrintSingleBook}
             onOpenAddBook={() => {
               setEditingBook(null);
               setIsAddEditOpen(true);
@@ -827,6 +839,7 @@ export const App: React.FC = () => {
             pressOrders={pressOrders}
             pressDeliveries={pressDeliveries}
             channelCollections={channelCollections}
+            initialSelectedBookId={reportPreSelectedBookId}
           />
         )}
       </main>

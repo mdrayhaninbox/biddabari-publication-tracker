@@ -46,6 +46,7 @@ interface PrintableReportProps {
   pressOrders?: PressOrderRecord[];
   pressDeliveries?: PressDeliveryRecord[];
   channelCollections?: ChannelCollectionRecord[];
+  initialSelectedBookId?: string;
 }
 
 export type ReportType = 'monthly' | 'daily' | 'weekly' | 'quarterly' | 'half_yearly' | 'yearly' | 'custom';
@@ -61,6 +62,7 @@ export const PrintableReport: React.FC<PrintableReportProps> = ({
   pressOrders = [],
   pressDeliveries = [],
   channelCollections = [],
+  initialSelectedBookId,
 }) => {
   // Time period filter state
   const [reportType, setReportType] = useState<ReportType>('monthly');
@@ -76,6 +78,48 @@ export const PrintableReport: React.FC<PrintableReportProps> = ({
   const [customEndDate, setCustomEndDate] = useState<string>(
     `${selectedYear}-${String(selectedMonth).padStart(2, '0')}-${String(daysInMonth).padStart(2, '0')}`
   );
+
+  // Book Selection State: 'all' | 'single' | 'multiple'
+  const [bookSelectionMode, setBookSelectionMode] = useState<'all' | 'single' | 'multiple'>(() => {
+    return initialSelectedBookId ? 'single' : 'all';
+  });
+
+  const [selectedSingleBookId, setSelectedSingleBookId] = useState<string>(() => {
+    if (initialSelectedBookId && books.some(b => b.id === initialSelectedBookId)) {
+      return initialSelectedBookId;
+    }
+    return books[0]?.id || '';
+  });
+
+  const [selectedMultipleBookIds, setSelectedMultipleBookIds] = useState<string[]>(() => {
+    if (initialSelectedBookId) {
+      return [initialSelectedBookId];
+    }
+    return books.map(b => b.id);
+  });
+
+  // Keep single and multi-selection in sync when initialSelectedBookId changes
+  React.useEffect(() => {
+    if (initialSelectedBookId && books.some(b => b.id === initialSelectedBookId)) {
+      setBookSelectionMode('single');
+      setSelectedSingleBookId(initialSelectedBookId);
+      setSelectedMultipleBookIds([initialSelectedBookId]);
+    }
+  }, [initialSelectedBookId, books]);
+
+  // Derive Effective Books based on selection
+  const effectiveBooks = React.useMemo(() => {
+    if (books.length === 0) return [];
+    if (bookSelectionMode === 'single') {
+      const found = books.find(b => b.id === selectedSingleBookId);
+      return found ? [found] : [books[0]];
+    }
+    if (bookSelectionMode === 'multiple') {
+      const selected = books.filter(b => selectedMultipleBookIds.includes(b.id));
+      return selected.length > 0 ? selected : books;
+    }
+    return books;
+  }, [books, bookSelectionMode, selectedSingleBookId, selectedMultipleBookIds]);
 
   // Selective Printing Controls (প্রেস, অনলাইন, অফলাইন আলাদা বা একসাথে)
   const [scope, setScope] = useState<PrintScope>('all');
@@ -129,9 +173,17 @@ export const PrintableReport: React.FC<PrintableReportProps> = ({
     day: 'numeric',
   });
 
-  // Press accounts and Channel Dues
-  const pressAccounts = calculatePressAccounts(books, pressPayments, pressOrders);
-  const channelAccounts = calculateChannelDueAccounts(books, channelCollections);
+  // Press accounts and Channel Dues for Effective Books
+  const pressAccounts = calculatePressAccounts(effectiveBooks, pressPayments, pressOrders);
+  const channelAccounts = calculateChannelDueAccounts(effectiveBooks, channelCollections);
+
+  // Filtered Press Payments for Effective Books
+  const filteredPressPayments = React.useMemo(() => {
+    return pressPayments.filter(p => {
+      if (!p.bookId) return true;
+      return effectiveBooks.some(b => b.id === p.bookId);
+    });
+  }, [pressPayments, effectiveBooks]);
 
   // Filtered Channels for Dues Section
   const filteredChannels = channelAccounts.channels.filter(ch => {
@@ -141,8 +193,8 @@ export const PrintableReport: React.FC<PrintableReportProps> = ({
     return false;
   });
 
-  // Monthly totals
-  const monthlyTotals = books.reduce(
+  // Monthly totals for Effective Books
+  const monthlyTotals = effectiveBooks.reduce(
     (acc, b) => {
       const m = calculateBookMetrics(b);
       acc.totalHOStock += m.totalPresentStockHO;
@@ -190,31 +242,38 @@ export const PrintableReport: React.FC<PrintableReportProps> = ({
   );
 
   // Daily breakdown
-  const dayData = calculateDayBreakdown(books, selectedDay);
+  const dayData = calculateDayBreakdown(effectiveBooks, selectedDay);
 
   // Weekly breakdown
-  const weekList = calculateWeekBreakdowns(books, daysInMonth);
+  const weekList = calculateWeekBreakdowns(effectiveBooks, daysInMonth);
   const currentWeek = weekList.find(w => w.weekNumber === selectedWeek) || weekList[0];
-  const weekBooks = calculateWeekBookBreakdown(books, currentWeek.startDay, currentWeek.endDay);
+  const weekBooks = calculateWeekBookBreakdown(effectiveBooks, currentWeek.startDay, currentWeek.endDay);
 
   const currentQuarter = QUARTER_OPTIONS.find(q => q.key === selectedQuarter) || QUARTER_OPTIONS[3];
   const currentHalf = HALF_YEAR_OPTIONS.find(h => h.key === selectedHalfYear) || HALF_YEAR_OPTIONS[1];
 
   // Dynamic Report Sub-title
   const getReportScopeTitle = () => {
+    let base = '';
     if (scope === 'press') {
-      return 'ফরিদ ভাই প্রেস হিসাব, চালান মূল্য, পেমেন্ট ভাউচার ও বকেয়া ব্যালেন্স বিবরণী প্রতিবেদন';
+      base = 'ফরিদ ভাই প্রেস হিসাব, চালান মূল্য, পেমেন্ট ভাউচার ও বকেয়া ব্যালেন্স বিবরণী প্রতিবেদন';
+    } else if (scope === 'online') {
+      base = 'অনলাইন সেলস চ্যানেল (বইবাড়ি, রকমারি, ওয়াফিলাইফ ও অন্যান্য) বিক্রয় ও ডিউ কালেকশন খতিয়ান';
+    } else if (scope === 'offline') {
+      base = 'অফলাইন কাউন্টার ও ডিলার লাইব্রেরি (সুমনা, প্রমিজ, জয়স্টার, নীলক্ষেত) সেলস ও ডিউ খতিয়ান';
+    } else if (scope === 'sales_due') {
+      base = 'অনলাইন ও অফলাইন চ্যানেল বিক্রয়, রাজস্ব ও ডিউ কালেকশন খতিয়ান প্রতিবেদন';
+    } else {
+      base = `সার্বিক বুক সেলস, স্টক ইনভেন্টরি, প্রেস হিসাব ও চ্যানেল ডিউ খতিয়ান প্রতিবেদন`;
     }
-    if (scope === 'online') {
-      return 'অনলাইন সেলস চ্যানেল (বইবাড়ি, রকমারি, ওয়াফিলাইফ ও অন্যান্য) বিক্রয় ও ডিউ কালেকশন খতিয়ান';
+
+    if (bookSelectionMode === 'single' && effectiveBooks[0]) {
+      return `${base} • [একক বই: ${effectiveBooks[0].bookName}]`;
     }
-    if (scope === 'offline') {
-      return 'অফলাইন কাউন্টার ও ডিলার লাইব্রেরি (সুমনা, প্রমিজ, জয়স্টার, নীলক্ষেত) সেলস ও ডিউ খতিয়ান';
+    if (bookSelectionMode === 'multiple' && effectiveBooks.length < books.length) {
+      return `${base} • [নির্বাচিত ${effectiveBooks.length} টি বইয়ের সমন্বিত রিপোর্ট]`;
     }
-    if (scope === 'sales_due') {
-      return 'অনলাইন ও অফলাইন চ্যানেল বিক্রয়, রাজস্ব ও ডিউ কালেকশন খতিয়ান প্রতিবেদন';
-    }
-    return `সার্বিক বুক সেলস, স্টক ইনভেন্টরি, প্রেস হিসাব ও চ্যানেল ডিউ খতিয়ান প্রতিবেদন`;
+    return base;
   };
 
   const getReportPeriodTitle = () => {
@@ -444,7 +503,141 @@ export const PrintableReport: React.FC<PrintableReportProps> = ({
           </div>
         )}
 
-        {/* 2. REPORT TIME PERIOD SELECTOR */}
+        {/* 2. BOOK SELECTION CONTROLS (বই নির্বাচন: সব বই / একক বই / একাধিক বই সিলেক্ট) */}
+        <div className="pt-3 border-t border-zinc-100 space-y-2.5">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <span className="text-xs font-bold text-zinc-900 flex items-center gap-1.5">
+              <BookOpen className="w-3.5 h-3.5 text-zinc-700" />
+              <span>বই নির্বাচন (Book Selection):</span>
+            </span>
+
+            {/* Selection Mode Pills */}
+            <div className="inline-flex items-center bg-zinc-100 p-0.5 rounded-lg border border-zinc-200 text-xs">
+              <button
+                type="button"
+                onClick={() => setBookSelectionMode('all')}
+                className={`px-3 py-1 font-bold rounded-md transition-all ${
+                  bookSelectionMode === 'all'
+                    ? 'bg-zinc-900 text-white shadow-xs'
+                    : 'text-zinc-600 hover:text-zinc-900'
+                }`}
+              >
+                সব বই ({books.length})
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setBookSelectionMode('single')}
+                className={`px-3 py-1 font-bold rounded-md transition-all ${
+                  bookSelectionMode === 'single'
+                    ? 'bg-zinc-900 text-white shadow-xs'
+                    : 'text-zinc-600 hover:text-zinc-900'
+                }`}
+              >
+                সিঙ্গেল বই
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setBookSelectionMode('multiple')}
+                className={`px-3 py-1 font-bold rounded-md transition-all ${
+                  bookSelectionMode === 'multiple'
+                    ? 'bg-zinc-900 text-white shadow-xs'
+                    : 'text-zinc-600 hover:text-zinc-900'
+                }`}
+              >
+                একাধিক বই সিলেক্ট ({selectedMultipleBookIds.length})
+              </button>
+            </div>
+          </div>
+
+          {/* Mode 1: Single Book Dropdown */}
+          {bookSelectionMode === 'single' && (
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2.5 p-3 bg-zinc-50 rounded-xl border border-zinc-200 animate-in fade-in">
+              <span className="text-xs font-semibold text-zinc-700 shrink-0">নির্দিষ্ট বই বাছাই করুন:</span>
+              <select
+                value={selectedSingleBookId}
+                onChange={(e) => setSelectedSingleBookId(e.target.value)}
+                className="w-full sm:max-w-md text-xs font-bold bg-white border border-zinc-300 rounded-lg p-2 text-zinc-900 focus:ring-2 focus:ring-zinc-900 cursor-pointer"
+              >
+                {books.map(b => (
+                  <option key={b.id} value={b.id}>
+                    {b.sl}. {b.bookName} (MRP: ৳{b.perBookAmount})
+                  </option>
+                ))}
+              </select>
+              <span className="text-[11px] text-zinc-500 font-medium">
+                👉 রিপোর্টে শুধুমাত্র এই একক বইটির সম্পূর্ণ বিক্রয়, প্রেস স্টক ও ব্যালেন্স প্রিন্ট হবে।
+              </span>
+            </div>
+          )}
+
+          {/* Mode 2: Multiple Book Selection (Checkboxes + Select All / Clear All) */}
+          {bookSelectionMode === 'multiple' && (
+            <div className="p-3 bg-zinc-50 rounded-xl border border-zinc-200 space-y-2.5 animate-in fade-in">
+              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-zinc-200 pb-2">
+                <span className="text-xs font-bold text-zinc-800">
+                  যেসব বইয়ের রিপোর্ট প্রিন্ট করতে চান সেগুলো টিক দিন:
+                </span>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedMultipleBookIds(books.map(b => b.id))}
+                    className="inline-flex items-center gap-1 text-[11px] font-bold text-zinc-700 hover:text-black bg-white px-2.5 py-1 rounded-md border border-zinc-300 shadow-2xs"
+                  >
+                    <CheckSquare className="w-3 h-3 text-zinc-600" />
+                    <span>সব সিলেক্ট করুন</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedMultipleBookIds([])}
+                    className="inline-flex items-center gap-1 text-[11px] font-bold text-zinc-700 hover:text-black bg-white px-2.5 py-1 rounded-md border border-zinc-300 shadow-2xs"
+                  >
+                    <Square className="w-3 h-3 text-zinc-600" />
+                    <span>সব আন-সিলেক্ট</span>
+                  </button>
+                  <span className="text-[11px] font-bold text-zinc-900 bg-zinc-200 px-2.5 py-0.5 rounded-full font-mono">
+                    নির্বাচিত: {selectedMultipleBookIds.length} / {books.length}
+                  </span>
+                </div>
+              </div>
+
+              {/* Checkboxes Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 max-h-56 overflow-y-auto pr-1">
+                {books.map(b => {
+                  const isChecked = selectedMultipleBookIds.includes(b.id);
+                  return (
+                    <label
+                      key={b.id}
+                      className={`flex items-center gap-2.5 p-2 rounded-lg border text-xs cursor-pointer transition-colors ${
+                        isChecked 
+                          ? 'bg-white border-zinc-900 shadow-2xs font-bold text-zinc-900' 
+                          : 'bg-white/60 border-zinc-200 text-zinc-600 hover:bg-white'
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={isChecked}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setSelectedMultipleBookIds(prev => [...prev, b.id]);
+                          } else {
+                            setSelectedMultipleBookIds(prev => prev.filter(id => id !== b.id));
+                          }
+                        }}
+                        className="rounded text-zinc-900 focus:ring-0 w-3.5 h-3.5"
+                      />
+                      <span className="font-mono text-[10px] text-zinc-400">{b.sl}.</span>
+                      <span className="truncate">{b.bookName}</span>
+                    </label>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* 3. REPORT TIME PERIOD SELECTOR */}
         <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-zinc-100">
           <div className="flex flex-wrap bg-zinc-100 p-1 rounded-xl border border-zinc-200 gap-1">
             {[
@@ -602,6 +795,80 @@ export const PrintableReport: React.FC<PrintableReportProps> = ({
           </div>
         </div>
 
+        {/* If Single Book is selected, show an executive Single Book Highlights Showcase Card */}
+        {effectiveBooks.length === 1 && (
+          <div className="bg-zinc-50 border-2 border-zinc-900 rounded-2xl p-4 sm:p-5 avoid-break space-y-3">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-zinc-200 pb-3 gap-2">
+              <div>
+                <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider block">একক বই স্পেশাল রিপোর্ট</span>
+                <h2 className="text-xl font-black text-zinc-900 flex items-center gap-2">
+                  <span>{effectiveBooks[0].sl}.</span>
+                  <span>{effectiveBooks[0].bookName}</span>
+                </h2>
+                {effectiveBooks[0].remarks && (
+                  <p className="text-xs text-zinc-600 mt-0.5">{effectiveBooks[0].remarks}</p>
+                )}
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="bg-white px-3 py-1.5 rounded-xl border border-zinc-200 text-right">
+                  <span className="text-[10px] text-zinc-400 block">বিক্রয় মূল্য (MRP)</span>
+                  <span className="text-base font-black text-zinc-900 font-mono">{formatBDT(effectiveBooks[0].perBookAmount)}</span>
+                </div>
+                <div className="bg-white px-3 py-1.5 rounded-xl border border-zinc-200 text-right">
+                  <span className="text-[10px] text-zinc-400 block">নিট লাভ/কপি</span>
+                  <span className="text-base font-black text-emerald-700 font-mono">+{formatBDT(calculateBookMetrics(effectiveBooks[0]).profitPerBook)}</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-center text-xs">
+              <div className="p-2.5 bg-white rounded-xl border border-zinc-200">
+                <span className="text-zinc-500 text-[11px] block">মোট প্রেস অর্ডার</span>
+                <span className="text-base font-bold text-zinc-900 font-mono">{formatNumber(calculateBookMetrics(effectiveBooks[0]).totalOrderFaridBhai)} কপি</span>
+              </div>
+              <div className="p-2.5 bg-white rounded-xl border border-zinc-200">
+                <span className="text-zinc-500 text-[11px] block">প্রেস থেকে প্রাপ্ত চালান</span>
+                <span className="text-base font-bold text-zinc-900 font-mono">{formatNumber(calculateBookMetrics(effectiveBooks[0]).faridBhaiToHeadOffice)} কপি</span>
+              </div>
+              <div className="p-2.5 bg-white rounded-xl border border-zinc-200">
+                <span className="text-zinc-500 text-[11px] block">হেড অফিস বর্তমান স্টক</span>
+                <span className="text-base font-bold text-zinc-900 font-mono">{formatNumber(calculateBookMetrics(effectiveBooks[0]).totalPresentStockHO)} কপি</span>
+              </div>
+              <div className="p-2.5 bg-white rounded-xl border border-zinc-200">
+                <span className="text-zinc-500 text-[11px] block">প্রেসে অবশিষ্ট স্টক</span>
+                <span className="text-base font-bold text-zinc-900 font-mono">{formatNumber(calculateBookMetrics(effectiveBooks[0]).stockToFaridBhai)} কপি</span>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-center text-xs">
+              <div className="p-2.5 bg-white rounded-xl border border-zinc-200">
+                <span className="text-zinc-500 text-[11px] block">অনলাইন বিক্রয়</span>
+                <span className="text-base font-bold text-zinc-900 font-mono">{formatNumber(calculateBookMetrics(effectiveBooks[0]).totalOnlineSell)} কপি</span>
+              </div>
+              <div className="p-2.5 bg-white rounded-xl border border-zinc-200">
+                <span className="text-zinc-500 text-[11px] block">অফলাইন বিক্রয়</span>
+                <span className="text-base font-bold text-zinc-900 font-mono">{formatNumber(calculateBookMetrics(effectiveBooks[0]).totalOfflineSell)} কপি</span>
+              </div>
+              <div className="p-2.5 bg-white rounded-xl border border-zinc-200">
+                <span className="text-zinc-500 text-[11px] block">মোট বিক্রিত কপি</span>
+                <span className="text-base font-bold text-zinc-900 font-mono">{formatNumber(calculateBookMetrics(effectiveBooks[0]).totalSold)} কপি</span>
+              </div>
+              <div className="p-2.5 bg-white rounded-xl border border-zinc-200">
+                <span className="text-zinc-500 text-[11px] block">মোট অর্জিত নিট লাভ</span>
+                <span className="text-base font-black text-emerald-800 font-mono">+{formatBDT(calculateBookMetrics(effectiveBooks[0]).totalNetProfit)}</span>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {effectiveBooks.length === 0 && (
+          <div className="p-8 text-center bg-zinc-50 rounded-2xl border border-zinc-200">
+            <BookOpen className="w-8 h-8 text-zinc-400 mx-auto mb-2" />
+            <h3 className="font-bold text-zinc-800 text-sm">কোনো বই নির্বাচন করা হয়নি</h3>
+            <p className="text-xs text-zinc-500 mt-1">দয়া করে উপরের বই নির্বাচন প্যানেল থেকে অন্তত একটি বই সিলেক্ট করুন।</p>
+          </div>
+        )}
+
         {/* Dynamic Primary KPI Summary Cards based on Selected Scope */}
         {scope === 'press' ? (
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
@@ -722,13 +989,13 @@ export const PrintableReport: React.FC<PrintableReportProps> = ({
         {/* ======================================================== */}
         {/* SECTION 1: BOOKS TABLE (Full / Online Only / Offline Only) */}
         {/* ======================================================== */}
-        {salesMode !== 'none' && (
+        {salesMode !== 'none' && effectiveBooks.length > 0 && (
           <div>
             <h3 className="text-xs font-bold text-zinc-900 mb-2 border-b border-zinc-200 pb-1 flex items-center justify-between">
               <span>
                 ১. বই ভিত্তিক {salesMode === 'online' ? 'অনলাইন' : salesMode === 'offline' ? 'অফলাইন ও লাইব্রেরি' : 'পূর্ণাঙ্গ'} বিক্রয় ও রাজস্ব খতিয়ান
               </span>
-              <span className="text-[11px] font-normal text-zinc-500">{books.length} টি বই</span>
+              <span className="text-[11px] font-normal text-zinc-500">{effectiveBooks.length} টি বই</span>
             </h3>
 
             {/* A: Online-Only Books Table */}
@@ -749,7 +1016,7 @@ export const PrintableReport: React.FC<PrintableReportProps> = ({
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-zinc-200">
-                    {books.map(b => {
+                    {effectiveBooks.map(b => {
                       const m = calculateBookMetrics(b);
                       const onlineRev = m.totalOnlineSell * m.perBookAmount;
                       return (
@@ -801,7 +1068,7 @@ export const PrintableReport: React.FC<PrintableReportProps> = ({
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-zinc-200">
-                    {books.map(b => {
+                    {effectiveBooks.map(b => {
                       const m = calculateBookMetrics(b);
                       const offlineRev = m.totalOfflineSell * m.perBookAmount;
                       return (
@@ -857,7 +1124,7 @@ export const PrintableReport: React.FC<PrintableReportProps> = ({
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-zinc-200">
-                    {books.map(b => {
+                    {effectiveBooks.map(b => {
                       const m = calculateBookMetrics(b);
                       return (
                         <tr key={b.id}>
@@ -879,8 +1146,8 @@ export const PrintableReport: React.FC<PrintableReportProps> = ({
                   </tbody>
                   <tfoot>
                     <tr className="bg-zinc-100 font-black border-t-2 border-zinc-900 text-zinc-900">
-                      <td colSpan={4} className="py-2.5 px-3 text-right">সর্বমোট যোগফল:</td>
-                      <td className="py-2.5 px-3 text-center font-mono">{formatNumber(books.reduce((s, b) => s + (Number(b.totalOrderFaridBhai) || 0), 0))}</td>
+                      <td colSpan={4} className="py-2.5 px-3 text-right">সর্বমোট যোগফল ({effectiveBooks.length} টি বই):</td>
+                      <td className="py-2.5 px-3 text-center font-mono">{formatNumber(effectiveBooks.reduce((s, b) => s + (Number(b.totalOrderFaridBhai) || 0), 0))}</td>
                       <td className="py-2.5 px-3 text-center font-mono">{formatNumber(monthlyTotals.totalHOStock)}</td>
                       <td className="py-2.5 px-3 text-center font-mono">{formatNumber(monthlyTotals.totalPressStock)}</td>
                       <td className="py-2.5 px-3 text-center font-mono">{formatNumber(monthlyTotals.totalOnlineSold)}</td>
@@ -967,10 +1234,10 @@ export const PrintableReport: React.FC<PrintableReportProps> = ({
         )}
 
         {/* Press Payment Voucher History Table */}
-        {includePressPayments && pressPayments.length > 0 && (
+        {includePressPayments && filteredPressPayments.length > 0 && (
           <div className="avoid-break">
             <h3 className="text-xs font-bold text-zinc-900 mb-2 border-b border-zinc-200 pb-1 flex items-center justify-between">
-              <span>ফরিদ ভাই প্রেসে পরিশোধিত পেমেন্ট ভাউচার হিস্ট্রি ({pressPayments.length} টি ভাউচার)</span>
+              <span>ফরিদ ভাই প্রেসে পরিশোধিত পেমেন্ট ভাউচার হিস্ট্রি ({filteredPressPayments.length} টি ভাউচার)</span>
               <span className="text-[11px] font-bold text-zinc-900 font-mono">
                 মোট পরিশোধ: {formatBDT(pressAccounts.totalPaidToPress)}
               </span>
@@ -989,7 +1256,7 @@ export const PrintableReport: React.FC<PrintableReportProps> = ({
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-zinc-100">
-                  {pressPayments.map(p => (
+                  {filteredPressPayments.map(p => (
                     <tr key={p.id}>
                       <td className="py-2 px-3 font-mono font-medium text-zinc-900">{p.date}</td>
                       <td className="py-2 px-3 font-semibold text-zinc-900">{p.bookName || 'সার্বিক প্রেস অর্ডার'}</td>

@@ -6,7 +6,8 @@ import {
   FileSpreadsheet, 
   Edit3, 
   Trash2, 
-  AlertTriangle 
+  AlertTriangle,
+  Printer
 } from 'lucide-react';
 import { BookRecord } from '../types/book';
 import { calculateBookMetrics, formatBDT, formatNumber } from '../utils/calculations';
@@ -18,6 +19,7 @@ interface BooksTableProps {
   onOpenEditBook: (book: BookRecord) => void;
   onDeleteBook: (bookId: string) => void;
   onOpenAddBook: () => void;
+  onPrintSingleBook?: (bookId: string) => void;
 }
 
 export const BooksTable: React.FC<BooksTableProps> = ({
@@ -27,6 +29,7 @@ export const BooksTable: React.FC<BooksTableProps> = ({
   onOpenEditBook,
   onDeleteBook,
   onOpenAddBook,
+  onPrintSingleBook,
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState<'sl' | 'name' | 'stock' | 'sold' | 'profit'>('sl');
@@ -219,6 +222,16 @@ export const BooksTable: React.FC<BooksTableProps> = ({
                           >
                             <FileSpreadsheet className="w-4 h-4" />
                           </button>
+
+                          {onPrintSingleBook && (
+                            <button
+                              onClick={() => onPrintSingleBook(book.id)}
+                              className="p-1.5 text-zinc-700 hover:text-black hover:bg-zinc-100 rounded-lg transition-colors border border-zinc-200"
+                              title="এই একক বইটির সম্পূর্ণ রিপোর্ট প্রিন্ট করুন"
+                            >
+                              <Printer className="w-4 h-4" />
+                            </button>
+                          )}
 
                           <button
                             onClick={() => onOpenEditBook(book)}
