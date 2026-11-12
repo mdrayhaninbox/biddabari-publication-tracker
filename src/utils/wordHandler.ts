@@ -437,7 +437,15 @@ export async function exportReportToWord(options: WordExportOptions): Promise<vo
               borders: cellBorders,
               margins: defaultCellMargins,
               shading: { fill: isEven ? ZEBRA_BG : WHITE },
-              children: [new Paragraph({ children: [new TextRun({ text: book.bookName, bold: true, size: 16 })] })],
+              children: [
+                new Paragraph({
+                  children: [
+                    new TextRun({ text: book.bookName, bold: true, size: 16 }),
+                    ...(book.edition ? [new TextRun({ text: ` [${book.edition}]`, size: 14, color: '1E3A8A', bold: true })] : []),
+                    ...(book.publishMonth ? [new TextRun({ text: ` (${book.publishMonth})`, size: 13, color: '64748B' })] : []),
+                  ],
+                }),
+              ],
             }),
             // Price
             new TableCell({

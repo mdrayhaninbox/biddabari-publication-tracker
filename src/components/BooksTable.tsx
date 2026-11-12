@@ -39,6 +39,8 @@ export const BooksTable: React.FC<BooksTableProps> = ({
 
   const filteredBooks = books.filter(b => 
     b.bookName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (b.edition && b.edition.toLowerCase().includes(searchTerm.toLowerCase())) ||
+    (b.publishMonth && b.publishMonth.toLowerCase().includes(searchTerm.toLowerCase())) ||
     (b.remarks && b.remarks.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
@@ -139,14 +141,26 @@ export const BooksTable: React.FC<BooksTableProps> = ({
                       </td>
 
                       <td className="py-3 px-4">
-                        <div className="font-bold text-zinc-900 text-sm">
-                          {book.bookName}
+                        <div className="font-bold text-zinc-900 text-sm flex items-center gap-1.5 flex-wrap">
+                          <span>{book.bookName}</span>
+                          {book.edition && (
+                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-blue-50 text-blue-900 border border-blue-200">
+                              {book.edition}
+                            </span>
+                          )}
                         </div>
-                        {book.remarks && (
-                          <div className="text-[11px] text-zinc-500 mt-0.5 truncate max-w-xs">
-                            {book.remarks}
-                          </div>
-                        )}
+                        <div className="flex items-center gap-2 text-[11px] text-zinc-500 mt-0.5 flex-wrap">
+                          {book.publishMonth && (
+                            <span className="inline-flex items-center gap-1 text-zinc-600 font-semibold bg-zinc-100 px-1.5 py-0.5 rounded text-[10px]">
+                              📅 {book.publishMonth}
+                            </span>
+                          )}
+                          {book.remarks && (
+                            <span className="text-zinc-400 truncate max-w-xs">
+                              {book.remarks}
+                            </span>
+                          )}
+                        </div>
                       </td>
 
                       <td className="py-3 px-3 text-right font-semibold text-zinc-900 font-mono">

@@ -105,7 +105,7 @@ export const AddPressPaymentModal: React.FC<AddPressPaymentModalProps> = ({
                 <option value="">{tr('সার্বিক প্রেস চালান (All Books)', 'General Press Account (All Books)', language)}</option>
                 {books.map(b => (
                   <option key={b.id} value={b.id}>
-                    {b.sl}. {b.bookName}
+                    {b.sl}. {b.bookName}{b.edition ? ` [${b.edition}]` : ''}
                   </option>
                 ))}
               </select>

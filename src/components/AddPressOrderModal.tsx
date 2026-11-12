@@ -118,7 +118,7 @@ export const AddPressOrderModal: React.FC<AddPressOrderModalProps> = ({
                 >
                   {books.map((b) => (
                     <option key={b.id} value={b.id}>
-                      {b.sl}. {b.bookName} ({tr('ছাপার খরচ', 'Printing Cost', language)}: ৳{b.makingCost})
+                      {b.sl}. {b.bookName}{b.edition ? ` [${b.edition}]` : ''} ({tr('ছাপার খরচ', 'Printing Cost', language)}: ৳{b.makingCost})
                     </option>
                   ))}
                 </select>

@@ -543,6 +543,8 @@ export const App: React.FC = () => {
         id: `book-${Date.now()}`,
         sl: books.length + 1,
         bookName: bookData.bookName || 'নতুন বই',
+        edition: bookData.edition || '1st Edition',
+        publishMonth: bookData.publishMonth || '',
         adCost: Number(bookData.adCost) || 0,
         makingCost: Number(bookData.makingCost) || 0,
         perBookAmount: Number(bookData.perBookAmount) || 0,

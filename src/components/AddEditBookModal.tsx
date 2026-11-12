@@ -22,6 +22,8 @@ export const AddEditBookModal: React.FC<AddEditBookModalProps> = ({
   language = 'en',
 }) => {
   const [bookName, setBookName] = useState('');
+  const [edition, setEdition] = useState('1st Edition');
+  const [publishMonth, setPublishMonth] = useState('');
   const [adCost, setAdCost] = useState<number>(30);
   const [makingCost, setMakingCost] = useState<number>(250);
   const [perBookAmount, setPerBookAmount] = useState<number>(390);
@@ -30,12 +32,18 @@ export const AddEditBookModal: React.FC<AddEditBookModalProps> = ({
   useEffect(() => {
     if (editingBook) {
       setBookName(editingBook.bookName);
+      setEdition(editingBook.edition || '1st Edition');
+      setPublishMonth(editingBook.publishMonth || '');
       setAdCost(editingBook.adCost);
       setMakingCost(editingBook.makingCost);
       setPerBookAmount(editingBook.perBookAmount);
       setRemarks(editingBook.remarks || '');
     } else {
       setBookName('');
+      setEdition('1st Edition');
+      const now = new Date();
+      const defaultMonthName = now.toLocaleString('en-US', { month: 'long' });
+      setPublishMonth(`${defaultMonthName}, ${now.getFullYear()}`);
       setAdCost(30);
       setMakingCost(250);
       setPerBookAmount(390);
@@ -54,6 +62,8 @@ export const AddEditBookModal: React.FC<AddEditBookModalProps> = ({
     onSaveBook({
       sl: editingBook ? editingBook.sl : nextSl,
       bookName: bookName.trim(),
+      edition: edition.trim() || '1st Edition',
+      publishMonth: publishMonth.trim(),
       adCost: Number(adCost) || 0,
       makingCost: Number(makingCost) || 0,
       perBookAmount: Number(perBookAmount) || 0,
@@ -111,6 +121,77 @@ export const AddEditBookModal: React.FC<AddEditBookModalProps> = ({
                 placeholder={tr('যেমন: ৪৭তম বিসিএস প্রিলিমিনারি গাইড', 'e.g. 47th BCS Preliminary Guide', language)}
                 className="w-full text-xs font-semibold border border-zinc-300 rounded-lg p-2.5 focus:ring-2 focus:ring-zinc-900"
               />
+            </div>
+
+            {/* Book Edition & Publish Month */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-zinc-50 p-3.5 rounded-xl border border-zinc-200">
+              {/* Edition */}
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-xs font-bold text-zinc-800">
+                    {tr('সংস্করণ (Book Edition) *', 'Book Edition *', language)}
+                  </label>
+                </div>
+                <input
+                  type="text"
+                  required
+                  value={edition}
+                  onChange={(e) => setEdition(e.target.value)}
+                  placeholder="e.g. 1st Edition"
+                  className="w-full text-xs font-bold border border-zinc-300 rounded-lg p-2 focus:ring-2 focus:ring-zinc-900 bg-white"
+                  list="edition-suggestions"
+                />
+                <datalist id="edition-suggestions">
+                  <option value="1st Edition" />
+                  <option value="2nd Edition" />
+                  <option value="3rd Edition" />
+                  <option value="4th Edition" />
+                  <option value="5th Edition" />
+                  <option value="Revised Edition" />
+                  <option value="Special Edition" />
+                  <option value="১ম সংস্করণ" />
+                  <option value="২য় সংস্করণ" />
+                  <option value="৩য় সংস্করণ" />
+                </datalist>
+
+                {/* Quick Selection Pills */}
+                <div className="flex flex-wrap gap-1 mt-1.5">
+                  {['1st Edition', '2nd Edition', '3rd Edition', 'Revised'].map(ed => (
+                    <button
+                      key={ed}
+                      type="button"
+                      onClick={() => setEdition(ed)}
+                      className={`text-[10px] px-2 py-0.5 rounded border transition-colors ${
+                        edition === ed
+                          ? 'bg-zinc-900 text-white border-zinc-900 font-bold'
+                          : 'bg-white hover:bg-zinc-100 text-zinc-700 border-zinc-200'
+                      }`}
+                    >
+                      {ed}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Publish Month */}
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-xs font-bold text-zinc-800">
+                    {tr('প্রকাশের মাস ও বছর *', 'Publish Month & Year *', language)}
+                  </label>
+                </div>
+                <input
+                  type="text"
+                  required
+                  value={publishMonth}
+                  onChange={(e) => setPublishMonth(e.target.value)}
+                  placeholder="e.g. January, 2025"
+                  className="w-full text-xs font-semibold border border-zinc-300 rounded-lg p-2 focus:ring-2 focus:ring-zinc-900 bg-white"
+                />
+                <p className="text-[10px] text-zinc-500 mt-1.5 leading-tight">
+                  {tr('একই বইয়ের বিভিন্ন সংস্করণের মূল্য ও প্রকাশকাল আলাদা হিসাবের জন্য।', 'Separates sales & pricing across multiple editions.', language)}
+                </p>
+              </div>
             </div>
 
             {/* Info note about Press Order Management */}

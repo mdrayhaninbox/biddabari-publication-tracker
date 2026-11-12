@@ -45,6 +45,8 @@ export interface BookRecord {
   updatedAt?: string;
   initialOrderDate?: string;
   initialLotName?: string;
+  edition?: string; // e.g. "1st Edition", "2nd Edition", "১ম সংস্করণ"
+  publishMonth?: string; // e.g. "January, 2025", "জানুয়ারি ২০২৫"
 
   // Dynamic / Custom Channel Daily Sales
   customChannelSales?: {

@@ -321,7 +321,16 @@ export const AccountsDueLedger: React.FC<AccountsDueLedgerProps> = ({
                   {pressAccounts.bookAccounts.map((b) => (
                     <tr key={b.bookId} className="hover:bg-zinc-50/80 transition-colors">
                       <td className="py-3 px-3 text-center font-mono font-bold text-zinc-600">{b.sl}</td>
-                      <td className="py-3 px-3 font-bold text-zinc-900">{b.bookName}</td>
+                      <td className="py-3 px-3 font-bold text-zinc-900">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span>{b.bookName}</span>
+                          {books.find(bk => bk.id === b.bookId)?.edition && (
+                            <span className="text-[10px] px-1.5 py-0.5 rounded font-bold bg-blue-50 text-blue-900 border border-blue-200">
+                              {books.find(bk => bk.id === b.bookId)?.edition}
+                            </span>
+                          )}
+                        </div>
+                      </td>
                       <td className="py-3 px-3 text-center">
                         <div className="font-mono font-bold text-zinc-900">
                           {formatNumber(b.orderQuantity, language)} {tr('কপি', 'copies', language)}
@@ -492,7 +501,7 @@ export const AccountsDueLedger: React.FC<AccountsDueLedgerProps> = ({
                   <option value="all">{tr(`সবগুলো বই (${books.length} টি)`, `All Books (${books.length})`, language)}</option>
                   {books.map((b) => (
                     <option key={b.id} value={b.id}>
-                      {b.sl}. {b.bookName}
+                      {b.sl}. {b.bookName}{b.edition ? ` [${b.edition}]` : ''}
                     </option>
                   ))}
                 </select>

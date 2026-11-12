@@ -642,7 +642,7 @@ export const PrintableReport: React.FC<PrintableReportProps> = ({
               >
                 {books.map(b => (
                   <option key={b.id} value={b.id}>
-                    {b.sl}. {b.bookName} (MRP: {formatBDT(b.perBookAmount, language)})
+                    {b.sl}. {b.bookName}{b.edition ? ` [${b.edition}]` : ''} (MRP: {formatBDT(b.perBookAmount, language)})
                   </option>
                 ))}
               </select>
@@ -708,7 +708,7 @@ export const PrintableReport: React.FC<PrintableReportProps> = ({
                         className="rounded text-zinc-900 focus:ring-0 w-3.5 h-3.5"
                       />
                       <span className="font-mono text-[10px] text-zinc-400">{b.sl}.</span>
-                      <span className="truncate">{b.bookName}</span>
+                      <span className="truncate">{b.bookName}{b.edition ? ` [${b.edition}]` : ''}</span>
                     </label>
                   );
                 })}
@@ -1123,7 +1123,16 @@ export const PrintableReport: React.FC<PrintableReportProps> = ({
                       return (
                         <tr key={b.id}>
                           <td className="py-2 px-3 text-center font-mono">{b.sl}</td>
-                          <td className="py-2 px-3 font-semibold text-zinc-900">{b.bookName}</td>
+                          <td className="py-2 px-3 font-semibold text-zinc-900">
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <span>{b.bookName}</span>
+                              {b.edition && (
+                                <span className="text-[10px] px-1 py-0.2 rounded font-bold bg-zinc-100 text-zinc-800 border border-zinc-300">
+                                  {b.edition}
+                                </span>
+                              )}
+                            </div>
+                          </td>
                           <td className="py-2 px-3 text-right font-mono">{formatBDT(m.perBookAmount, language)}</td>
                           <td className="py-2 px-3 text-center font-mono">{formatNumber(m.boibariTotal, language)}</td>
                           <td className="py-2 px-3 text-center font-mono">{formatNumber(m.rokomariTotal, language)}</td>
@@ -1175,7 +1184,16 @@ export const PrintableReport: React.FC<PrintableReportProps> = ({
                       return (
                         <tr key={b.id}>
                           <td className="py-2 px-3 text-center font-mono">{b.sl}</td>
-                          <td className="py-2 px-3 font-semibold text-zinc-900">{b.bookName}</td>
+                          <td className="py-2 px-3 font-semibold text-zinc-900">
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <span>{b.bookName}</span>
+                              {b.edition && (
+                                <span className="text-[10px] px-1 py-0.2 rounded font-bold bg-zinc-100 text-zinc-800 border border-zinc-300">
+                                  {b.edition}
+                                </span>
+                              )}
+                            </div>
+                          </td>
                           <td className="py-2 px-3 text-right font-mono">{formatBDT(m.perBookAmount, language)}</td>
                           <td className="py-2 px-3 text-center font-mono">{formatNumber(m.headOfficeOfflineTotal, language)}</td>
                           <td className="py-2 px-3 text-center font-mono">{formatNumber(m.nilkhetTotal, language)}</td>
@@ -1230,7 +1248,16 @@ export const PrintableReport: React.FC<PrintableReportProps> = ({
                       return (
                         <tr key={b.id}>
                           <td className="py-2 px-3 text-center font-mono">{b.sl}</td>
-                          <td className="py-2 px-3 font-semibold text-zinc-900">{b.bookName}</td>
+                          <td className="py-2 px-3 font-semibold text-zinc-900">
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <span>{b.bookName}</span>
+                              {b.edition && (
+                                <span className="text-[10px] px-1 py-0.2 rounded font-bold bg-zinc-100 text-zinc-800 border border-zinc-300">
+                                  {b.edition}
+                                </span>
+                              )}
+                            </div>
+                          </td>
                           <td className="py-2 px-3 text-right font-mono">{formatBDT(m.perBookAmount, language)}</td>
                           <td className="py-2 px-3 text-right font-mono">+{formatBDT(m.profitPerBook, language)}</td>
                           <td className="py-2 px-3 text-center font-mono">{formatNumber(m.totalOrderFaridBhai, language)}</td>

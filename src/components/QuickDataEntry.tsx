@@ -286,7 +286,7 @@ export const QuickDataEntry: React.FC<QuickDataEntryProps> = ({
               >
                 {books.map(b => (
                   <option key={b.id} value={b.id}>
-                    {b.sl}. {b.bookName} (MRP: {b.perBookAmount}৳ | {tr('লাভ:', 'Profit:', language)} +{b.profitPerBook}৳)
+                    {b.sl}. {b.bookName}{b.edition ? ` [${b.edition}]` : ''} (MRP: {b.perBookAmount}৳ | {tr('লাভ:', 'Profit:', language)} +{b.profitPerBook}৳)
                   </option>
                 ))}
               </select>
@@ -318,7 +318,7 @@ export const QuickDataEntry: React.FC<QuickDataEntryProps> = ({
           <div className="bg-zinc-100 border border-zinc-200 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-3 text-xs">
             <div className="flex items-center gap-2">
               <span className="font-bold text-zinc-900">
-                "{currentBook?.bookName}" — {language === 'bn' ? `${day} তারিখের হিসাব:` : `Day ${day} Summary:`}
+                "{currentBook?.bookName}{currentBook?.edition ? ` [${currentBook.edition}]` : ''}" — {language === 'bn' ? `${day} তারিখের হিসাব:` : `Day ${day} Summary:`}
               </span>
             </div>
             <div className="flex items-center gap-4 text-zinc-800">
@@ -605,7 +605,14 @@ export const QuickDataEntry: React.FC<QuickDataEntryProps> = ({
                     return (
                       <tr key={b.id} className="hover:bg-zinc-50 transition-colors">
                         <td className="py-2 px-3 font-semibold text-zinc-900 sticky left-0 z-10 bg-white">
-                          {b.sl}. {b.bookName}
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span>{b.sl}. {b.bookName}</span>
+                            {b.edition && (
+                              <span className="text-[10px] px-1 py-0.2 rounded font-bold bg-blue-50 text-blue-900 border border-blue-200">
+                                {b.edition}
+                              </span>
+                            )}
+                          </div>
                         </td>
 
                         {/* Press Receipt */}

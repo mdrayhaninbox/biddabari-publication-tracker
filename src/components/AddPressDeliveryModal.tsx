@@ -107,7 +107,7 @@ export const AddPressDeliveryModal: React.FC<AddPressDeliveryModalProps> = ({
               >
                 {books.map((b) => (
                   <option key={b.id} value={b.id}>
-                    {b.sl}. {b.bookName}
+                    {b.sl}. {b.bookName}{b.edition ? ` [${b.edition}]` : ''}
                   </option>
                 ))}
               </select>

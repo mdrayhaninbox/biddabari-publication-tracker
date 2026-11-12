@@ -9,6 +9,15 @@ import {
   SALES_CHANNELS 
 } from '../types/book';
 
+export function formatBookWithEdition(book?: { bookName: string; edition?: string; sl?: number } | null, includeSl = false): string {
+  if (!book) return '';
+  const editionPart = book.edition && book.edition.trim() ? ` [${book.edition.trim()}]` : '';
+  if (includeSl && book.sl) {
+    return `${book.sl}. ${book.bookName}${editionPart}`;
+  }
+  return `${book.bookName}${editionPart}`;
+}
+
 export function sumDaily(salesMap: DailyChannelSales = {}): number {
   if (!salesMap) return 0;
   return Object.values(salesMap).reduce((sum, val) => sum + (Number(val) || 0), 0);
