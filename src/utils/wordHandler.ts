@@ -51,6 +51,7 @@ export interface WordExportOptions {
   includeOnlineDue?: boolean;
   includeOfflineDue?: boolean;
   includeSignatures?: boolean;
+  scope?: string;
 }
 
 const NAVY_COLOR = '1E3A8A';
@@ -82,6 +83,161 @@ const defaultCellMargins = {
   right: 120,
 };
 
+function appendSignaturesBlock(children: (Paragraph | Table)[], language: Language) {
+  children.push(
+    new Paragraph({
+      spacing: { before: 200, after: 120 },
+      children: [
+        new TextRun({
+          text: tr('অফিসিয়াল অনুমোদন ও যাচাইকরণ স্বাক্ষর:', 'Official Verification & Approval Signatures:', language),
+          bold: true,
+          size: 18,
+          color: NAVY_DARK,
+        }),
+      ],
+    }),
+    new Table({
+      width: { size: 100, type: WidthType.PERCENTAGE },
+      rows: [
+        new TableRow({
+          children: [
+            new TableCell({
+              borders: { top: tableBorder, bottom: tableBorder, left: tableBorder, right: tableBorder },
+              margins: { top: 200, bottom: 200, left: 140, right: 140 },
+              children: [
+                new Paragraph({ alignment: AlignmentType.CENTER, spacing: { before: 240 }, children: [new TextRun({ text: '_______________________________', color: TEXT_MUTED })] }),
+                new Paragraph({ alignment: AlignmentType.CENTER, spacing: { before: 60 }, children: [new TextRun({ text: tr('প্রস্তুতকারী কর্মকর্তা', 'Prepared By', language), bold: true, size: 16 })] }),
+                new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: tr('বিদ্যাবাড়ি পাবলিকেশন শাখা', 'Biddabari Publication Section', language), size: 14, color: TEXT_MUTED })] }),
+              ],
+            }),
+            new TableCell({
+              borders: { top: tableBorder, bottom: tableBorder, left: tableBorder, right: tableBorder },
+              margins: { top: 200, bottom: 200, left: 140, right: 140 },
+              children: [
+                new Paragraph({ alignment: AlignmentType.CENTER, spacing: { before: 240 }, children: [new TextRun({ text: '_______________________________', color: TEXT_MUTED })] }),
+                new Paragraph({ alignment: AlignmentType.CENTER, spacing: { before: 60 }, children: [new TextRun({ text: tr('হিসাব রক্ষণ কর্মকর্তা', 'Accounts & Finance Officer', language), bold: true, size: 16 })] }),
+                new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: tr('হিসাব ও অডিট বিভাগ', 'Accounts & Audit Dept', language), size: 14, color: TEXT_MUTED })] }),
+              ],
+            }),
+            new TableCell({
+              borders: { top: tableBorder, bottom: tableBorder, left: tableBorder, right: tableBorder },
+              margins: { top: 200, bottom: 200, left: 140, right: 140 },
+              children: [
+                new Paragraph({ alignment: AlignmentType.CENTER, spacing: { before: 240 }, children: [new TextRun({ text: '_______________________________', color: TEXT_MUTED })] }),
+                new Paragraph({ alignment: AlignmentType.CENTER, spacing: { before: 60 }, children: [new TextRun({ text: tr('অনুমোদনকারী কর্তৃপক্ষ', 'Authorized Executive / CEO', language), bold: true, size: 16 })] }),
+                new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: tr('বিদ্যাবাড়ি পাবলিকেশন ঢাকা', 'Biddabari Publication Dhaka', language), size: 14, color: TEXT_MUTED })] }),
+              ],
+            }),
+          ],
+        }),
+      ],
+    })
+  );
+}
+
+async function assembleAndDownloadDoc(
+  children: (Paragraph | Table)[],
+  fileNamePrefix: string,
+  periodTitle: string,
+  reportTitle: string,
+  language: Language
+): Promise<void> {
+  const doc = new Document({
+    title: `${reportTitle} - ${periodTitle}`,
+    description: reportTitle,
+    creator: 'Biddabari Publication System',
+    sections: [
+      {
+        properties: {
+          page: {
+            size: {
+              orientation: PageOrientation.LANDSCAPE,
+            },
+            margin: {
+              top: 720,
+              bottom: 720,
+              left: 720,
+              right: 720,
+            },
+          },
+        },
+        headers: {
+          default: new Header({
+            children: [
+              new Paragraph({
+                alignment: AlignmentType.RIGHT,
+                children: [
+                  new TextRun({
+                    text: 'Biddabari Publication • Official Executive Report',
+                    size: 14,
+                    color: TEXT_MUTED,
+                    font: 'Segoe UI',
+                  }),
+                ],
+              }),
+            ],
+          }),
+        },
+        footers: {
+          default: new Footer({
+            children: [
+              new Paragraph({
+                alignment: AlignmentType.CENTER,
+                children: [
+                  new TextRun({
+                    text: `${tr('পৃষ্ঠা ', 'Page ', language)}`,
+                    size: 14,
+                    color: TEXT_MUTED,
+                  }),
+                  new TextRun({
+                    children: [PageNumber.CURRENT],
+                    size: 14,
+                    bold: true,
+                    color: NAVY_COLOR,
+                  }),
+                  new TextRun({
+                    text: ` ${tr('এর মধ্যে ', ' of ', language)}`,
+                    size: 14,
+                    color: TEXT_MUTED,
+                  }),
+                  new TextRun({
+                    children: [PageNumber.TOTAL_PAGES],
+                    size: 14,
+                    bold: true,
+                    color: NAVY_COLOR,
+                  }),
+                  new TextRun({
+                    text: ` | ${tr('গোপনীয় ও অফিসিয়াল ব্যবহারের জন্য সংরক্ষিত', 'Confidential - For internal executive use only', language)}`,
+                    size: 14,
+                    color: TEXT_MUTED,
+                  }),
+                ],
+              }),
+            ],
+          }),
+        },
+        children,
+      },
+    ],
+  });
+
+  const blob = await Packer.toBlob(doc);
+  const cleanPeriod = periodTitle.replace(/[/\\?%*:|"<>]/g, '-');
+  const fileName = `${fileNamePrefix}_${cleanPeriod}_${new Date().toISOString().split('T')[0]}.docx`;
+
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+  anchor.href = url;
+  anchor.download = fileName;
+  document.body.appendChild(anchor);
+  anchor.click();
+  document.body.removeChild(anchor);
+
+  setTimeout(() => {
+    URL.revokeObjectURL(url);
+  }, 2500);
+}
+
 export async function exportReportToWord(options: WordExportOptions): Promise<void> {
   const {
     books,
@@ -101,6 +257,7 @@ export async function exportReportToWord(options: WordExportOptions): Promise<vo
     includeOnlineDue = true,
     includeOfflineDue = true,
     includeSignatures = true,
+    scope = 'all',
   } = options;
 
   const pressAccounts = calculatePressAccounts(books, pressPayments, pressOrders);
@@ -216,6 +373,200 @@ export async function exportReportToWord(options: WordExportOptions): Promise<vo
     }),
     new Paragraph({ spacing: { after: 200 } })
   );
+
+  // ==============================================================
+  // SPECIAL SCOPE: Press Payment Vouchers Only
+  // ==============================================================
+  if (scope === 'press_vouchers') {
+    children.push(
+      new Table({
+        width: { size: 100, type: WidthType.PERCENTAGE },
+        rows: [
+          new TableRow({
+            children: [
+              new TableCell({
+                borders: cellBorders,
+                margins: defaultCellMargins,
+                shading: { fill: NAVY_COLOR },
+                children: [
+                  new Paragraph({
+                    children: [
+                      new TextRun({ text: tr('মোট প্রেস পেমেন্ট ভাউচার: ', 'Total Press Payment Vouchers: ', language), bold: true, color: WHITE, size: 18 }),
+                      new TextRun({ text: `${pressPayments.length} ${tr('টি', '', language)}`, bold: true, color: WHITE, size: 20 }),
+                    ],
+                  }),
+                ],
+              }),
+              new TableCell({
+                borders: cellBorders,
+                margins: defaultCellMargins,
+                shading: { fill: NAVY_COLOR },
+                children: [
+                  new Paragraph({
+                    alignment: AlignmentType.RIGHT,
+                    children: [
+                      new TextRun({ text: tr('মোট পরিশোধিত অর্থ: ', 'Total Amount Paid: ', language), bold: true, color: WHITE, size: 18 }),
+                      new TextRun({ text: formatBDT(pressAccounts.totalPaidToPress, language), bold: true, color: WHITE, size: 20 }),
+                    ],
+                  }),
+                ],
+              }),
+            ],
+          }),
+        ],
+      }),
+      new Paragraph({ spacing: { after: 150 } })
+    );
+
+    const voucherRows: TableRow[] = [
+      new TableRow({
+        children: [
+          new TableCell({ borders: cellBorders, margins: defaultCellMargins, shading: { fill: NAVY_DARK }, children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: tr('ক্রমিক', 'SL', language), bold: true, color: WHITE, size: 16 })] })] }),
+          new TableCell({ borders: cellBorders, margins: defaultCellMargins, shading: { fill: NAVY_DARK }, children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: tr('তারিখ', 'Date', language), bold: true, color: WHITE, size: 16 })] })] }),
+          new TableCell({ borders: cellBorders, margins: defaultCellMargins, shading: { fill: NAVY_DARK }, children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: tr('ভাউচার নং', 'Voucher No', language), bold: true, color: WHITE, size: 16 })] })] }),
+          new TableCell({ borders: cellBorders, margins: defaultCellMargins, shading: { fill: NAVY_DARK }, children: [new Paragraph({ children: [new TextRun({ text: tr('খাত / বইয়ের নাম', 'Category / Book Name', language), bold: true, color: WHITE, size: 16 })] })] }),
+          new TableCell({ borders: cellBorders, margins: defaultCellMargins, shading: { fill: NAVY_DARK }, children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: tr('পেমেন্ট মাধ্যম', 'Method', language), bold: true, color: WHITE, size: 16 })] })] }),
+          new TableCell({ borders: cellBorders, margins: defaultCellMargins, shading: { fill: NAVY_DARK }, children: [new Paragraph({ children: [new TextRun({ text: tr('বিবরণ / নোট', 'Notes', language), bold: true, color: WHITE, size: 16 })] })] }),
+          new TableCell({ borders: cellBorders, margins: defaultCellMargins, shading: { fill: NAVY_DARK }, children: [new Paragraph({ alignment: AlignmentType.RIGHT, children: [new TextRun({ text: tr('টাকার পরিমাণ (৳)', 'Amount (BDT)', language), bold: true, color: WHITE, size: 16 })] })] }),
+        ],
+      }),
+    ];
+
+    pressPayments.forEach((p, idx) => {
+      const isEven = idx % 2 === 0;
+      voucherRows.push(
+        new TableRow({
+          children: [
+            new TableCell({ borders: cellBorders, margins: defaultCellMargins, shading: { fill: isEven ? ZEBRA_BG : WHITE }, children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: String(idx + 1), size: 15 })] })] }),
+            new TableCell({ borders: cellBorders, margins: defaultCellMargins, shading: { fill: isEven ? ZEBRA_BG : WHITE }, children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: p.date, size: 15 })] })] }),
+            new TableCell({ borders: cellBorders, margins: defaultCellMargins, shading: { fill: isEven ? ZEBRA_BG : WHITE }, children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: p.voucherNo || `VCH-${idx + 1}`, size: 15 })] })] }),
+            new TableCell({ borders: cellBorders, margins: defaultCellMargins, shading: { fill: isEven ? ZEBRA_BG : WHITE }, children: [new Paragraph({ children: [new TextRun({ text: p.bookName || tr('সার্বিক প্রেস অর্ডার বাবদ', 'General Press Order', language), size: 15 })] })] }),
+            new TableCell({ borders: cellBorders, margins: defaultCellMargins, shading: { fill: isEven ? ZEBRA_BG : WHITE }, children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: p.paymentMethod.toUpperCase(), size: 15 })] })] }),
+            new TableCell({ borders: cellBorders, margins: defaultCellMargins, shading: { fill: isEven ? ZEBRA_BG : WHITE }, children: [new Paragraph({ children: [new TextRun({ text: p.notes || '-', size: 15 })] })] }),
+            new TableCell({ borders: cellBorders, margins: defaultCellMargins, shading: { fill: isEven ? ZEBRA_BG : WHITE }, children: [new Paragraph({ alignment: AlignmentType.RIGHT, children: [new TextRun({ text: formatBDT(p.amount, language), bold: true, size: 15 })] })] }),
+          ],
+        })
+      );
+    });
+
+    voucherRows.push(
+      new TableRow({
+        children: [
+          new TableCell({ borders: cellBorders, margins: defaultCellMargins, shading: { fill: TOTAL_BG }, columnSpan: 6, children: [new Paragraph({ alignment: AlignmentType.RIGHT, children: [new TextRun({ text: tr('সর্বমোট প্রেস পরিশোধ:', 'Grand Total Paid:', language), bold: true, size: 16 })] })] }),
+          new TableCell({ borders: cellBorders, margins: defaultCellMargins, shading: { fill: TOTAL_BG }, children: [new Paragraph({ alignment: AlignmentType.RIGHT, children: [new TextRun({ text: formatBDT(pressAccounts.totalPaidToPress, language), bold: true, size: 16, color: NAVY_COLOR })] })] }),
+        ],
+      })
+    );
+
+    children.push(
+      new Table({ width: { size: 100, type: WidthType.PERCENTAGE }, rows: voucherRows }),
+      new Paragraph({ spacing: { after: 240 } })
+    );
+
+    // Signatures
+    if (includeSignatures) {
+      appendSignaturesBlock(children, language);
+    }
+
+    return assembleAndDownloadDoc(children, 'Biddabari_Press_Payment_Vouchers', periodTitle, reportTitle, language);
+  }
+
+  // ==============================================================
+  // SPECIAL SCOPE: Channel Collection Vouchers Only
+  // ==============================================================
+  if (scope === 'collection_vouchers') {
+    children.push(
+      new Table({
+        width: { size: 100, type: WidthType.PERCENTAGE },
+        rows: [
+          new TableRow({
+            children: [
+              new TableCell({
+                borders: cellBorders,
+                margins: defaultCellMargins,
+                shading: { fill: NAVY_COLOR },
+                children: [
+                  new Paragraph({
+                    children: [
+                      new TextRun({ text: tr('মোট মানি রিসিট / কালেকশন সংখ্যা: ', 'Total Collection Receipts: ', language), bold: true, color: WHITE, size: 18 }),
+                      new TextRun({ text: `${channelCollections.length} ${tr('টি', '', language)}`, bold: true, color: WHITE, size: 20 }),
+                    ],
+                  }),
+                ],
+              }),
+              new TableCell({
+                borders: cellBorders,
+                margins: defaultCellMargins,
+                shading: { fill: NAVY_COLOR },
+                children: [
+                  new Paragraph({
+                    alignment: AlignmentType.RIGHT,
+                    children: [
+                      new TextRun({ text: tr('মোট সংগৃহীত আদায়: ', 'Total Collected Amount: ', language), bold: true, color: WHITE, size: 18 }),
+                      new TextRun({ text: formatBDT(channelAccounts.totalCollected, language), bold: true, color: WHITE, size: 20 }),
+                    ],
+                  }),
+                ],
+              }),
+            ],
+          }),
+        ],
+      }),
+      new Paragraph({ spacing: { after: 150 } })
+    );
+
+    const collectionRows: TableRow[] = [
+      new TableRow({
+        children: [
+          new TableCell({ borders: cellBorders, margins: defaultCellMargins, shading: { fill: NAVY_DARK }, children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: tr('ক্রমিক', 'SL', language), bold: true, color: WHITE, size: 16 })] })] }),
+          new TableCell({ borders: cellBorders, margins: defaultCellMargins, shading: { fill: NAVY_DARK }, children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: tr('তারিখ', 'Date', language), bold: true, color: WHITE, size: 16 })] })] }),
+          new TableCell({ borders: cellBorders, margins: defaultCellMargins, shading: { fill: NAVY_DARK }, children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: tr('মানি রিসিট নং', 'Receipt No', language), bold: true, color: WHITE, size: 16 })] })] }),
+          new TableCell({ borders: cellBorders, margins: defaultCellMargins, shading: { fill: NAVY_DARK }, children: [new Paragraph({ children: [new TextRun({ text: tr('চ্যানেল / লাইব্রেরির নাম', 'Channel / Library Name', language), bold: true, color: WHITE, size: 16 })] })] }),
+          new TableCell({ borders: cellBorders, margins: defaultCellMargins, shading: { fill: NAVY_DARK }, children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: tr('মাধ্যম', 'Method', language), bold: true, color: WHITE, size: 16 })] })] }),
+          new TableCell({ borders: cellBorders, margins: defaultCellMargins, shading: { fill: NAVY_DARK }, children: [new Paragraph({ children: [new TextRun({ text: tr('বিবরণ / নোট', 'Notes', language), bold: true, color: WHITE, size: 16 })] })] }),
+          new TableCell({ borders: cellBorders, margins: defaultCellMargins, shading: { fill: NAVY_DARK }, children: [new Paragraph({ alignment: AlignmentType.RIGHT, children: [new TextRun({ text: tr('আদায়কৃত টাকা (৳)', 'Amount (BDT)', language), bold: true, color: WHITE, size: 16 })] })] }),
+        ],
+      }),
+    ];
+
+    channelCollections.forEach((c, idx) => {
+      const isEven = idx % 2 === 0;
+      collectionRows.push(
+        new TableRow({
+          children: [
+            new TableCell({ borders: cellBorders, margins: defaultCellMargins, shading: { fill: isEven ? ZEBRA_BG : WHITE }, children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: String(idx + 1), size: 15 })] })] }),
+            new TableCell({ borders: cellBorders, margins: defaultCellMargins, shading: { fill: isEven ? ZEBRA_BG : WHITE }, children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: c.date, size: 15 })] })] }),
+            new TableCell({ borders: cellBorders, margins: defaultCellMargins, shading: { fill: isEven ? ZEBRA_BG : WHITE }, children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: c.receiptNo || `MR-${idx + 1}`, size: 15 })] })] }),
+            new TableCell({ borders: cellBorders, margins: defaultCellMargins, shading: { fill: isEven ? ZEBRA_BG : WHITE }, children: [new Paragraph({ children: [new TextRun({ text: c.channelName, bold: true, size: 15 })] })] }),
+            new TableCell({ borders: cellBorders, margins: defaultCellMargins, shading: { fill: isEven ? ZEBRA_BG : WHITE }, children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: c.paymentMethod.toUpperCase(), size: 15 })] })] }),
+            new TableCell({ borders: cellBorders, margins: defaultCellMargins, shading: { fill: isEven ? ZEBRA_BG : WHITE }, children: [new Paragraph({ children: [new TextRun({ text: c.notes || '-', size: 15 })] })] }),
+            new TableCell({ borders: cellBorders, margins: defaultCellMargins, shading: { fill: isEven ? ZEBRA_BG : WHITE }, children: [new Paragraph({ alignment: AlignmentType.RIGHT, children: [new TextRun({ text: formatBDT(c.amount, language), bold: true, size: 15, color: '059669' })] })] }),
+          ],
+        })
+      );
+    });
+
+    collectionRows.push(
+      new TableRow({
+        children: [
+          new TableCell({ borders: cellBorders, margins: defaultCellMargins, shading: { fill: TOTAL_BG }, columnSpan: 6, children: [new Paragraph({ alignment: AlignmentType.RIGHT, children: [new TextRun({ text: tr('সর্বমোট সংগৃহীত আদায়:', 'Grand Total Collected:', language), bold: true, size: 16 })] })] }),
+          new TableCell({ borders: cellBorders, margins: defaultCellMargins, shading: { fill: TOTAL_BG }, children: [new Paragraph({ alignment: AlignmentType.RIGHT, children: [new TextRun({ text: formatBDT(channelAccounts.totalCollected, language), bold: true, size: 16, color: '059669' })] })] }),
+        ],
+      })
+    );
+
+    children.push(
+      new Table({ width: { size: 100, type: WidthType.PERCENTAGE }, rows: collectionRows }),
+      new Paragraph({ spacing: { after: 240 } })
+    );
+
+    // Signatures
+    if (includeSignatures) {
+      appendSignaturesBlock(children, language);
+    }
+
+    return assembleAndDownloadDoc(children, 'Biddabari_Collection_Vouchers', periodTitle, reportTitle, language);
+  }
 
   // ==============================================================
   // 2. EXECUTIVE HIGHLIGHTS / KPI SUMMARY TABLE
@@ -724,7 +1075,7 @@ export async function exportReportToWord(options: WordExportOptions): Promise<vo
       }),
     ];
 
-    pressPayments.slice(0, 15).forEach((p, idx) => {
+    pressPayments.forEach((p, idx) => {
       const isEven = idx % 2 === 0;
       paymentRows.push(
         new TableRow({
@@ -738,6 +1089,15 @@ export async function exportReportToWord(options: WordExportOptions): Promise<vo
         })
       );
     });
+
+    paymentRows.push(
+      new TableRow({
+        children: [
+          new TableCell({ borders: cellBorders, margins: defaultCellMargins, shading: { fill: TOTAL_BG }, columnSpan: 4, children: [new Paragraph({ alignment: AlignmentType.RIGHT, children: [new TextRun({ text: tr('মোট পরিশোধ:', 'Total Paid:', language), bold: true, size: 16 })] })] }),
+          new TableCell({ borders: cellBorders, margins: defaultCellMargins, shading: { fill: TOTAL_BG }, children: [new Paragraph({ alignment: AlignmentType.RIGHT, children: [new TextRun({ text: formatBDT(pressAccounts.totalPaidToPress, language), bold: true, size: 16, color: NAVY_COLOR })] })] }),
+        ],
+      })
+    );
 
     children.push(
       new Table({ width: { size: 100, type: WidthType.PERCENTAGE }, rows: paymentRows }),
@@ -864,101 +1224,7 @@ export async function exportReportToWord(options: WordExportOptions): Promise<vo
   }
 
   // ==============================================================
-  // 8. ASSEMBLE DOCUMENT WITH LANDSCAPE ORIENTATION
+  // 8. ASSEMBLE DOCUMENT AND DOWNLOAD
   // ==============================================================
-  const doc = new Document({
-    title: `Biddabari Publication Report - ${periodTitle}`,
-    description: reportTitle,
-    creator: 'Biddabari Publication System',
-    sections: [
-      {
-        properties: {
-          page: {
-            size: {
-              orientation: PageOrientation.LANDSCAPE,
-            },
-            margin: {
-              top: 720,    // 0.5 inch
-              bottom: 720,
-              left: 720,
-              right: 720,
-            },
-          },
-        },
-        headers: {
-          default: new Header({
-            children: [
-              new Paragraph({
-                alignment: AlignmentType.RIGHT,
-                children: [
-                  new TextRun({
-                    text: 'Biddabari Publication • Official Executive Report',
-                    size: 14,
-                    color: TEXT_MUTED,
-                    font: 'Segoe UI',
-                  }),
-                ],
-              }),
-            ],
-          }),
-        },
-        footers: {
-          default: new Footer({
-            children: [
-              new Paragraph({
-                alignment: AlignmentType.CENTER,
-                children: [
-                  new TextRun({
-                    text: `${tr('পৃষ্ঠা ', 'Page ', language)}`,
-                    size: 14,
-                    color: TEXT_MUTED,
-                  }),
-                  new TextRun({
-                    children: [PageNumber.CURRENT],
-                    size: 14,
-                    bold: true,
-                    color: NAVY_COLOR,
-                  }),
-                  new TextRun({
-                    text: ` ${tr('এর মধ্যে ', ' of ', language)}`,
-                    size: 14,
-                    color: TEXT_MUTED,
-                  }),
-                  new TextRun({
-                    children: [PageNumber.TOTAL_PAGES],
-                    size: 14,
-                    bold: true,
-                    color: NAVY_COLOR,
-                  }),
-                  new TextRun({
-                    text: ` | ${tr('গোপনীয় ও অফিসিয়াল ব্যবহারের জন্য সংরক্ষিত', 'Confidential - For internal executive use only', language)}`,
-                    size: 14,
-                    color: TEXT_MUTED,
-                  }),
-                ],
-              }),
-            ],
-          }),
-        },
-        children,
-      },
-    ],
-  });
-
-  // Pack and trigger native browser download
-  const blob = await Packer.toBlob(doc);
-  const cleanPeriod = periodTitle.replace(/[/\\?%*:|"<>]/g, '-');
-  const fileName = `Biddabari_Report_${cleanPeriod}_${new Date().toISOString().split('T')[0]}.docx`;
-
-  const url = URL.createObjectURL(blob);
-  const anchor = document.createElement('a');
-  anchor.href = url;
-  anchor.download = fileName;
-  document.body.appendChild(anchor);
-  anchor.click();
-  document.body.removeChild(anchor);
-
-  setTimeout(() => {
-    URL.revokeObjectURL(url);
-  }, 2500);
+  return assembleAndDownloadDoc(children, 'Biddabari_Executive_Report', periodTitle, reportTitle, language);
 }

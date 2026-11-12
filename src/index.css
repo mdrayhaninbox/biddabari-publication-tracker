@@ -170,4 +170,14 @@ html[data-theme="emerald"] .hover\:bg-zinc-900:hover {
     break-inside: avoid !important;
     margin-top: 15mm !important;
   }
+
+  /* Explicit multi-page pagination rules (for 10-vouchers per page) */
+  .page-break-after, .break-after-page {
+    page-break-after: always !important;
+    break-after: page !important;
+  }
+  .page-break-before, .break-before-page {
+    page-break-before: always !important;
+    break-before: page !important;
+  }
 }

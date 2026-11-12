@@ -19,7 +19,9 @@ import {
   CheckSquare,
   Square,
   Settings2,
-  FileText
+  FileText,
+  Receipt,
+  Search
 } from 'lucide-react';
 import { BookRecord, PressPaymentRecord, ChannelCollectionRecord, PressOrderRecord, PressDeliveryRecord, ChannelConfig, DEFAULT_CHANNELS } from '../types/book';
 import { 
@@ -56,7 +58,7 @@ interface PrintableReportProps {
 }
 
 export type ReportType = 'monthly' | 'daily' | 'weekly' | 'quarterly' | 'half_yearly' | 'yearly' | 'custom';
-export type PrintScope = 'all' | 'press' | 'online' | 'offline' | 'sales_due' | 'custom';
+export type PrintScope = 'all' | 'press' | 'online' | 'offline' | 'sales_due' | 'press_vouchers' | 'collection_vouchers' | 'custom';
 export type SalesMode = 'all' | 'online' | 'offline' | 'none';
 
 export const PrintableReport: React.FC<PrintableReportProps> = ({ 
@@ -140,6 +142,8 @@ export const PrintableReport: React.FC<PrintableReportProps> = ({
   const [includeSignatures, setIncludeSignatures] = useState<boolean>(true);
   const [showCustomSettings, setShowCustomSettings] = useState<boolean>(false);
   const [isExportingWord, setIsExportingWord] = useState<boolean>(false);
+  const [voucherLayoutMode, setVoucherLayoutMode] = useState<'table' | 'slips'>('table');
+  const [voucherSearchQuery, setVoucherSearchQuery] = useState<string>('');
 
   // Handler for Preset Scope Selection
   const handleSelectScope = (newScope: PrintScope) => {
@@ -174,6 +178,18 @@ export const PrintableReport: React.FC<PrintableReportProps> = ({
       setIncludePressPayments(false);
       setIncludeOnlineDue(true);
       setIncludeOfflineDue(true);
+    } else if (newScope === 'press_vouchers') {
+      setSalesMode('none');
+      setIncludePressAccounts(false);
+      setIncludePressPayments(true);
+      setIncludeOnlineDue(false);
+      setIncludeOfflineDue(false);
+    } else if (newScope === 'collection_vouchers') {
+      setSalesMode('none');
+      setIncludePressAccounts(false);
+      setIncludePressPayments(false);
+      setIncludeOnlineDue(false);
+      setIncludeOfflineDue(false);
     }
   };
 
@@ -192,6 +208,42 @@ export const PrintableReport: React.FC<PrintableReportProps> = ({
       return effectiveBooks.some(b => b.id === p.bookId);
     });
   }, [pressPayments, effectiveBooks]);
+
+  // Helper to chunk items strictly into groups of size (default 10)
+  const chunkArray = <T,>(arr: T[], size: number = 10): T[][] => {
+    if (arr.length === 0) return [[]];
+    const chunks: T[][] = [];
+    for (let i = 0; i < arr.length; i += size) {
+      chunks.push(arr.slice(i, i + size));
+    }
+    return chunks;
+  };
+
+  // Searched Press Payments
+  const searchedPressPayments = React.useMemo(() => {
+    const q = voucherSearchQuery.trim().toLowerCase();
+    if (!q) return filteredPressPayments;
+    return filteredPressPayments.filter(p => 
+      (p.voucherNo && p.voucherNo.toLowerCase().includes(q)) ||
+      (p.bookName && p.bookName.toLowerCase().includes(q)) ||
+      (p.date && p.date.includes(q)) ||
+      (p.notes && p.notes.toLowerCase().includes(q)) ||
+      (p.paymentMethod && p.paymentMethod.toLowerCase().includes(q))
+    );
+  }, [filteredPressPayments, voucherSearchQuery]);
+
+  // Searched Channel Collections
+  const searchedChannelCollections = React.useMemo(() => {
+    const q = voucherSearchQuery.trim().toLowerCase();
+    if (!q) return channelCollections;
+    return channelCollections.filter(c => 
+      (c.receiptNo && c.receiptNo.toLowerCase().includes(q)) ||
+      (c.channelName && c.channelName.toLowerCase().includes(q)) ||
+      (c.date && c.date.includes(q)) ||
+      (c.notes && c.notes.toLowerCase().includes(q)) ||
+      (c.paymentMethod && c.paymentMethod.toLowerCase().includes(q))
+    );
+  }, [channelCollections, voucherSearchQuery]);
 
   // Filtered Channels for Dues Section
   const filteredChannels = channelAccounts.channels.filter(ch => {
@@ -287,6 +339,18 @@ export const PrintableReport: React.FC<PrintableReportProps> = ({
         'Online & Offline Channels Sales, Revenue & Due Collection Report',
         language
       );
+    } else if (scope === 'press_vouchers') {
+      base = tr(
+        'ফরিদ ভাই প্রেস পেমেন্ট ভাউচার (প্রতি পৃষ্ঠায় ১০টি ভাউচার)',
+        'Farid Bhai Press Payment Vouchers (10 Vouchers per Page)',
+        language
+      );
+    } else if (scope === 'collection_vouchers') {
+      base = tr(
+        'অনলাইন ও লাইব্রেরি আদায় ভাউচার / মানি রিসিট (প্রতি পৃষ্ঠায় ১০টি ভাউচার)',
+        'Online & Library Collection Vouchers (10 Vouchers per Page)',
+        language
+      );
     } else {
       base = tr(
         'সার্বিক বুক সেলস, স্টক ইনভেন্টরি, প্রেস হিসাব ও চ্যানেল ডিউ খতিয়ান প্রতিবেদন',
@@ -336,6 +400,7 @@ export const PrintableReport: React.FC<PrintableReportProps> = ({
         includeOnlineDue,
         includeOfflineDue,
         includeSignatures,
+        scope,
       });
     } catch (error) {
       console.error('Failed to export Word document:', error);
@@ -343,6 +408,570 @@ export const PrintableReport: React.FC<PrintableReportProps> = ({
     } finally {
       setIsExportingWord(false);
     }
+  };
+
+  // ========================================================
+  // RENDER: Press Payment Vouchers (Strictly 10 per page)
+  // ========================================================
+  const renderPressVoucherPages = () => {
+    const chunks = chunkArray(searchedPressPayments, 10);
+    const totalPages = chunks.length;
+
+    return (
+      <div className="w-full max-w-6xl mx-auto space-y-8 print:space-y-0 print:max-w-none">
+        {chunks.map((chunk, pageIndex) => {
+          // Exactly 10 slots per page
+          const pageRows: (PressPaymentRecord | undefined)[] = [...chunk];
+          while (pageRows.length < 10) {
+            pageRows.push(undefined);
+          }
+
+          const pageSubtotal = chunk.reduce((sum, p) => sum + (p?.amount || 0), 0);
+          const isLastPage = pageIndex === totalPages - 1;
+
+          return (
+            <div
+              key={`press-page-${pageIndex}`}
+              className={`print-page-container voucher-page bg-white p-6 sm:p-8 rounded-2xl border border-zinc-200 shadow-xs min-h-[260mm] flex flex-col justify-between print:m-0 print:p-0 print:border-none print:shadow-none print:rounded-none ${
+                !isLastPage ? 'break-after-page page-break-after mb-8 print:mb-0' : ''
+              }`}
+            >
+              {/* Page Header */}
+              <div>
+                <div className="border-b-2 border-zinc-900 pb-3 mb-4 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-xl bg-zinc-900 flex items-center justify-center text-white shrink-0">
+                      <BookOpen className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h1 className="text-lg font-black tracking-tight text-zinc-900 leading-tight">
+                        {tr('বিদ্যাবাড়ি পাবলিকেশন', 'Biddabari Publication', language)}
+                      </h1>
+                      <p className="text-[11px] text-zinc-500">
+                        {tr('প্রধান কার্যালয়, ঢাকা • বুক পাবলিকেশন অ্যান্ড ডিস্ট্রিবিউশন ডিপার্টমেন্ট', 'Head Office, Dhaka • Book Publication & Distribution Dept.', language)}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="text-right">
+                    <span className="inline-block bg-zinc-900 text-white text-[11px] px-3 py-0.5 rounded-full font-bold">
+                      🧾 {tr('ফরিদ ভাই প্রেস পেমেন্ট ভাউচার', 'Farid Bhai Press Payment Vouchers', language)}
+                    </span>
+                    <div className="text-[11px] text-zinc-600 font-medium mt-1">
+                      <span>{tr('পৃষ্ঠা:', 'Page:', language)} <b className="font-mono text-zinc-900 font-bold">{formatNumber(pageIndex + 1, language)}</b> / <b className="font-mono text-zinc-900 font-bold">{formatNumber(totalPages, language)}</b></span>
+                      <span className="mx-2">•</span>
+                      <span>{tr('তারিখ:', 'Date:', language)} <b>{currentDate}</b></span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Subtitle / Period Banner */}
+                <div className="bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-1.5 mb-3 flex items-center justify-between text-xs">
+                  <span className="font-semibold text-zinc-800">
+                    {tr('হিসাব খাত: ফরিদ ভাই প্রেস (ছাপা ও বাঁধাই পেমেন্ট ভাউচার)', 'Account: Farid Bhai Press (Printing & Binding Payment Vouchers)', language)}
+                  </span>
+                  <span className="text-[11px] font-mono font-bold text-zinc-600">
+                    {tr('প্রতি পৃষ্ঠায় ১০টি ভাউচার', '10 Vouchers per page', language)} • {getReportPeriodTitle()}
+                  </span>
+                </div>
+
+                {/* Voucher Content: Table or Slips */}
+                {voucherLayoutMode === 'table' ? (
+                  <div className="overflow-x-auto w-full border border-zinc-300 rounded-xl">
+                    <table className="w-full text-left border-collapse text-xs">
+                      <thead>
+                        <tr className="bg-zinc-100 border-b-2 border-zinc-900 text-zinc-900 font-bold text-[11px]">
+                          <th className="py-2 px-2 text-center w-10 border-r border-zinc-300">{tr('ক্রমিক', 'SL', language)}</th>
+                          <th className="py-2 px-2.5 w-24 text-center border-r border-zinc-300">{tr('তারিখ', 'Date', language)}</th>
+                          <th className="py-2 px-2.5 w-28 border-r border-zinc-300">{tr('ভাউচার নং', 'Voucher No', language)}</th>
+                          <th className="py-2 px-3 border-r border-zinc-300">{tr('খাত / বইয়ের নাম ও সংস্করণ', 'Category / Book Name & Edition', language)}</th>
+                          <th className="py-2 px-2 text-center w-20 border-r border-zinc-300">{tr('মাধ্যম', 'Method', language)}</th>
+                          <th className="py-2 px-3 border-r border-zinc-300">{tr('বিবরণ ও রেফারেন্স', 'Notes & Ref', language)}</th>
+                          <th className="py-2 px-3 text-right w-28 border-r border-zinc-300">{tr('পরিশোধিত টাকা (৳)', 'Amount (BDT)', language)}</th>
+                          <th className="py-2 px-3 text-center w-24">{tr('গ্রহীতার স্বাক্ষর', 'Receiver Sign', language)}</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-zinc-200">
+                        {pageRows.map((p, rowIdx) => {
+                          const itemNumber = pageIndex * 10 + rowIdx + 1;
+                          if (p) {
+                            return (
+                              <tr key={p.id || rowIdx} className="h-10 hover:bg-zinc-50/50">
+                                <td className="py-1.5 px-2 text-center font-mono font-bold text-zinc-700 border-r border-zinc-200">
+                                  {formatNumber(itemNumber, language)}
+                                </td>
+                                <td className="py-1.5 px-2.5 text-center font-mono text-zinc-900 border-r border-zinc-200 text-[11px]">
+                                  {p.date}
+                                </td>
+                                <td className="py-1.5 px-2.5 font-mono font-bold text-zinc-900 border-r border-zinc-200 text-[11px]">
+                                  {p.voucherNo || `VCH-${itemNumber}`}
+                                </td>
+                                <td className="py-1.5 px-3 font-semibold text-zinc-900 border-r border-zinc-200 text-[11px]">
+                                  {p.bookName || tr('সার্বিক প্রেস অর্ডার বাবদ', 'General Press Order', language)}
+                                </td>
+                                <td className="py-1.5 px-2 text-center uppercase font-mono text-[10px] text-zinc-700 border-r border-zinc-200">
+                                  {p.paymentMethod}
+                                </td>
+                                <td className="py-1.5 px-3 text-zinc-600 border-r border-zinc-200 text-[11px]">
+                                  {p.notes || '—'}
+                                </td>
+                                <td className="py-1.5 px-3 text-right font-mono font-bold text-zinc-900 border-r border-zinc-200">
+                                  {formatBDT(p.amount, language)}
+                                </td>
+                                <td className="py-1.5 px-3 text-center">
+                                  <span className="inline-block border-b border-zinc-300 w-16 text-[9px] text-zinc-300"></span>
+                                </td>
+                              </tr>
+                            );
+                          } else {
+                            return (
+                              <tr key={`blank-${rowIdx}`} className="h-10 text-zinc-300">
+                                <td className="py-1.5 px-2 text-center font-mono text-zinc-400 border-r border-zinc-200">
+                                  {formatNumber(itemNumber, language)}
+                                </td>
+                                <td className="py-1.5 px-2.5 text-center border-r border-zinc-200 font-mono text-zinc-300">—</td>
+                                <td className="py-1.5 px-2.5 border-r border-zinc-200 font-mono text-zinc-300">—</td>
+                                <td className="py-1.5 px-3 border-r border-zinc-200 text-zinc-300 italic text-[11px]">
+                                  {tr('(ফাঁকা ভাউচার লাইন)', '(Blank Voucher Line)', language)}
+                                </td>
+                                <td className="py-1.5 px-2 text-center border-r border-zinc-200 font-mono text-zinc-300">—</td>
+                                <td className="py-1.5 px-3 border-r border-zinc-200 text-zinc-300">—</td>
+                                <td className="py-1.5 px-3 text-right border-r border-zinc-200 font-mono text-zinc-300">—</td>
+                                <td className="py-1.5 px-3 text-center">
+                                  <span className="inline-block border-b border-zinc-200 w-16"></span>
+                                </td>
+                              </tr>
+                            );
+                          }
+                        })}
+                      </tbody>
+                      <tfoot>
+                        <tr className="bg-zinc-100 font-bold border-t-2 border-zinc-300 text-zinc-900 text-xs">
+                          <td colSpan={6} className="py-2 px-3 text-right border-r border-zinc-300">
+                            {tr('এই পৃষ্ঠার মোট পরিশোধ (Subtotal):', 'Page Subtotal:', language)}
+                          </td>
+                          <td className="py-2 px-3 text-right font-mono font-black border-r border-zinc-300 text-zinc-900">
+                            {formatBDT(pageSubtotal, language)}
+                          </td>
+                          <td></td>
+                        </tr>
+                        {isLastPage && (
+                          <tr className="bg-zinc-200 font-black border-t-2 border-zinc-900 text-zinc-900 text-xs">
+                            <td colSpan={6} className="py-2.5 px-3 text-right border-r border-zinc-300">
+                              {tr('সর্বমোট প্রেস পরিশোধ (Grand Total):', 'Grand Total Paid to Press:', language)}
+                            </td>
+                            <td className="py-2.5 px-3 text-right font-mono font-black text-sm border-r border-zinc-300 text-zinc-900">
+                              {formatBDT(pressAccounts.totalPaidToPress, language)}
+                            </td>
+                            <td></td>
+                          </tr>
+                        )}
+                      </tfoot>
+                    </table>
+                  </div>
+                ) : (
+                  // Slips Format (2 cols x 5 rows = 10 slips per page)
+                  <div className="grid grid-cols-2 gap-3 print:gap-2 my-2">
+                    {pageRows.map((p, rowIdx) => {
+                      const itemNumber = pageIndex * 10 + rowIdx + 1;
+                      if (p) {
+                        return (
+                          <div 
+                            key={p.id || rowIdx} 
+                            className="border border-dashed border-zinc-400 rounded-xl p-2.5 bg-zinc-50/40 print:bg-white flex flex-col justify-between h-[45mm] print:h-[45mm] relative"
+                          >
+                            <div className="flex items-center justify-between border-b border-zinc-200 pb-1">
+                              <div className="flex items-center gap-1.5">
+                                <span className="w-2 h-2 rounded-full bg-zinc-900"></span>
+                                <span className="font-bold text-[11px] text-zinc-900">{tr('বিদ্যাবাড়ি পাবলিকেশন', 'Biddabari Publication', language)}</span>
+                                <span className="text-[10px] text-zinc-500 font-medium">({tr('পেমেন্ট ভাউচার', 'Payment Voucher', language)})</span>
+                              </div>
+                              <span className="font-mono text-[10px] px-1.5 py-0.2 bg-zinc-200 text-zinc-800 rounded font-bold">
+                                #{p.voucherNo || `VCH-${itemNumber}`}
+                              </span>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-1 text-[11px] py-1">
+                              <div>
+                                <span className="text-[9px] text-zinc-500 block">{tr('প্রাপক:', 'Payee:', language)}</span>
+                                <span className="font-bold text-zinc-900 block text-xs">{tr('ফরিদ ভাই প্রেস', 'Farid Bhai Press', language)}</span>
+                              </div>
+                              <div className="text-right">
+                                <span className="text-[9px] text-zinc-500 block">{tr('তারিখ ও মাধ্যম:', 'Date & Method:', language)}</span>
+                                <span className="font-mono text-zinc-800 font-semibold text-[10px]">{p.date} • <span className="uppercase">{p.paymentMethod}</span></span>
+                              </div>
+                              <div className="col-span-2">
+                                <span className="text-[9px] text-zinc-500 block">{tr('বই / বিবরণ:', 'Book / Category:', language)}</span>
+                                <span className="font-medium text-zinc-900 truncate block text-[11px]">{p.bookName || tr('সার্বিক প্রেস অর্ডার বাবদ', 'General Press Order', language)} {p.notes ? `(${p.notes})` : ''}</span>
+                              </div>
+                            </div>
+
+                            <div className="pt-1 border-t border-zinc-200 flex items-center justify-between">
+                              <div>
+                                <span className="text-[9px] text-zinc-400 block">{tr('পরিশোধিত টাকা:', 'Paid Amount:', language)}</span>
+                                <span className="font-black text-sm text-zinc-900 font-mono">{formatBDT(p.amount, language)}</span>
+                              </div>
+                              <div className="flex items-center gap-3 text-[9px] text-zinc-500">
+                                <div className="text-center">
+                                  <div className="w-14 border-b border-zinc-300 mb-0.5"></div>
+                                  <span>{tr('প্রস্তুতকারী', 'Prepared', language)}</span>
+                                </div>
+                                <div className="text-center">
+                                  <div className="w-14 border-b border-zinc-300 mb-0.5"></div>
+                                  <span>{tr('গ্রহীতা (প্রেস)', 'Receiver', language)}</span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      } else {
+                        return (
+                          <div 
+                            key={`blank-slip-${rowIdx}`} 
+                            className="border border-dashed border-zinc-300 rounded-xl p-2.5 bg-white flex flex-col justify-between h-[45mm] print:h-[45mm] relative opacity-60"
+                          >
+                            <div className="flex items-center justify-between border-b border-zinc-100 pb-1">
+                              <span className="font-bold text-[11px] text-zinc-700">{tr('বিদ্যাবাড়ি পাবলিকেশন (পেমেন্ট ভাউচার)', 'Biddabari Publication (Blank Voucher)', language)}</span>
+                              <span className="font-mono text-[10px] text-zinc-400">#{itemNumber}</span>
+                            </div>
+                            <div className="text-center py-2 text-[10px] text-zinc-400 italic">
+                              {tr('— ফাঁকা ভাউচার স্লিপ (হাতে লিখে ব্যবহারের জন্য) —', '— Blank voucher slip for manual entry —', language)}
+                            </div>
+                            <div className="pt-1 border-t border-zinc-100 flex items-center justify-between text-[9px] text-zinc-400">
+                              <span>{tr('টাকা: ....................', 'Amount: ....................', language)}</span>
+                              <span>{tr('স্বাক্ষর: ....................', 'Signature: ....................', language)}</span>
+                            </div>
+                          </div>
+                        );
+                      }
+                    })}
+                  </div>
+                )}
+              </div>
+
+              {/* Signatures at bottom of page */}
+              {includeSignatures && (
+                <div className="signature-block avoid-break pt-6 mt-6 border-t border-zinc-200">
+                  <div className="grid grid-cols-3 gap-6 text-center text-xs text-zinc-600">
+                    <div>
+                      <div className="border-t border-zinc-400 w-32 mx-auto pt-1 mb-1"></div>
+                      <span className="font-semibold block text-zinc-800">{tr('প্রস্তুতকারী / হিসাব সহকারী', 'Prepared By / Accounts Asst.', language)}</span>
+                      <span className="text-[10px] text-zinc-400">{tr('বিদ্যাবাড়ি প্রকাশনা বিভাগ', 'Biddabari Publication Dept.', language)}</span>
+                    </div>
+
+                    <div>
+                      <div className="border-t border-zinc-400 w-32 mx-auto pt-1 mb-1"></div>
+                      <span className="font-semibold block text-zinc-800">{tr('হিসাবরক্ষণ কর্মকর্তা', 'Accounts Officer', language)}</span>
+                      <span className="text-[10px] text-zinc-400">{tr('অ্যাকাউন্টিং অ্যান্ড ফিন্যান্স', 'Accounting & Finance', language)}</span>
+                    </div>
+
+                    <div>
+                      <div className="border-t border-zinc-400 w-32 mx-auto pt-1 mb-1"></div>
+                      <span className="font-semibold block text-zinc-800">{tr('গ্রহীতা (ফরিদ ভাই প্রেস)', 'Receiver (Farid Bhai Press)', language)}</span>
+                      <span className="text-[10px] text-zinc-400">{tr('স্বাক্ষর ও তারিখ', 'Signature & Date', language)}</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
+
+  // ========================================================
+  // RENDER: Channel Collection Vouchers (Strictly 10 per page)
+  // ========================================================
+  const renderCollectionVoucherPages = () => {
+    const chunks = chunkArray(searchedChannelCollections, 10);
+    const totalPages = chunks.length;
+
+    const getChannelType = (key: string, name: string) => {
+      const ch = effectiveChannels.find(c => c.id === key || c.name === name);
+      if (ch) return ch.type;
+      if (['boibari', 'rokomari', 'wafilife', 'othersOnline'].includes(key) || key.toLowerCase().includes('online')) return 'online';
+      return 'offline';
+    };
+
+    return (
+      <div className="w-full max-w-6xl mx-auto space-y-8 print:space-y-0 print:max-w-none">
+        {chunks.map((chunk, pageIndex) => {
+          // Exactly 10 slots per page
+          const pageRows: (ChannelCollectionRecord | undefined)[] = [...chunk];
+          while (pageRows.length < 10) {
+            pageRows.push(undefined);
+          }
+
+          const pageSubtotal = chunk.reduce((sum, c) => sum + (c?.amount || 0), 0);
+          const isLastPage = pageIndex === totalPages - 1;
+
+          return (
+            <div
+              key={`coll-page-${pageIndex}`}
+              className={`print-page-container voucher-page bg-white p-6 sm:p-8 rounded-2xl border border-zinc-200 shadow-xs min-h-[260mm] flex flex-col justify-between print:m-0 print:p-0 print:border-none print:shadow-none print:rounded-none ${
+                !isLastPage ? 'break-after-page page-break-after mb-8 print:mb-0' : ''
+              }`}
+            >
+              {/* Page Header */}
+              <div>
+                <div className="border-b-2 border-zinc-900 pb-3 mb-4 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-xl bg-zinc-900 flex items-center justify-center text-white shrink-0">
+                      <BookOpen className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h1 className="text-lg font-black tracking-tight text-zinc-900 leading-tight">
+                        {tr('বিদ্যাবাড়ি পাবলিকেশন', 'Biddabari Publication', language)}
+                      </h1>
+                      <p className="text-[11px] text-zinc-500">
+                        {tr('প্রধান কার্যালয়, ঢাকা • বুক পাবলিকেশন অ্যান্ড ডিস্ট্রিবিউশন ডিপার্টমেন্ট', 'Head Office, Dhaka • Book Publication & Distribution Dept.', language)}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="text-right">
+                    <span className="inline-block bg-zinc-900 text-white text-[11px] px-3 py-0.5 rounded-full font-bold">
+                      💵 {tr('অনলাইন ও লাইব্রেরি আদায় ভাউচার / মানি রিসিট', 'Channel Collection Receipts', language)}
+                    </span>
+                    <div className="text-[11px] text-zinc-600 font-medium mt-1">
+                      <span>{tr('পৃষ্ঠা:', 'Page:', language)} <b className="font-mono text-zinc-900 font-bold">{formatNumber(pageIndex + 1, language)}</b> / <b className="font-mono text-zinc-900 font-bold">{formatNumber(totalPages, language)}</b></span>
+                      <span className="mx-2">•</span>
+                      <span>{tr('তারিখ:', 'Date:', language)} <b>{currentDate}</b></span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Subtitle / Period Banner */}
+                <div className="bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-1.5 mb-3 flex items-center justify-between text-xs">
+                  <span className="font-semibold text-zinc-800">
+                    {tr('খাত: অনলাইন ও ডিলার লাইব্রেরি বিক্রয় আদায় ও জমা খতিয়ান', 'Category: Online & Dealer Libraries Sales Collection Ledger', language)}
+                  </span>
+                  <span className="text-[11px] font-mono font-bold text-zinc-600">
+                    {tr('প্রতি পৃষ্ঠায় ১০টি ভাউচার', '10 Vouchers per page', language)} • {getReportPeriodTitle()}
+                  </span>
+                </div>
+
+                {/* Voucher Content: Table or Slips */}
+                {voucherLayoutMode === 'table' ? (
+                  <div className="overflow-x-auto w-full border border-zinc-300 rounded-xl">
+                    <table className="w-full text-left border-collapse text-xs">
+                      <thead>
+                        <tr className="bg-zinc-100 border-b-2 border-zinc-900 text-zinc-900 font-bold text-[11px]">
+                          <th className="py-2 px-2 text-center w-10 border-r border-zinc-300">{tr('ক্রমিক', 'SL', language)}</th>
+                          <th className="py-2 px-2.5 w-24 text-center border-r border-zinc-300">{tr('তারিখ', 'Date', language)}</th>
+                          <th className="py-2 px-2.5 w-28 border-r border-zinc-300">{tr('মানি রিসিট নং', 'Receipt No', language)}</th>
+                          <th className="py-2 px-3 border-r border-zinc-300">{tr('চ্যানেল / লাইব্রেরির নাম', 'Channel / Library Name', language)}</th>
+                          <th className="py-2 px-2 text-center w-20 border-r border-zinc-300">{tr('ধরন', 'Type', language)}</th>
+                          <th className="py-2 px-2 text-center w-20 border-r border-zinc-300">{tr('মাধ্যম', 'Method', language)}</th>
+                          <th className="py-2 px-3 border-r border-zinc-300">{tr('বিবরণ ও নোট', 'Notes & Ref', language)}</th>
+                          <th className="py-2 px-3 text-right w-28 border-r border-zinc-300">{tr('আদায়কৃত টাকা (৳)', 'Amount (BDT)', language)}</th>
+                          <th className="py-2 px-3 text-center w-24">{tr('আদায়কারীর স্বাক্ষর', 'Collector Sign', language)}</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-zinc-200">
+                        {pageRows.map((c, rowIdx) => {
+                          const itemNumber = pageIndex * 10 + rowIdx + 1;
+                          if (c) {
+                            const cType = getChannelType(c.channelKey, c.channelName);
+                            return (
+                              <tr key={c.id || rowIdx} className="h-10 hover:bg-zinc-50/50">
+                                <td className="py-1.5 px-2 text-center font-mono font-bold text-zinc-700 border-r border-zinc-200">
+                                  {formatNumber(itemNumber, language)}
+                                </td>
+                                <td className="py-1.5 px-2.5 text-center font-mono text-zinc-900 border-r border-zinc-200 text-[11px]">
+                                  {c.date}
+                                </td>
+                                <td className="py-1.5 px-2.5 font-mono font-bold text-zinc-900 border-r border-zinc-200 text-[11px]">
+                                  {c.receiptNo || `MR-${itemNumber}`}
+                                </td>
+                                <td className="py-1.5 px-3 font-semibold text-zinc-900 border-r border-zinc-200 text-[11px]">
+                                  {c.channelName}
+                                </td>
+                                <td className="py-1.5 px-2 text-center uppercase font-mono text-[10px] border-r border-zinc-200">
+                                  <span className={`px-1.5 py-0.2 rounded font-bold ${
+                                    cType === 'online' ? 'bg-sky-50 text-sky-700' : 'bg-emerald-50 text-emerald-700'
+                                  }`}>
+                                    {cType === 'online' ? tr('অনলাইন', 'Online', language) : tr('অফলাইন', 'Offline', language)}
+                                  </span>
+                                </td>
+                                <td className="py-1.5 px-2 text-center uppercase font-mono text-[10px] text-zinc-700 border-r border-zinc-200">
+                                  {c.paymentMethod}
+                                </td>
+                                <td className="py-1.5 px-3 text-zinc-600 border-r border-zinc-200 text-[11px]">
+                                  {c.notes || '—'}
+                                </td>
+                                <td className="py-1.5 px-3 text-right font-mono font-bold text-emerald-700 border-r border-zinc-200">
+                                  {formatBDT(c.amount, language)}
+                                </td>
+                                <td className="py-1.5 px-3 text-center">
+                                  <span className="inline-block border-b border-zinc-300 w-16 text-[9px] text-zinc-300"></span>
+                                </td>
+                              </tr>
+                            );
+                          } else {
+                            return (
+                              <tr key={`blank-${rowIdx}`} className="h-10 text-zinc-300">
+                                <td className="py-1.5 px-2 text-center font-mono text-zinc-400 border-r border-zinc-200">
+                                  {formatNumber(itemNumber, language)}
+                                </td>
+                                <td className="py-1.5 px-2.5 text-center border-r border-zinc-200 font-mono text-zinc-300">—</td>
+                                <td className="py-1.5 px-2.5 border-r border-zinc-200 font-mono text-zinc-300">—</td>
+                                <td className="py-1.5 px-3 border-r border-zinc-200 text-zinc-300 italic text-[11px]">
+                                  {tr('(ফাঁকা মানি রিসিট লাইন)', '(Blank Receipt Line)', language)}
+                                </td>
+                                <td className="py-1.5 px-2 text-center border-r border-zinc-200 font-mono text-zinc-300">—</td>
+                                <td className="py-1.5 px-2 text-center border-r border-zinc-200 font-mono text-zinc-300">—</td>
+                                <td className="py-1.5 px-3 border-r border-zinc-200 text-zinc-300">—</td>
+                                <td className="py-1.5 px-3 text-right border-r border-zinc-200 font-mono text-zinc-300">—</td>
+                                <td className="py-1.5 px-3 text-center">
+                                  <span className="inline-block border-b border-zinc-200 w-16"></span>
+                                </td>
+                              </tr>
+                            );
+                          }
+                        })}
+                      </tbody>
+                      <tfoot>
+                        <tr className="bg-zinc-100 font-bold border-t-2 border-zinc-300 text-zinc-900 text-xs">
+                          <td colSpan={7} className="py-2 px-3 text-right border-r border-zinc-300">
+                            {tr('এই পৃষ্ঠার মোট আদায় (Subtotal):', 'Page Subtotal:', language)}
+                          </td>
+                          <td className="py-2 px-3 text-right font-mono font-black border-r border-zinc-300 text-emerald-800">
+                            {formatBDT(pageSubtotal, language)}
+                          </td>
+                          <td></td>
+                        </tr>
+                        {isLastPage && (
+                          <tr className="bg-zinc-200 font-black border-t-2 border-zinc-900 text-zinc-900 text-xs">
+                            <td colSpan={7} className="py-2.5 px-3 text-right border-r border-zinc-300">
+                              {tr('সর্বমোট সংগৃহীত আদায় (Grand Total):', 'Grand Total Collected:', language)}
+                            </td>
+                            <td className="py-2.5 px-3 text-right font-mono font-black text-sm border-r border-zinc-300 text-emerald-900">
+                              {formatBDT(channelAccounts.totalCollected, language)}
+                            </td>
+                            <td></td>
+                          </tr>
+                        )}
+                      </tfoot>
+                    </table>
+                  </div>
+                ) : (
+                  // Slips Format (2 cols x 5 rows = 10 slips per page)
+                  <div className="grid grid-cols-2 gap-3 print:gap-2 my-2">
+                    {pageRows.map((c, rowIdx) => {
+                      const itemNumber = pageIndex * 10 + rowIdx + 1;
+                      if (c) {
+                        const cType = getChannelType(c.channelKey, c.channelName);
+                        return (
+                          <div 
+                            key={c.id || rowIdx} 
+                            className="border border-dashed border-zinc-400 rounded-xl p-2.5 bg-zinc-50/40 print:bg-white flex flex-col justify-between h-[45mm] print:h-[45mm] relative"
+                          >
+                            <div className="flex items-center justify-between border-b border-zinc-200 pb-1">
+                              <div className="flex items-center gap-1.5">
+                                <span className="w-2 h-2 rounded-full bg-emerald-600"></span>
+                                <span className="font-bold text-[11px] text-zinc-900">{tr('বিদ্যাবাড়ি পাবলিকেশন', 'Biddabari Publication', language)}</span>
+                                <span className="text-[10px] text-emerald-700 font-medium">({tr('মানি রিসিট', 'Money Receipt', language)})</span>
+                              </div>
+                              <span className="font-mono text-[10px] px-1.5 py-0.2 bg-zinc-200 text-zinc-800 rounded font-bold">
+                                #{c.receiptNo || `MR-${itemNumber}`}
+                              </span>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-1 text-[11px] py-1">
+                              <div>
+                                <span className="text-[9px] text-zinc-500 block">{tr('প্রাপ্তি চ্যানেল / লাইব্রেরি:', 'Channel / Library:', language)}</span>
+                                <span className="font-bold text-zinc-900 block text-xs">{c.channelName}</span>
+                              </div>
+                              <div className="text-right">
+                                <span className="text-[9px] text-zinc-500 block">{tr('তারিখ ও মাধ্যম:', 'Date & Method:', language)}</span>
+                                <span className="font-mono text-zinc-800 font-semibold text-[10px]">{c.date} • <span className="uppercase">{c.paymentMethod}</span></span>
+                              </div>
+                              <div className="col-span-2 flex items-center justify-between">
+                                <span className="text-[11px] text-zinc-600 truncate block">
+                                  {c.notes || tr('বই বিক্রয় বাবদ আদায়', 'Book sales collection', language)}
+                                </span>
+                                <span className={`text-[9px] px-1.5 py-0.2 rounded font-bold uppercase ${
+                                  cType === 'online' ? 'bg-sky-100 text-sky-800' : 'bg-emerald-100 text-emerald-800'
+                                }`}>
+                                  {cType === 'online' ? tr('অনলাইন', 'Online', language) : tr('অফলাইন', 'Offline', language)}
+                                </span>
+                              </div>
+                            </div>
+
+                            <div className="pt-1 border-t border-zinc-200 flex items-center justify-between">
+                              <div>
+                                <span className="text-[9px] text-zinc-400 block">{tr('আদায়কৃত টাকা:', 'Collected Amount:', language)}</span>
+                                <span className="font-black text-sm text-emerald-700 font-mono">{formatBDT(c.amount, language)}</span>
+                              </div>
+                              <div className="flex items-center gap-3 text-[9px] text-zinc-500">
+                                <div className="text-center">
+                                  <div className="w-14 border-b border-zinc-300 mb-0.5"></div>
+                                  <span>{tr('আদায়কারী', 'Collector', language)}</span>
+                                </div>
+                                <div className="text-center">
+                                  <div className="w-14 border-b border-zinc-300 mb-0.5"></div>
+                                  <span>{tr('অনুমোদন', 'Authorized', language)}</span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      } else {
+                        return (
+                          <div 
+                            key={`blank-slip-${rowIdx}`} 
+                            className="border border-dashed border-zinc-300 rounded-xl p-2.5 bg-white flex flex-col justify-between h-[45mm] print:h-[45mm] relative opacity-60"
+                          >
+                            <div className="flex items-center justify-between border-b border-zinc-100 pb-1">
+                              <span className="font-bold text-[11px] text-zinc-700">{tr('বিদ্যাবাড়ি পাবলিকেশন (মানি রিসিট)', 'Biddabari Publication (Blank Receipt)', language)}</span>
+                              <span className="font-mono text-[10px] text-zinc-400">#{itemNumber}</span>
+                            </div>
+                            <div className="text-center py-2 text-[10px] text-zinc-400 italic">
+                              {tr('— ফাঁকা মানি রিসিট স্লিপ (হাতে লিখে ব্যবহারের জন্য) —', '— Blank money receipt for manual entry —', language)}
+                            </div>
+                            <div className="pt-1 border-t border-zinc-100 flex items-center justify-between text-[9px] text-zinc-400">
+                              <span>{tr('আদায়কৃত টাকা: ....................', 'Amount: ....................', language)}</span>
+                              <span>{tr('স্বাক্ষর: ....................', 'Signature: ....................', language)}</span>
+                            </div>
+                          </div>
+                        );
+                      }
+                    })}
+                  </div>
+                )}
+              </div>
+
+              {/* Signatures at bottom of page */}
+              {includeSignatures && (
+                <div className="signature-block avoid-break pt-6 mt-6 border-t border-zinc-200">
+                  <div className="grid grid-cols-3 gap-6 text-center text-xs text-zinc-600">
+                    <div>
+                      <div className="border-t border-zinc-400 w-32 mx-auto pt-1 mb-1"></div>
+                      <span className="font-semibold block text-zinc-800">{tr('আদায়কারী / ক্যাশিয়ার', 'Collector / Cashier', language)}</span>
+                      <span className="text-[10px] text-zinc-400">{tr('কালেকশন অ্যান্ড ক্যাশ বিভাগ', 'Collection & Cash Dept.', language)}</span>
+                    </div>
+
+                    <div>
+                      <div className="border-t border-zinc-400 w-32 mx-auto pt-1 mb-1"></div>
+                      <span className="font-semibold block text-zinc-800">{tr('হিসাবরক্ষণ কর্মকর্তা', 'Accounts Officer', language)}</span>
+                      <span className="text-[10px] text-zinc-400">{tr('অ্যাকাউন্টিং অ্যান্ড ফিন্যান্স', 'Accounting & Finance', language)}</span>
+                    </div>
+
+                    <div>
+                      <div className="border-t border-zinc-400 w-32 mx-auto pt-1 mb-1"></div>
+                      <span className="font-semibold block text-zinc-800">{tr('অনুমোদনকারী / পরিচালক', 'Approved By / Director', language)}</span>
+                      <span className="text-[10px] text-zinc-400">{tr('বিদ্যাবাড়ি পাবলিকেশন', 'Biddabari Publication', language)}</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    );
   };
 
   return (
@@ -481,7 +1110,100 @@ export const PrintableReport: React.FC<PrintableReportProps> = ({
               <HandCoins className="w-3.5 h-3.5" />
               <span>🌐+🏪 {tr('অনলাইন ও অফলাইন সেলস ও ডিউ', 'Online & Offline Sales & Dues', language)}</span>
             </button>
+
+            <button
+              onClick={() => handleSelectScope('press_vouchers')}
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                scope === 'press_vouchers'
+                  ? 'bg-zinc-900 text-white shadow-xs'
+                  : 'text-zinc-600 hover:text-zinc-900'
+              }`}
+            >
+              <Receipt className="w-3.5 h-3.5" />
+              <span>🧾 {tr('প্রেস পেমেন্ট ভাউচার (১০টি/পৃষ্ঠা)', 'Press Payment Vouchers (10/page)', language)}</span>
+            </button>
+
+            <button
+              onClick={() => handleSelectScope('collection_vouchers')}
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                scope === 'collection_vouchers'
+                  ? 'bg-zinc-900 text-white shadow-xs'
+                  : 'text-zinc-600 hover:text-zinc-900'
+              }`}
+            >
+              <HandCoins className="w-3.5 h-3.5" />
+              <span>💵 {tr('অনলাইন ও লাইব্রেরি আদায় ভাউচার (১০টি/পৃষ্ঠা)', 'Collection Vouchers (10/page)', language)}</span>
+            </button>
           </div>
+
+          {/* Interactive Voucher Print Toolbar (Shown when press_vouchers or collection_vouchers is selected) */}
+          {(scope === 'press_vouchers' || scope === 'collection_vouchers') && (
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-3 bg-zinc-50 border border-zinc-200 rounded-xl text-xs animate-in fade-in">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="font-bold text-zinc-900 flex items-center gap-1.5">
+                  <Receipt className="w-4 h-4 text-zinc-700" />
+                  <span>
+                    {scope === 'press_vouchers'
+                      ? tr('প্রেস পেমেন্ট ভাউচার লেআউট:', 'Press Payment Voucher Layout:', language)
+                      : tr('অনলাইন ও লাইব্রেরি আদায় ভাউচার লেআউট:', 'Collection Voucher Layout:', language)
+                    }
+                  </span>
+                </span>
+                <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-blue-100 text-blue-800 border border-blue-300">
+                  ⚡ {tr('প্রতি পৃষ্ঠায় ঠিক ১০টি ভাউচার (A4 অটো-ব্রেক)', 'Exactly 10 Vouchers per Page (A4 Auto-Break)', language)}
+                </span>
+              </div>
+
+              <div className="flex items-center gap-2 flex-wrap">
+                {/* Search Box */}
+                <div className="relative">
+                  <Search className="w-3.5 h-3.5 text-zinc-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="text"
+                    value={voucherSearchQuery}
+                    onChange={(e) => setVoucherSearchQuery(e.target.value)}
+                    placeholder={tr('ভাউচার নং বা নাম...', 'Search voucher no or name...', language)}
+                    className="pl-8 pr-2.5 py-1 text-xs border border-zinc-300 rounded-lg bg-white w-40 sm:w-48 text-zinc-900 focus:ring-1 focus:ring-zinc-900"
+                  />
+                  {voucherSearchQuery && (
+                    <button
+                      type="button"
+                      onClick={() => setVoucherSearchQuery('')}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 text-[10px]"
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
+
+                {/* Table vs Slips Toggle */}
+                <div className="inline-flex items-center bg-white p-0.5 rounded-lg border border-zinc-300 text-xs shadow-xs">
+                  <button
+                    type="button"
+                    onClick={() => setVoucherLayoutMode('table')}
+                    className={`px-3 py-1 rounded font-bold transition-all ${
+                      voucherLayoutMode === 'table'
+                        ? 'bg-zinc-900 text-white shadow-xs'
+                        : 'text-zinc-600 hover:text-zinc-900'
+                    }`}
+                  >
+                    📊 {tr('রেজিস্টার টেবিল', 'Register Table', language)}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setVoucherLayoutMode('slips')}
+                    className={`px-3 py-1 rounded font-bold transition-all ${
+                      voucherLayoutMode === 'slips'
+                        ? 'bg-zinc-900 text-white shadow-xs'
+                        : 'text-zinc-600 hover:text-zinc-900'
+                    }`}
+                  >
+                    📋 {tr('কাটার উপযোগী স্লিপস', 'Cuttable Slips', language)}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Granular Section Checkboxes (shown when toggled or custom) */}
@@ -853,7 +1575,12 @@ export const PrintableReport: React.FC<PrintableReportProps> = ({
       {/* ======================================================== */}
       {/* Formal Printable Document Body (A4 Calibrated) */}
       {/* ======================================================== */}
-      <div className="print-page-container bg-white p-4 sm:p-8 md:p-10 rounded-2xl border border-zinc-200 shadow-xs w-full max-w-6xl mx-auto space-y-6 print:max-w-none print:p-0 print:border-none print:shadow-none print:rounded-none">
+      {scope === 'press_vouchers' ? (
+        renderPressVoucherPages()
+      ) : scope === 'collection_vouchers' ? (
+        renderCollectionVoucherPages()
+      ) : (
+        <div className="print-page-container bg-white p-4 sm:p-8 md:p-10 rounded-2xl border border-zinc-200 shadow-xs w-full max-w-6xl mx-auto space-y-6 print:max-w-none print:p-0 print:border-none print:shadow-none print:rounded-none">
         
         {/* Publication Header */}
         <div className="border-b-2 border-zinc-900 pb-5 text-center relative">
@@ -1500,6 +2227,7 @@ export const PrintableReport: React.FC<PrintableReportProps> = ({
         )}
 
       </div>
+      )}
 
     </div>
   );
