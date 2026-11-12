@@ -129,7 +129,20 @@ export function getDaysInMonth(year: number, month: number): number {
   return new Date(year, month, 0).getDate();
 }
 
-export function formatYearBengali(year: number): string {
+export type AppLanguage = 'bn' | 'en';
+let currentAppLanguage: AppLanguage = 'bn';
+
+export function setAppLanguage(lang: AppLanguage) {
+  currentAppLanguage = lang;
+}
+
+export function getAppLanguage(): AppLanguage {
+  return currentAppLanguage;
+}
+
+export function formatYearBengali(year: number, lang?: AppLanguage): string {
+  const activeLang = lang || currentAppLanguage;
+  if (activeLang === 'en') return String(year);
   const bnDigits: { [k: string]: string } = {
     '0': '০', '1': '১', '2': '২', '3': '৩', '4': '৪',
     '5': '৫', '6': '৬', '7': '৭', '8': '৮', '9': '৯',
@@ -137,10 +150,15 @@ export function formatYearBengali(year: number): string {
   return String(year).split('').map(c => bnDigits[c] || c).join('');
 }
 
-export function formatMonthYearBengali(month: number, year: number): string {
+export function formatMonthYearBengali(month: number, year: number, lang?: AppLanguage): string {
+  const activeLang = lang || currentAppLanguage;
+  if (activeLang === 'en') {
+    const enMonths = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+    return `${enMonths[month - 1] || month} ${year}`;
+  }
   const m = BENGALI_MONTHS.find(x => x.value === month);
   const mName = m ? m.name : `${month}ম মাস`;
-  return `${mName} ${formatYearBengali(year)}`;
+  return `${mName} ${formatYearBengali(year, 'bn')}`;
 }
 
 // -------------------------------------------------------------
@@ -388,7 +406,15 @@ export function calculateWeekBookBreakdown(books: BookRecord[], startDay: number
   });
 }
 
-export function formatBDT(amount: number): string {
+export function formatBDT(amount: number, lang?: AppLanguage): string {
+  const activeLang = lang || currentAppLanguage;
+  if (activeLang === 'en') {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'BDT',
+      maximumFractionDigits: 0,
+    }).format(amount).replace('BDT', '৳');
+  }
   return new Intl.NumberFormat('bn-BD', {
     style: 'currency',
     currency: 'BDT',
@@ -396,7 +422,11 @@ export function formatBDT(amount: number): string {
   }).format(amount).replace('BDT', '৳');
 }
 
-export function formatNumber(num: number): string {
+export function formatNumber(num: number, lang?: AppLanguage): string {
+  const activeLang = lang || currentAppLanguage;
+  if (activeLang === 'en') {
+    return new Intl.NumberFormat('en-US').format(num);
+  }
   return new Intl.NumberFormat('bn-BD').format(num);
 }
 

@@ -33,8 +33,10 @@ import { exportBooksToExcel } from './utils/excelHandler';
 import { 
   getDaysInMonth, 
   createFreshMonthBooks, 
-  formatMonthYearBengali 
+  formatMonthYearBengali,
+  setAppLanguage 
 } from './utils/calculations';
+import { Theme, Language } from './utils/i18n';
 
 const CLEAN_SLATE_ZERO_KEY = 'biddabari_clean_slate_zero_v4';
 
@@ -45,6 +47,8 @@ const PRESS_PAYMENTS_STORAGE_KEY = 'biddabari_press_payments_v4';
 const PRESS_ORDERS_STORAGE_KEY = 'biddabari_press_orders_v4';
 const PRESS_DELIVERIES_STORAGE_KEY = 'biddabari_press_deliveries_v4';
 const CHANNEL_COLLECTIONS_STORAGE_KEY = 'biddabari_channel_collections_v4';
+const THEME_STORAGE_KEY = 'biddabari_theme_v1';
+const LANGUAGE_STORAGE_KEY = 'biddabari_language_v1';
 
 const getMonthlyStorageKey = (year: number, month: number) => 
   `biddabari_books_data_v4_${year}-${String(month).padStart(2, '0')}`;
@@ -97,6 +101,51 @@ export const App: React.FC = () => {
     window.addEventListener('resize', applyZoom);
     return () => window.removeEventListener('resize', applyZoom);
   }, [uiZoom]);
+
+  // Color Theme & Language State
+  const [theme, setTheme] = useState<Theme>(() => {
+    try {
+      const saved = localStorage.getItem(THEME_STORAGE_KEY) as Theme;
+      if (saved && ['classic', 'dark', 'navy', 'emerald'].includes(saved)) {
+        return saved;
+      }
+    } catch (e) {
+      // fallback
+    }
+    return 'classic';
+  });
+
+  const [language, setLanguage] = useState<Language>(() => {
+    try {
+      const saved = localStorage.getItem(LANGUAGE_STORAGE_KEY) as Language;
+      if (saved && ['bn', 'en'].includes(saved)) {
+        return saved;
+      }
+    } catch (e) {
+      // fallback
+    }
+    return 'bn';
+  });
+
+  // Apply theme to document element
+  useEffect(() => {
+    try {
+      document.documentElement.setAttribute('data-theme', theme);
+      localStorage.setItem(THEME_STORAGE_KEY, theme);
+    } catch (e) {
+      console.error(e);
+    }
+  }, [theme]);
+
+  // Apply language globally
+  useEffect(() => {
+    try {
+      setAppLanguage(language);
+      localStorage.setItem(LANGUAGE_STORAGE_KEY, language);
+    } catch (e) {
+      console.error(e);
+    }
+  }, [language]);
 
   // Selected Month & Year (Default to current active month: Nov 2026)
   const [selectedYear, setSelectedYear] = useState<number>(() => {
@@ -664,6 +713,10 @@ export const App: React.FC = () => {
         bookCount={books.length}
         zoom={uiZoom}
         onSetZoom={setUiZoom}
+        language={language}
+        onSetLanguage={setLanguage}
+        theme={theme}
+        onSetTheme={setTheme}
         selectedMonth={selectedMonth}
         selectedYear={selectedYear}
         onSelectPeriod={handleSelectPeriod}
@@ -782,16 +835,16 @@ export const App: React.FC = () => {
       <footer className="print:hidden bg-white border-t border-zinc-200/80 py-4 mt-auto">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between text-xs text-zinc-500 gap-2 text-center sm:text-left">
           <div>
-            © {selectedYear} <b>বিদ্যাবাড়ি পাবলিকেশন (Biddabari Publication)</b>. সর্বস্বত্ব সংরক্ষিত। ({formatMonthYearBengali(selectedMonth, selectedYear)})
+            © {selectedYear} <b>{language === 'bn' ? 'বিদ্যাবাড়ি পাবলিকেশন (Biddabari Publication)' : 'Biddabari Publication'}</b>. {language === 'bn' ? 'সর্বস্বত্ব সংরক্ষিত।' : 'All rights reserved.'} ({formatMonthYearBengali(selectedMonth, selectedYear, language)})
           </div>
           <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3">
-            <span>প্রেস পেমেন্ট ও চ্যানেল ডিউ ট্র্যাকিং সক্রিয়</span>
+            <span>{language === 'bn' ? 'প্রেস পেমেন্ট ও চ্যানেল ডিউ ট্র্যাকিং সক্রিয়' : 'Press & Channel Tracking Active'}</span>
             <span className="hidden sm:inline">•</span>
             <button
               onClick={() => exportBooksToExcel(books, selectedMonth, selectedYear)}
               className="text-zinc-900 hover:underline font-semibold"
             >
-              এক্সেল এক্সপোর্ট
+              {language === 'bn' ? 'এক্সেল এক্সপোর্ট' : 'Excel Export'}
             </button>
             <span>•</span>
             <a
@@ -799,7 +852,7 @@ export const App: React.FC = () => {
               download="biddabari publication all books data.xlsx"
               className="text-zinc-600 hover:underline"
             >
-              মূল ফাইল ডাউনলোড
+              {language === 'bn' ? 'মূল ফাইল ডাউনলোড' : 'Download Original File'}
             </a>
           </div>
         </div>

@@ -29,6 +29,132 @@
 }
 
 /* ======================================================== */
+/* Color Themes Support (Classic, Dark, Navy, Emerald) */
+/* ======================================================== */
+
+/* 1. Midnight Dark Mode */
+html[data-theme="dark"] body {
+  background-color: #0b0f19;
+  color: #e2e8f0;
+}
+html[data-theme="dark"] header {
+  background-color: #0f172a !important;
+  border-color: #1e293b !important;
+}
+html[data-theme="dark"] footer {
+  background-color: #0f172a !important;
+  border-color: #1e293b !important;
+  color: #94a3b8 !important;
+}
+html[data-theme="dark"] .bg-white {
+  background-color: #151c2c !important;
+  color: #e2e8f0;
+}
+html[data-theme="dark"] .bg-zinc-50 {
+  background-color: #0f172a !important;
+}
+html[data-theme="dark"] .bg-zinc-100 {
+  background-color: #1e293b !important;
+}
+html[data-theme="dark"] .border-zinc-200,
+html[data-theme="dark"] .border-zinc-100,
+html[data-theme="dark"] .border-zinc-300 {
+  border-color: #27354f !important;
+}
+html[data-theme="dark"] .text-zinc-900,
+html[data-theme="dark"] .text-zinc-800 {
+  color: #f8fafc !important;
+}
+html[data-theme="dark"] .text-zinc-700,
+html[data-theme="dark"] .text-zinc-600 {
+  color: #cbd5e1 !important;
+}
+html[data-theme="dark"] .text-zinc-500 {
+  color: #94a3b8 !important;
+}
+html[data-theme="dark"] input,
+html[data-theme="dark"] select,
+html[data-theme="dark"] textarea {
+  background-color: #1e293b !important;
+  color: #f8fafc !important;
+  border-color: #334155 !important;
+}
+
+/* 2. Royal Navy Theme */
+html[data-theme="navy"] body {
+  background-color: #f0f4f9;
+  color: #0f172a;
+}
+html[data-theme="navy"] header {
+  background-color: #1e3a8a !important;
+  border-color: #172554 !important;
+  color: #ffffff !important;
+}
+html[data-theme="navy"] header .text-zinc-900,
+html[data-theme="navy"] header .text-zinc-800,
+html[data-theme="navy"] header .text-zinc-700,
+html[data-theme="navy"] header .text-zinc-600 {
+  color: #ffffff !important;
+}
+html[data-theme="navy"] header .text-zinc-500,
+html[data-theme="navy"] header .text-zinc-400 {
+  color: #bfdbfe !important;
+}
+html[data-theme="navy"] header .border-zinc-200,
+html[data-theme="navy"] header .border-zinc-100 {
+  border-color: rgba(37, 99, 235, 0.25) !important;
+}
+html[data-theme="navy"] header .bg-zinc-50,
+html[data-theme="navy"] header .bg-zinc-100,
+html[data-theme="navy"] header .bg-white {
+  background-color: #172554 !important;
+  color: #ffffff !important;
+}
+html[data-theme="navy"] .bg-zinc-900 {
+  background-color: #1e3a8a !important;
+}
+html[data-theme="navy"] .hover\:bg-zinc-900:hover {
+  background-color: #172554 !important;
+}
+
+/* 3. Deep Emerald Green Theme */
+html[data-theme="emerald"] body {
+  background-color: #f0fdf4;
+  color: #064e3b;
+}
+html[data-theme="emerald"] header {
+  background-color: #064e3b !important;
+  border-color: #022c22 !important;
+  color: #ffffff !important;
+}
+html[data-theme="emerald"] header .text-zinc-900,
+html[data-theme="emerald"] header .text-zinc-800,
+html[data-theme="emerald"] header .text-zinc-700,
+html[data-theme="emerald"] header .text-zinc-600 {
+  color: #ffffff !important;
+}
+html[data-theme="emerald"] header .text-zinc-500,
+html[data-theme="emerald"] header .text-zinc-400 {
+  color: #a7f3d0 !important;
+}
+html[data-theme="emerald"] header .border-zinc-200,
+html[data-theme="emerald"] header .border-zinc-100 {
+  border-color: rgba(5, 150, 105, 0.25) !important;
+}
+html[data-theme="emerald"] header .bg-zinc-50,
+html[data-theme="emerald"] header .bg-zinc-100,
+html[data-theme="emerald"] header .bg-white {
+  background-color: #022c22 !important;
+  color: #ffffff !important;
+}
+html[data-theme="emerald"] .bg-zinc-900 {
+  background-color: #065f46 !important;
+}
+html[data-theme="emerald"] .hover\:bg-zinc-900:hover {
+  background-color: #064e3b !important;
+}
+
+/* ======================================================== */
 /* Standard A4 Paper Print Rules & Multi-page Auto Break */
 /* ======================================================== */
 @page {
