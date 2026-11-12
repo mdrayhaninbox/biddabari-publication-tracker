@@ -67,7 +67,7 @@ export const PrintableReport: React.FC<PrintableReportProps> = ({
   pressDeliveries = [],
   channelCollections = [],
   initialSelectedBookId,
-  language = 'bn',
+  language = 'en',
   channels = DEFAULT_CHANNELS,
 }) => {
   const effectiveChannels = channels && channels.length > 0 ? channels : DEFAULT_CHANNELS;

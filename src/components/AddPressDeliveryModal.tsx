@@ -18,7 +18,7 @@ export const AddPressDeliveryModal: React.FC<AddPressDeliveryModalProps> = ({
   books,
   onAddDelivery,
   preSelectedBookId,
-  language = 'bn',
+  language = 'en',
 }) => {
   const [selectedBookId, setSelectedBookId] = useState<string>(
     preSelectedBookId || books[0]?.id || ''

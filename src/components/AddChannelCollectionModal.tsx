@@ -16,7 +16,7 @@ export const AddChannelCollectionModal: React.FC<AddChannelCollectionModalProps>
   onClose,
   onSaveCollection,
   initialChannelKey,
-  language = 'bn',
+  language = 'en',
 }) => {
   const [date, setDate] = useState<string>(() => new Date().toISOString().split('T')[0]);
   const [channelKey, setChannelKey] = useState<string>(initialChannelKey || SALES_CHANNELS[0].key);

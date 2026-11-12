@@ -33,7 +33,7 @@ export const THEME_OPTIONS: ThemeOption[] = [
   },
 ];
 
-let globalAppLanguage: Language = 'bn';
+let globalAppLanguage: Language = 'en';
 
 export function setGlobalLanguage(lang: Language) {
   globalAppLanguage = lang;

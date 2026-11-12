@@ -32,7 +32,7 @@ export const BooksTable: React.FC<BooksTableProps> = ({
   onDeleteBook,
   onOpenAddBook,
   onPrintSingleBook,
-  language = 'bn',
+  language = 'en',
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState<'sl' | 'name' | 'stock' | 'sold' | 'profit'>('sl');

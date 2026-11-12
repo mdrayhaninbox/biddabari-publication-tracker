@@ -19,7 +19,7 @@ export const AddEditBookModal: React.FC<AddEditBookModalProps> = ({
   editingBook,
   onSaveBook,
   nextSl,
-  language = 'bn',
+  language = 'en',
 }) => {
   const [bookName, setBookName] = useState('');
   const [adCost, setAdCost] = useState<number>(30);

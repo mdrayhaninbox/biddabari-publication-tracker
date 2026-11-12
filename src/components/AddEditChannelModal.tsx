@@ -25,7 +25,7 @@ export const AddEditChannelModal: React.FC<AddEditChannelModalProps> = ({
   onDeleteChannel,
   books = [],
   channelCollections = [],
-  language = 'bn',
+  language = 'en',
 }) => {
   const [name, setName] = useState('');
   const [nameEn, setNameEn] = useState('');

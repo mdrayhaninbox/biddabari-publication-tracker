@@ -52,8 +52,8 @@ const PRESS_ORDERS_STORAGE_KEY = 'biddabari_press_orders_v4';
 const PRESS_DELIVERIES_STORAGE_KEY = 'biddabari_press_deliveries_v4';
 const CHANNEL_COLLECTIONS_STORAGE_KEY = 'biddabari_channel_collections_v4';
 const CHANNELS_STORAGE_KEY = 'biddabari_sales_channels_v5';
-const THEME_STORAGE_KEY = 'biddabari_theme_v1';
-const LANGUAGE_STORAGE_KEY = 'biddabari_language_v1';
+const THEME_STORAGE_KEY = 'biddabari_theme_v2';
+const LANGUAGE_STORAGE_KEY = 'biddabari_language_v2';
 
 const getMonthlyStorageKey = (year: number, month: number) => 
   `biddabari_books_data_v4_${year}-${String(month).padStart(2, '0')}`;
@@ -107,7 +107,7 @@ export const App: React.FC = () => {
     return () => window.removeEventListener('resize', applyZoom);
   }, [uiZoom]);
 
-  // Color Theme & Language State
+  // Color Theme & Language State (Default: Royal Navy Blue & English)
   const [theme, setTheme] = useState<Theme>(() => {
     try {
       const saved = localStorage.getItem(THEME_STORAGE_KEY) as Theme;
@@ -117,7 +117,7 @@ export const App: React.FC = () => {
     } catch (e) {
       // fallback
     }
-    return 'classic';
+    return 'navy';
   });
 
   const [language, setLanguage] = useState<Language>(() => {
@@ -129,7 +129,7 @@ export const App: React.FC = () => {
     } catch (e) {
       // fallback
     }
-    return 'bn';
+    return 'en';
   });
 
   // Apply theme to document element

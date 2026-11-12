@@ -19,7 +19,7 @@ export const AddPressOrderModal: React.FC<AddPressOrderModalProps> = ({
   books,
   onAddOrder,
   preSelectedBookId,
-  language = 'bn',
+  language = 'en',
 }) => {
   const [selectedBookId, setSelectedBookId] = useState<string>(
     preSelectedBookId || books[0]?.id || ''

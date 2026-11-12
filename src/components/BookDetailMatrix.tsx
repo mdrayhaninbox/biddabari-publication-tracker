@@ -29,7 +29,7 @@ export const BookDetailMatrix: React.FC<BookDetailMatrixProps> = ({
   selectedMonth = 11,
   selectedYear = 2026,
   daysInMonth = 30,
-  language = 'bn',
+  language = 'en',
   channels = DEFAULT_CHANNELS,
 }) => {
   const currentBook = books.find(b => b.id === selectedBookId) || books[0];

@@ -37,7 +37,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   selectedMonth = 11,
   selectedYear = 2026,
   daysInMonth = 30,
-  language = 'bn',
+  language = 'en',
   channels = DEFAULT_CHANNELS,
   onOpenAddChannel,
   onOpenEditChannel,

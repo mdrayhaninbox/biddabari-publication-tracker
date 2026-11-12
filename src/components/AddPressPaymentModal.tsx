@@ -16,7 +16,7 @@ export const AddPressPaymentModal: React.FC<AddPressPaymentModalProps> = ({
   onClose,
   books,
   onSavePayment,
-  language = 'bn',
+  language = 'en',
 }) => {
   const [date, setDate] = useState<string>(() => new Date().toISOString().split('T')[0]);
   const [bookId, setBookId] = useState<string>(books[0]?.id || '');

@@ -66,7 +66,7 @@ export const AccountsDueLedger: React.FC<AccountsDueLedgerProps> = ({
   onDeletePressDelivery,
   onAddChannelCollection,
   onDeleteChannelCollection,
-  language = 'bn',
+  language = 'en',
   channels = DEFAULT_CHANNELS,
   onOpenAddChannel,
   onOpenEditChannel,

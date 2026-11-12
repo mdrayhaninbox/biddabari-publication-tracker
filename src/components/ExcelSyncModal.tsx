@@ -17,7 +17,7 @@ export const ExcelSyncModal: React.FC<ExcelSyncModalProps> = ({
   onClose,
   books,
   onImportSuccess,
-  language = 'bn',
+  language = 'en',
 }) => {
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
