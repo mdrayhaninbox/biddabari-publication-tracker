@@ -32,6 +32,7 @@ import { AddPressOrderModal } from './components/AddPressOrderModal';
 import { AddPressDeliveryModal } from './components/AddPressDeliveryModal';
 import { AddChannelCollectionModal } from './components/AddChannelCollectionModal';
 import { AddEditChannelModal } from './components/AddEditChannelModal';
+import { ResetConfirmModal } from './components/ResetConfirmModal';
 import { exportBooksToExcel } from './utils/excelHandler';
 import { 
   getDaysInMonth, 
@@ -304,6 +305,9 @@ export const App: React.FC = () => {
   const [isAddEditChannelOpen, setIsAddEditChannelOpen] = useState(false);
   const [editingChannel, setEditingChannel] = useState<ChannelConfig | null>(null);
   const [channelModalDefaultType, setChannelModalDefaultType] = useState<'online' | 'offline'>('offline');
+
+  // Reset Security Confirmation Modal
+  const [isResetConfirmOpen, setIsResetConfirmOpen] = useState(false);
 
   // Single Book Printing Pre-selection
   const [reportPreSelectedBookId, setReportPreSelectedBookId] = useState<string | undefined>(undefined);
@@ -708,30 +712,32 @@ export const App: React.FC = () => {
     setIsPressDeliveryModalOpen(true);
   };
 
-  // Reset all data to clean zero slate
+  // Reset all data to clean zero slate (Opens Secure Modal with Math Challenge)
   const handleResetAllData = () => {
-    if (window.confirm('আপনি কি নিশ্চিত যে সমস্ত ডেটা মুছে সম্পূর্ণ শূন্য (০) থেকে শুরু করতে চান? এটি করলে বর্তমান সকল বই, প্রেস অর্ডার ও বিক্রয়ের খতিয়ান পরিষ্কার হয়ে যাবে।')) {
-      try {
-        const keysToRemove: string[] = [];
-        for (let i = 0; i < localStorage.length; i++) {
-          const k = localStorage.key(i);
-          if (k && k.startsWith('biddabari_') && k !== ZOOM_STORAGE_KEY) {
-            keysToRemove.push(k);
-          }
+    setIsResetConfirmOpen(true);
+  };
+
+  const handlePerformActualReset = () => {
+    try {
+      const keysToRemove: string[] = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k && k.startsWith('biddabari_') && k !== ZOOM_STORAGE_KEY) {
+          keysToRemove.push(k);
         }
-        keysToRemove.forEach(k => localStorage.removeItem(k));
-        localStorage.setItem(CLEAN_SLATE_ZERO_KEY, 'true');
-      } catch (e) {
-        console.error(e);
       }
-      setBooks([]);
-      setPressOrders([]);
-      setPressDeliveries([]);
-      setPressPayments([]);
-      setChannelCollections([]);
-      setChannels(DEFAULT_CHANNELS);
-      alert('সকল ডেমো ডেটা সফলভাবে মুছে শূন্য (০) করা হয়েছে। এখন নতুন বই যুক্ত করে হিসাব শুরু করুন।');
+      keysToRemove.forEach(k => localStorage.removeItem(k));
+      localStorage.setItem(CLEAN_SLATE_ZERO_KEY, 'true');
+    } catch (e) {
+      console.error(e);
     }
+    setBooks([]);
+    setPressOrders([]);
+    setPressDeliveries([]);
+    setPressPayments([]);
+    setChannelCollections([]);
+    setChannels(DEFAULT_CHANNELS);
+    setIsResetConfirmOpen(false);
   };
 
   // Channel Collection Actions
@@ -1058,6 +1064,19 @@ export const App: React.FC = () => {
         onDeleteChannel={handleDeleteChannel}
         books={books}
         channelCollections={channelCollections}
+        language={language}
+      />
+
+      {/* System Reset Security Verification Modal (Math Equation + I Understand Checkbox) */}
+      <ResetConfirmModal
+        isOpen={isResetConfirmOpen}
+        onClose={() => setIsResetConfirmOpen(false)}
+        onConfirmReset={handlePerformActualReset}
+        booksCount={books.length}
+        ordersCount={pressOrders.length}
+        paymentsCount={pressPayments.length}
+        deliveriesCount={pressDeliveries.length}
+        collectionsCount={channelCollections.length}
         language={language}
       />
 
