@@ -40,6 +40,7 @@ import {
   AVAILABLE_YEARS
 } from '../utils/calculations';
 import { exportBooksToExcel } from '../utils/excelHandler';
+import { exportReportToExcel } from '../utils/excelReportHandler';
 import { exportReportToWord } from '../utils/wordHandler';
 import { Language, tr } from '../utils/i18n';
 
@@ -142,6 +143,7 @@ export const PrintableReport: React.FC<PrintableReportProps> = ({
   const [includeSignatures, setIncludeSignatures] = useState<boolean>(true);
   const [showCustomSettings, setShowCustomSettings] = useState<boolean>(false);
   const [isExportingWord, setIsExportingWord] = useState<boolean>(false);
+  const [isExportingExcel, setIsExportingExcel] = useState<boolean>(false);
   const [voucherLayoutMode, setVoucherLayoutMode] = useState<'table' | 'slips'>('table');
   const [voucherSearchQuery, setVoucherSearchQuery] = useState<string>('');
 
@@ -407,6 +409,37 @@ export const PrintableReport: React.FC<PrintableReportProps> = ({
       alert(language === 'en' ? 'Failed to generate Word document. Please try again.' : 'ওয়ার্ড ফাইল তৈরি করতে সমস্যা হয়েছে। অনুগ্রহ করে আবার চেষ্টা করুন।');
     } finally {
       setIsExportingWord(false);
+    }
+  };
+
+  const handleExportExcel = async () => {
+    try {
+      setIsExportingExcel(true);
+      await exportReportToExcel({
+        books: effectiveBooks,
+        allBooksCount: books.length,
+        reportTitle: getReportScopeTitle(),
+        periodTitle: getReportPeriodTitle(),
+        currentDate,
+        language,
+        channels: effectiveChannels,
+        pressPayments: filteredPressPayments,
+        pressOrders,
+        pressDeliveries,
+        channelCollections,
+        salesMode,
+        includePressAccounts,
+        includePressPayments,
+        includeOnlineDue,
+        includeOfflineDue,
+        includeSignatures,
+        scope,
+      });
+    } catch (error) {
+      console.error('Failed to export Excel report:', error);
+      alert(language === 'en' ? 'Failed to generate Excel report. Please try again.' : 'এক্সেল ফাইল তৈরি করতে সমস্যা হয়েছে। অনুগ্রহ করে আবার চেষ্টা করুন।');
+    } finally {
+      setIsExportingExcel(false);
     }
   };
 
@@ -1003,11 +1036,17 @@ export const PrintableReport: React.FC<PrintableReportProps> = ({
             </span>
 
             <button
-              onClick={() => exportBooksToExcel(books, selectedMonth, selectedYear)}
-              className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-zinc-800 bg-white hover:bg-zinc-100 rounded-lg transition-colors border border-zinc-300"
+              onClick={handleExportExcel}
+              disabled={isExportingExcel}
+              className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-zinc-800 bg-white hover:bg-zinc-100 rounded-lg transition-colors border border-zinc-300 disabled:opacity-50"
+              title={tr('সাজানো এক্সেল ফাইল ডাউনলোড (.xlsx)', 'Download Styled Excel File (.xlsx)', language)}
             >
-              <Download className="w-4 h-4 text-zinc-700" />
-              <span>{tr('এক্সেল ফাইল', 'Excel File', language)}</span>
+              <Download className="w-4 h-4 text-emerald-700" />
+              <span>
+                {isExportingExcel
+                  ? tr('ডাউনলোড হচ্ছে...', 'Downloading...', language)
+                  : tr('এক্সেল ফাইল', 'Excel File', language)}
+              </span>
             </button>
 
             <button
