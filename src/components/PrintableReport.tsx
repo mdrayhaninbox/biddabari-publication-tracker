@@ -1383,11 +1383,11 @@ export const PrintableReport: React.FC<PrintableReportProps> = ({
             </button>
           </div>
 
-          {/* Row 1: General Reports & Ledgers */}
+          {/* Row 1: General Reports, Ledgers & Vouchers */}
           <div>
             <div className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider mb-1.5 flex items-center gap-1">
               <Layers className="w-3 h-3 text-zinc-400" />
-              <span>{tr('📊 সাধারণ রিপোর্ট ও খতিয়ান (General Reports & Statements):', 'General Reports & Statements:', language)}</span>
+              <span>{tr('📊 রিপোর্ট ও ভাউচার ক্যাটাগরি (Report & Voucher Scopes):', 'Report & Voucher Scopes:', language)}</span>
             </div>
             <div className="flex flex-wrap bg-zinc-100 p-1 rounded-xl border border-zinc-200 gap-1">
               <button
@@ -1454,103 +1454,43 @@ export const PrintableReport: React.FC<PrintableReportProps> = ({
                 <HandCoins className="w-3.5 h-3.5" />
                 <span>🌐+🏪 {tr('অনলাইন ও অফলাইন সেলস ও ডিউ', 'Online & Offline Sales & Dues', language)}</span>
               </button>
-            </div>
-          </div>
 
-          {/* Row 2: Prominent Voucher Print Formats (10 per Page A4 Print) */}
-          <div className="p-3 bg-gradient-to-r from-emerald-50 via-teal-50 to-indigo-50 border-2 border-emerald-300 rounded-2xl shadow-xs space-y-2.5">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5">
-              <div className="flex items-center gap-2">
-                <span className="flex h-2.5 w-2.5 rounded-full bg-emerald-600 animate-pulse" />
-                <span className="text-xs font-black text-emerald-950 uppercase tracking-wide flex items-center gap-1.5">
-                  <Receipt className="w-4 h-4 text-emerald-700" />
-                  <span>{tr('🧾 বিশেষ ভাউচার প্রিন্ট ফরম্যাট (১০টি/পৃষ্ঠা A4)', 'Special Voucher Print Formats (10/Page A4)', language)}</span>
-                </span>
-              </div>
-              <span className="text-[11px] font-semibold text-emerald-800 bg-white/90 border border-emerald-200 px-2.5 py-0.5 rounded-full self-start sm:self-auto">
-                ⚡ {tr('প্রতি পৃষ্ঠায় ঠিক ১০টি ভাউচার স্লিপ সহ প্রিন্ট ও কাটিং ফরম্যাট', 'Ready-to-cut slip format: strictly 10 vouchers per printed page', language)}
-              </span>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              {/* Collection Voucher Button */}
+              {/* Collection Voucher Button in the same pattern */}
               <button
                 type="button"
                 onClick={() => handleSelectScope('collection_vouchers')}
-                className={`flex items-center justify-between p-3 rounded-xl border text-xs font-bold transition-all shadow-xs text-left ${
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
                   scope === 'collection_vouchers'
-                    ? 'bg-emerald-700 text-white border-emerald-800 ring-2 ring-emerald-400'
-                    : 'bg-white hover:bg-emerald-100/70 text-emerald-950 border-emerald-300'
+                    ? 'bg-emerald-700 text-white shadow-xs'
+                    : 'text-emerald-800 hover:text-emerald-950 hover:bg-emerald-50'
                 }`}
               >
-                <div className="flex items-center gap-2.5">
-                  <span className={`p-2 rounded-lg ${scope === 'collection_vouchers' ? 'bg-emerald-800 text-white' : 'bg-emerald-100 text-emerald-800'}`}>
-                    <HandCoins className="w-5 h-5" />
-                  </span>
-                  <div>
-                    <div className="text-xs font-black flex items-center gap-1.5">
-                      <span>{tr('💵 অনলাইন ও লাইব্রেরি আদায় ভাউচার', 'Collection Vouchers (Online & Library)', language)}</span>
-                      {scope === 'collection_vouchers' && (
-                        <span className="text-[10px] bg-white text-emerald-800 px-1.5 py-0.2 rounded font-bold">
-                          {tr('সক্রিয়', 'Active', language)}
-                        </span>
-                      )}
-                    </div>
-                    <div className={`text-[11px] font-normal ${scope === 'collection_vouchers' ? 'text-emerald-100' : 'text-zinc-600'}`}>
-                      {tr('লাইব্রেরি ভিত্তিক ফিল্টার বা আলাদা পৃষ্ঠা (Split)', 'Filter by library or split per library', language)}
-                    </div>
-                  </div>
-                </div>
-                <div className="flex flex-col items-end shrink-0 pl-2">
-                  <span className={`text-[11px] px-2.5 py-0.5 rounded-full font-bold ${
-                    scope === 'collection_vouchers' ? 'bg-emerald-800 text-emerald-100' : 'bg-emerald-100 text-emerald-800 border border-emerald-200'
-                  }`}>
-                    {formatNumber(channelCollections.length, language)} {tr('টি ভাউচার', 'vouchers', language)}
-                  </span>
-                  <span className={`text-[10px] font-semibold mt-0.5 ${scope === 'collection_vouchers' ? 'text-emerald-200' : 'text-emerald-700'}`}>
-                    ⚡ ১০টি/পৃষ্ঠা
-                  </span>
-                </div>
+                <HandCoins className="w-3.5 h-3.5" />
+                <span>💵 {tr('আদায় ভাউচার (১০টি/পৃষ্ঠা)', 'Collection Vouchers (10/Page)', language)}</span>
+                <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
+                  scope === 'collection_vouchers' ? 'bg-emerald-900 text-white' : 'bg-emerald-100 text-emerald-800'
+                }`}>
+                  {formatNumber(channelCollections.length, language)}
+                </span>
               </button>
 
-              {/* Press Payment Voucher Button */}
+              {/* Press Payment Voucher Button in the same pattern */}
               <button
                 type="button"
                 onClick={() => handleSelectScope('press_vouchers')}
-                className={`flex items-center justify-between p-3 rounded-xl border text-xs font-bold transition-all shadow-xs text-left ${
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
                   scope === 'press_vouchers'
-                    ? 'bg-zinc-900 text-white border-black ring-2 ring-zinc-500'
-                    : 'bg-white hover:bg-zinc-100 text-zinc-900 border-zinc-300'
+                    ? 'bg-zinc-900 text-white shadow-xs'
+                    : 'text-zinc-700 hover:text-zinc-900 hover:bg-zinc-200/60'
                 }`}
               >
-                <div className="flex items-center gap-2.5">
-                  <span className={`p-2 rounded-lg ${scope === 'press_vouchers' ? 'bg-zinc-800 text-white' : 'bg-zinc-100 text-zinc-800'}`}>
-                    <Receipt className="w-5 h-5" />
-                  </span>
-                  <div>
-                    <div className="text-xs font-black flex items-center gap-1.5">
-                      <span>{tr('🧾 প্রেস পেমেন্ট ভাউচার প্রিন্ট', 'Press Payment Vouchers Print', language)}</span>
-                      {scope === 'press_vouchers' && (
-                        <span className="text-[10px] bg-white text-zinc-900 px-1.5 py-0.2 rounded font-bold">
-                          {tr('সক্রিয়', 'Active', language)}
-                        </span>
-                      )}
-                    </div>
-                    <div className={`text-[11px] font-normal ${scope === 'press_vouchers' ? 'text-zinc-300' : 'text-zinc-600'}`}>
-                      {tr('বই বা তারিখ অনুযায়ী প্রেস পরিশোধ স্লিপ', 'Press payment slips with voucher no & dates', language)}
-                    </div>
-                  </div>
-                </div>
-                <div className="flex flex-col items-end shrink-0 pl-2">
-                  <span className={`text-[11px] px-2.5 py-0.5 rounded-full font-bold ${
-                    scope === 'press_vouchers' ? 'bg-zinc-800 text-zinc-200' : 'bg-zinc-100 text-zinc-800 border border-zinc-200'
-                  }`}>
-                    {formatNumber(pressPayments.length, language)} {tr('টি ভাউচার', 'vouchers', language)}
-                  </span>
-                  <span className={`text-[10px] font-semibold mt-0.5 ${scope === 'press_vouchers' ? 'text-zinc-400' : 'text-zinc-600'}`}>
-                    ⚡ ১০টি/পৃষ্ঠা
-                  </span>
-                </div>
+                <Receipt className="w-3.5 h-3.5" />
+                <span>🧾 {tr('প্রেস পেমেন্ট ভাউচার (১০টি/পৃষ্ঠা)', 'Press Payment Vouchers (10/Page)', language)}</span>
+                <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
+                  scope === 'press_vouchers' ? 'bg-zinc-800 text-zinc-100' : 'bg-zinc-200 text-zinc-800'
+                }`}>
+                  {formatNumber(pressPayments.length, language)}
+                </span>
               </button>
             </div>
           </div>
