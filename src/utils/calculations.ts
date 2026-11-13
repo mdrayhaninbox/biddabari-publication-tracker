@@ -5,6 +5,7 @@ import {
   ChannelCollectionRecord, 
   PressOrderRecord, 
   ChannelConfig, 
+  ChannelType, 
   DEFAULT_CHANNELS, 
   SALES_CHANNELS 
 } from '../types/book';
@@ -584,20 +585,32 @@ export interface PressAccountsSummary {
 export function calculatePressAccounts(
   books: BookRecord[],
   pressPayments: PressPaymentRecord[],
-  pressOrders?: PressOrderRecord[]
+  pressOrders?: PressOrderRecord[],
+  pressIdFilter?: string
 ): PressAccountsSummary {
   let totalOrderBill = 0;
   let totalReceivedBill = 0;
   let totalPaidToPress = 0;
 
-  const totalPaymentsSum = pressPayments.reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
+  const isMatchingPress = (itemPressId?: string) => {
+    if (!pressIdFilter || pressIdFilter === 'all') return true;
+    const effectiveId = itemPressId || 'faridBhaiPress';
+    return effectiveId === pressIdFilter;
+  };
+
+  const filteredPayments = pressPayments.filter(p => isMatchingPress(p.pressId));
+  const totalPaymentsSum = filteredPayments.reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
   totalPaidToPress = totalPaymentsSum;
 
   const bookAccounts: PressBookAccount[] = books.map(book => {
-    const bookOrders = pressOrders ? pressOrders.filter(po => po.bookId === book.id) : [];
+    const bookOrders = pressOrders
+      ? pressOrders.filter(po => po.bookId === book.id && isMatchingPress(po.pressId))
+      : [];
     const orderQuantity = bookOrders.length > 0
       ? bookOrders.reduce((sum, o) => sum + (Number(o.orderQuantity) || 0), 0)
-      : (Number(book.totalOrderFaridBhai) || 0);
+      : (!pressIdFilter || pressIdFilter === 'all' || pressIdFilter === 'faridBhaiPress'
+          ? (Number(book.totalOrderFaridBhai) || 0)
+          : 0);
 
     const makingCost = Number(book.makingCost) || 0;
 
@@ -624,7 +637,7 @@ export function calculatePressAccounts(
     const bReceivedBill = receivedCopies * makingCost;
 
     // Payments specifically assigned to this book
-    const specificPaid = pressPayments
+    const specificPaid = filteredPayments
       .filter(p => p.bookId === book.id)
       .reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
 
@@ -685,7 +698,7 @@ export function calculatePressAccounts(
 export interface ChannelDueAccount {
   key: string;
   name: string;
-  type: 'online' | 'offline';
+  type: ChannelType;
   category: string;
   totalCopies: number;
   totalBilled: number;
@@ -719,7 +732,10 @@ export function calculateChannelDueAccounts(
   let offlineBilled = 0;
   let offlineCollected = 0;
 
-  const channels: ChannelDueAccount[] = channelsList.map(ch => {
+  // Filter out 'press' type channels so only sales channels are included in dues ledger
+  const salesChannels = channelsList.filter(ch => ch.type === 'online' || ch.type === 'offline');
+
+  const channels: ChannelDueAccount[] = salesChannels.map(ch => {
     // Total copies sold across all books for this channel
     let totalCopies = 0;
     let totalBilled = 0;

@@ -7,6 +7,7 @@ import {
   PressOrderRecord, 
   PressDeliveryRecord,
   ChannelConfig,
+  ChannelType,
   DEFAULT_CHANNELS
 } from './types/book';
 import { INITIAL_BOOKS } from './data/initialBooks';
@@ -423,7 +424,7 @@ export const App: React.FC = () => {
   // Channel Management Modal
   const [isAddEditChannelOpen, setIsAddEditChannelOpen] = useState(false);
   const [editingChannel, setEditingChannel] = useState<ChannelConfig | null>(null);
-  const [channelModalDefaultType, setChannelModalDefaultType] = useState<'online' | 'offline'>('offline');
+  const [channelModalDefaultType, setChannelModalDefaultType] = useState<ChannelType>('offline');
 
   // Reset Security Confirmation Modal
   const [isResetConfirmOpen, setIsResetConfirmOpen] = useState(false);
@@ -692,7 +693,7 @@ export const App: React.FC = () => {
   }, [channels]);
 
   // Channel Actions (Add, Edit, Safe Delete)
-  const handleOpenAddChannel = (defaultType: 'online' | 'offline' = 'offline') => {
+  const handleOpenAddChannel = (defaultType: ChannelType = 'offline') => {
     setEditingChannel(null);
     setChannelModalDefaultType(defaultType);
     setIsAddEditChannelOpen(true);
@@ -718,10 +719,15 @@ export const App: React.FC = () => {
         name: channelData.name || 'নতুন চ্যানেল',
         nameEn: channelData.nameEn || '',
         type: channelData.type || channelModalDefaultType,
-        source: channelData.source || 'headOffice',
+        source: channelData.type === 'offline' ? (channelData.source || 'headOffice') : undefined,
+        pressId: channelData.pressId,
+        address: channelData.address,
+        phone: channelData.phone,
         category:
           channelData.category ||
-          (channelData.type === 'online'
+          (channelData.type === 'press'
+            ? 'মুদ্রণ ও বাঁধাই প্রেস'
+            : channelData.type === 'online'
             ? 'অনলাইন ই-কমার্স'
             : channelData.source === 'press'
             ? 'প্রেস সরাসরি'
@@ -1129,16 +1135,30 @@ export const App: React.FC = () => {
 
   const handlePerformActualReset = () => {
     try {
+      const keysToPreserve = new Set([
+        ZOOM_STORAGE_KEY,
+        THEME_STORAGE_KEY,
+        LANGUAGE_STORAGE_KEY,
+        STORED_FILES_KEY,
+        NOTEBOOK_NOTES_KEY,
+      ]);
+
       const keysToRemove: string[] = [];
       for (let i = 0; i < localStorage.length; i++) {
         const k = localStorage.key(i);
-        if (k && k.startsWith('biddabari_') && k !== ZOOM_STORAGE_KEY) {
+        if (k && k.startsWith('biddabari_') && !keysToPreserve.has(k)) {
           keysToRemove.push(k);
         }
       }
       keysToRemove.forEach(k => localStorage.removeItem(k));
       localStorage.setItem(CLEAN_SLATE_ZERO_KEY, 'true');
-      idbClear().catch(() => {});
+      
+      // Clear publication cache from IndexedDB while preserving stored files & notebook notes
+      idbClear().then(() => {
+        if (storedFiles.length > 0) idbSet(STORED_FILES_KEY, storedFiles).catch(() => {});
+        if (notebookNotes.length > 0) idbSet(NOTEBOOK_NOTES_KEY, notebookNotes).catch(() => {});
+      }).catch(() => {});
+
       resetFirestoreData(selectedYear, selectedMonth).catch(() => {});
     } catch (e) {
       console.error(e);
@@ -1257,6 +1277,12 @@ export const App: React.FC = () => {
       safeLocalStorageSet(CHANNELS_STORAGE_KEY, JSON.stringify(result.channels));
       syncChannelsToFirestore(result.channels);
     }
+
+    // 6. Notebook Notes
+    if (result.notebookNotes !== undefined && result.notebookNotes.length > 0) {
+      setNotebookNotes(result.notebookNotes);
+      idbSet(NOTEBOOK_NOTES_KEY, result.notebookNotes).catch(() => {});
+    }
   };
 
   // Storage & Notebook Handlers
@@ -1322,6 +1348,7 @@ export const App: React.FC = () => {
           pressDeliveries,
           channelCollections,
           channels,
+          notebookNotes,
         })}
         onOpenImport={() => setIsExcelSyncOpen(true)}
         onResetData={handleResetAllData}
@@ -1537,6 +1564,7 @@ export const App: React.FC = () => {
         pressDeliveries={pressDeliveries}
         channelCollections={channelCollections}
         channels={channels}
+        notebookNotes={notebookNotes}
         onImportSuccess={handleImportBooksSuccess}
         language={language}
       />
@@ -1546,6 +1574,7 @@ export const App: React.FC = () => {
         isOpen={isPressPaymentModalOpen}
         onClose={() => setIsPressPaymentModalOpen(false)}
         books={books}
+        channels={channels}
         onSavePayment={handleAddPressPayment}
         language={language}
       />
@@ -1555,6 +1584,7 @@ export const App: React.FC = () => {
         isOpen={isPressOrderModalOpen}
         onClose={() => setIsPressOrderModalOpen(false)}
         books={books}
+        channels={channels}
         onAddOrder={handleAddPressOrder}
         preSelectedBookId={pressOrderPreSelectedBookId}
         language={language}
@@ -1565,6 +1595,7 @@ export const App: React.FC = () => {
         isOpen={isPressDeliveryModalOpen}
         onClose={() => setIsPressDeliveryModalOpen(false)}
         books={books}
+        channels={channels}
         onAddDelivery={handleAddPressDelivery}
         preSelectedBookId={pressDeliveryPreSelectedBookId}
         language={language}
@@ -1592,6 +1623,7 @@ export const App: React.FC = () => {
         onDeleteChannel={handleDeleteChannel}
         books={books}
         channelCollections={channelCollections}
+        channels={channels}
         language={language}
       />
 

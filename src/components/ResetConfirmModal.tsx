@@ -155,6 +155,10 @@ export const ResetConfirmModal: React.FC<ResetConfirmModalProps> = ({
                 <span>{tr('পেমেন্ট ভাউচার:', 'Payment Vouchers:', language)}</span>
                 <span className="font-bold font-mono text-zinc-900">{formatNumber(paymentsCount, language)} {tr('টি', '', language)}</span>
               </div>
+              <div className="flex justify-between col-span-2 border-t border-zinc-100 pt-1">
+                <span>{tr('আদায় ভাউচার / রিসিট:', 'Collection Receipts:', language)}</span>
+                <span className="font-bold font-mono text-zinc-900">{formatNumber(collectionsCount, language)} {tr('টি', '', language)}</span>
+              </div>
             </div>
           </div>
 

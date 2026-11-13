@@ -8,6 +8,7 @@ import {
   ChannelCollectionRecord, 
   ChannelConfig 
 } from '../types/book';
+import { NotebookNoteRecord } from '../types/storage';
 import { 
   importBooksFromExcel, 
   exportBooksToExcel, 
@@ -24,6 +25,7 @@ interface ExcelSyncModalProps {
   pressDeliveries?: PressDeliveryRecord[];
   channelCollections?: ChannelCollectionRecord[];
   channels?: ChannelConfig[];
+  notebookNotes?: NotebookNoteRecord[];
   onImportSuccess: (result: FullDatabaseImportResult) => void;
   language?: Language;
 }
@@ -37,6 +39,7 @@ export const ExcelSyncModal: React.FC<ExcelSyncModalProps> = ({
   pressDeliveries = [],
   channelCollections = [],
   channels = [],
+  notebookNotes = [],
   onImportSuccess,
   language = 'en',
 }) => {
@@ -64,6 +67,7 @@ export const ExcelSyncModal: React.FC<ExcelSyncModalProps> = ({
       if (imported.pressOrders?.length) details.push(`${imported.pressOrders.length}টি প্রেস অর্ডার`);
       if (imported.pressDeliveries?.length) details.push(`${imported.pressDeliveries.length}টি চালান`);
       if (imported.channelCollections?.length) details.push(`${imported.channelCollections.length}টি আদায় ভাউচার`);
+      if (imported.notebookNotes?.length) details.push(`${imported.notebookNotes.length}টি নোট`);
       
       const summaryText = details.length > 0 ? ` (${details.join(', ')})` : '';
       setSuccessMsg(tr(
@@ -178,6 +182,7 @@ export const ExcelSyncModal: React.FC<ExcelSyncModalProps> = ({
                   pressDeliveries,
                   channelCollections,
                   channels,
+                  notebookNotes,
                 });
                 onClose();
               }}

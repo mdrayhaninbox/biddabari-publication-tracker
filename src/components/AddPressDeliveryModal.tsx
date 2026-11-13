@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { X, Truck, Save } from 'lucide-react';
-import { BookRecord, PressDeliveryRecord } from '../types/book';
+import { X, Truck, Save, Building2 } from 'lucide-react';
+import { BookRecord, PressDeliveryRecord, ChannelConfig } from '../types/book';
 import { Language, tr } from '../utils/i18n';
 import { VoucherImageUploader } from './VoucherImageUploader';
 
@@ -8,6 +8,7 @@ interface AddPressDeliveryModalProps {
   isOpen: boolean;
   onClose: () => void;
   books: BookRecord[];
+  channels?: ChannelConfig[];
   onAddDelivery: (delivery: Omit<PressDeliveryRecord, 'id' | 'createdAt'>) => void;
   preSelectedBookId?: string;
   language?: Language;
@@ -17,6 +18,7 @@ export const AddPressDeliveryModal: React.FC<AddPressDeliveryModalProps> = ({
   isOpen,
   onClose,
   books,
+  channels = [],
   onAddDelivery,
   preSelectedBookId,
   language = 'en',
@@ -36,6 +38,11 @@ export const AddPressDeliveryModal: React.FC<AddPressDeliveryModalProps> = ({
   const [voucherImage, setVoucherImage] = useState<string | undefined>(undefined);
   const [notes, setNotes] = useState<string>('');
 
+  const availablePresses = channels.filter(c => c.type === 'press' || c.id === 'faridBhaiPress');
+  const [selectedPressId, setSelectedPressId] = useState<string>(
+    availablePresses[0]?.id || 'faridBhaiPress'
+  );
+
   useEffect(() => {
     if (preSelectedBookId) {
       setSelectedBookId(preSelectedBookId);
@@ -44,9 +51,16 @@ export const AddPressDeliveryModal: React.FC<AddPressDeliveryModalProps> = ({
     }
   }, [preSelectedBookId, books]);
 
+  useEffect(() => {
+    if (availablePresses.length > 0 && !selectedPressId) {
+      setSelectedPressId(availablePresses[0].id);
+    }
+  }, [channels]);
+
   if (!isOpen) return null;
 
   const currentBook = books.find((b) => b.id === selectedBookId);
+  const currentPress = availablePresses.find((p) => p.id === selectedPressId);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -55,6 +69,8 @@ export const AddPressDeliveryModal: React.FC<AddPressDeliveryModalProps> = ({
     onAddDelivery({
       bookId: selectedBookId,
       bookName: currentBook?.bookName || tr('অজানা বই', 'Unknown Book', language),
+      pressId: selectedPressId,
+      pressName: currentPress?.name || 'ফরিদ ভাই প্রেস',
       deliveryDate,
       quantity: Number(quantity),
       chalanNo: chalanNo.trim() || `CH-${Date.now()}`,
@@ -82,7 +98,7 @@ export const AddPressDeliveryModal: React.FC<AddPressDeliveryModalProps> = ({
                 {tr('প্রেস থেকে বই চালান গ্রহণ', 'Receive Book Delivery from Press', language)}
               </h3>
               <p className="text-xs text-zinc-400">
-                {tr('ফরিদ ভাই প্রেস থেকে হেড অফিসে বই সরবরাহ চালান এন্ট্রি করুন', 'Enter delivery chalan of books received from Farid Bhai Press to Head Office', language)}
+                {tr('প্রেস থেকে হেড অফিসে বই সরবরাহ চালান এন্ট্রি করুন', 'Enter delivery chalan of books received from press to Head Office', language)}
               </p>
             </div>
           </div>
@@ -97,6 +113,30 @@ export const AddPressDeliveryModal: React.FC<AddPressDeliveryModalProps> = ({
         <form onSubmit={handleSubmit}>
           <div className="p-6 space-y-4">
             
+            {/* Press Selection */}
+            <div>
+              <label className="block text-xs font-bold text-zinc-800 mb-1.5 flex items-center gap-1.5">
+                <Building2 className="w-3.5 h-3.5 text-zinc-500" />
+                <span>{tr('সরবরাহকারী প্রেস (Delivering Press) *', 'Delivering Press *', language)}</span>
+              </label>
+              <select
+                value={selectedPressId}
+                onChange={(e) => setSelectedPressId(e.target.value)}
+                className="w-full text-xs font-bold border border-zinc-300 rounded-lg p-2.5 focus:ring-2 focus:ring-zinc-900 bg-white"
+                required
+              >
+                {availablePresses.length > 0 ? (
+                  availablePresses.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.name} {p.address ? `(${p.address})` : ''}
+                    </option>
+                  ))
+                ) : (
+                  <option value="faridBhaiPress">ফরিদ ভাই প্রেস (Farid Bhai Press)</option>
+                )}
+              </select>
+            </div>
+
             {/* Book Selection (Bookwise) */}
             <div>
               <label className="block text-xs font-bold text-zinc-800 mb-1.5">

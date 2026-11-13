@@ -27,7 +27,7 @@ import {
   Image as ImageIcon
 } from 'lucide-react';
 import { ImageViewerModal } from './ImageViewerModal';
-import { BookRecord, PressPaymentRecord, ChannelCollectionRecord, PressOrderRecord, PressDeliveryRecord, ChannelConfig, DEFAULT_CHANNELS } from '../types/book';
+import { BookRecord, PressPaymentRecord, ChannelCollectionRecord, PressOrderRecord, PressDeliveryRecord, ChannelConfig, ChannelType, DEFAULT_CHANNELS } from '../types/book';
 import { 
   calculateBookMetrics, 
   calculateDayBreakdown, 
@@ -277,10 +277,10 @@ export const PrintableReport: React.FC<PrintableReportProps> = ({
 
   // Library / Channel Options for Collection Voucher filtering
   const availableLibraries = React.useMemo(() => {
-    const map = new Map<string, { key: string; name: string; nameEn?: string; type: 'online' | 'offline'; count: number; totalAmount: number }>();
+    const map = new Map<string, { key: string; name: string; nameEn?: string; type: ChannelType; count: number; totalAmount: number }>();
     
-    // Seed from effectiveChannels
-    effectiveChannels.forEach(ch => {
+    // Seed from effectiveChannels (retail sales channels only)
+    effectiveChannels.filter(ch => ch.type === 'online' || ch.type === 'offline').forEach(ch => {
       map.set(ch.id, {
         key: ch.id,
         name: ch.name,

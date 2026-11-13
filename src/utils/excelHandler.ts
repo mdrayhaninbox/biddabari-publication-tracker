@@ -7,6 +7,7 @@ import {
   ChannelCollectionRecord, 
   ChannelConfig 
 } from '../types/book';
+import { NotebookNoteRecord } from '../types/storage';
 import { calculateBookMetrics } from './calculations';
 import { EXCEL_HEADERS } from './excelHeaders';
 
@@ -16,6 +17,7 @@ export interface FullDatabaseBackupData {
   pressDeliveries?: PressDeliveryRecord[];
   channelCollections?: ChannelCollectionRecord[];
   channels?: ChannelConfig[];
+  notebookNotes?: NotebookNoteRecord[];
 }
 
 export interface FullDatabaseImportResult {
@@ -25,6 +27,7 @@ export interface FullDatabaseImportResult {
   pressDeliveries?: PressDeliveryRecord[];
   channelCollections?: ChannelCollectionRecord[];
   channels?: ChannelConfig[];
+  notebookNotes?: NotebookNoteRecord[];
 }
 
 export function exportBooksToExcel(
@@ -276,7 +279,26 @@ export function exportBooksToExcel(
     XLSX.utils.book_append_sheet(wb, wsChannels, 'Sales Channels');
   }
 
-  // Sheet 7: Executive Summary
+  // Sheet 7: Publication Notebook Notes
+  if (additionalData?.notebookNotes && additionalData.notebookNotes.length > 0) {
+    const noteRows: (string | number)[][] = [
+      ['ID', 'Title', 'Content', 'Color', 'Created At', 'Updated At']
+    ];
+    additionalData.notebookNotes.forEach(n => {
+      noteRows.push([
+        n.id || '',
+        n.title || '',
+        n.content || '',
+        n.color || 'yellow',
+        n.createdAt || '',
+        n.updatedAt || ''
+      ]);
+    });
+    const wsNotes = XLSX.utils.aoa_to_sheet(noteRows);
+    XLSX.utils.book_append_sheet(wb, wsNotes, 'Notebook Notes');
+  }
+
+  // Sheet 8: Executive Summary
   const summaryHeaders = [
     'ক্রমিক (SL)',
     'বইয়ের নাম (Book Name)',
@@ -569,13 +591,36 @@ export function importBooksFromExcel(file: File): Promise<FullDatabaseImportResu
           }
         }
 
+        // 7. Parse Notebook Notes (if sheet exists)
+        let notebookNotes: NotebookNoteRecord[] | undefined = undefined;
+        if (wb.SheetNames.includes('Notebook Notes')) {
+          const wsNotes = wb.Sheets['Notebook Notes'];
+          const noteRows: any[][] = XLSX.utils.sheet_to_json(wsNotes, { header: 1 });
+          if (noteRows.length > 1) {
+            notebookNotes = [];
+            for (let i = 1; i < noteRows.length; i++) {
+              const r = noteRows[i];
+              if (!r || !r[0]) continue;
+              notebookNotes.push({
+                id: String(r[0]),
+                title: String(r[1] || ''),
+                content: String(r[2] || ''),
+                color: (r[3] || 'yellow') as any,
+                createdAt: String(r[4] || new Date().toISOString()),
+                updatedAt: String(r[5] || new Date().toISOString()),
+              });
+            }
+          }
+        }
+
         resolve({
           books,
           pressPayments,
           pressOrders,
           pressDeliveries,
           channelCollections,
-          channels
+          channels,
+          notebookNotes
         });
       } catch (err) {
         reject(err);

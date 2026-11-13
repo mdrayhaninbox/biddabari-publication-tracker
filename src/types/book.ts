@@ -63,6 +63,8 @@ export interface PressOrderRecord {
   id: string;
   bookId: string;
   bookName: string;
+  pressId?: string; // Optional press ID (defaults to Farid Bhai Press)
+  pressName?: string; // e.g. "ফরিদ ভাই প্রেস", "বর্ণালী প্রেস"
   orderDate: string; // YYYY-MM-DD
   orderQuantity: number;
   lotName?: string; // e.g. "১ম মুদ্রণ", "২য় মুদ্রণ", "রি-অর্ডার লট-২"
@@ -78,6 +80,8 @@ export interface PressDeliveryRecord {
   id: string;
   bookId: string;
   bookName: string;
+  pressId?: string; // Optional press ID
+  pressName?: string; // e.g. "ফরিদ ভাই প্রেস", "বর্ণালী প্রেস"
   deliveryDate: string; // YYYY-MM-DD
   quantity: number;
   chalanNo: string;
@@ -93,6 +97,8 @@ export interface PressPaymentRecord {
   date: string; // YYYY-MM-DD
   bookId?: string; // Optional: specific book or all/general
   bookName?: string;
+  pressId?: string; // Optional press ID
+  pressName?: string; // e.g. "ফরিদ ভাই প্রেস", "বর্ণালী প্রেস"
   amount: number;
   paymentMethod: PaymentMethod;
   voucherNo?: string;
@@ -115,24 +121,31 @@ export interface ChannelCollectionRecord {
   createdAt: string;
 }
 
+export type ChannelType = 'online' | 'offline' | 'press';
+
 export interface ChannelConfig {
-  id: string; // unique key, e.g. 'boibari', 'nilkhetLibrary', 'chan_1234567'
-  name: string; // Bangla display name, e.g. 'নীলক্ষেত লাইব্রেরি'
-  nameEn?: string; // English display name, e.g. 'Nilkhet Library'
-  type: 'online' | 'offline';
-  source?: 'headOffice' | 'press'; // for offline: 'headOffice' (from HO) or 'press' (directly from Farid Bhai Press)
+  id: string; // unique key, e.g. 'boibari', 'nilkhetLibrary', 'faridBhaiPress', 'press_123'
+  name: string; // Bangla display name, e.g. 'নীলক্ষেত লাইব্রেরি' or 'ফরিদ ভাই প্রেস'
+  nameEn?: string; // English display name, e.g. 'Nilkhet Library' or 'Farid Bhai Press'
+  type: ChannelType;
+  source?: 'headOffice' | 'press'; // for offline: 'headOffice' (from HO) or 'press' (directly from Press)
+  pressId?: string; // if supplied from a specific press
+  address?: string; // optional address/location for press or library
+  phone?: string; // optional contact phone
+  contactPhone?: string; // optional contact phone
   category?: string;
   isSystemDefault?: boolean;
 }
 
 export const DEFAULT_CHANNELS: ChannelConfig[] = [
+  { id: 'faridBhaiPress', name: 'ফরিদ ভাই প্রেস (Farid Bhai Press)', nameEn: 'Farid Bhai Press', type: 'press', category: 'প্রধান প্রিন্টিং ও বাঁধাই প্রেস', isSystemDefault: true },
   { id: 'boibari', name: 'বইবাড়ি (Boibari)', nameEn: 'Boibari', type: 'online', category: 'অনলাইন ই-কমার্স', isSystemDefault: true },
   { id: 'rokomari', name: 'রকমারি (Rokomari)', nameEn: 'Rokomari', type: 'online', category: 'অনলাইন ই-কমার্স', isSystemDefault: true },
   { id: 'wafilife', name: 'ওয়াফিলাইফ (Wafilife)', nameEn: 'Wafilife', type: 'online', category: 'অনলাইন ই-কমার্স', isSystemDefault: true },
   { id: 'othersOnline', name: 'অন্যান্য অনলাইন লাইব্রেরি', nameEn: 'Others Online', type: 'online', category: 'অনলাইন প্ল্যাটফর্ম', isSystemDefault: true },
-  { id: 'sumonaLibrary', name: 'সুমনা লাইব্রেরি (Sumona Library)', nameEn: 'Sumona Library', type: 'offline', source: 'press', category: 'ডিলার লাইব্রেরি (প্রেস থেকে সরাসরি)', isSystemDefault: true },
-  { id: 'promiseLibrary', name: 'প্রমিজ লাইব্রেরি (Promise Library)', nameEn: 'Promise Library', type: 'offline', source: 'press', category: 'ডিলার লাইব্রেরি (প্রেস থেকে সরাসরি)', isSystemDefault: true },
-  { id: 'joystarLibrary', name: 'জয়স্টার লাইব্রেরি (Joystar Library)', nameEn: 'Joystar Library', type: 'offline', source: 'press', category: 'ডিলার লাইব্রেরি (প্রেস থেকে সরাসরি)', isSystemDefault: true },
+  { id: 'sumonaLibrary', name: 'সুমনা লাইব্রেরি (Sumona Library)', nameEn: 'Sumona Library', type: 'offline', source: 'press', pressId: 'faridBhaiPress', category: 'ডিলার লাইব্রেরি (প্রেস থেকে সরাসরি)', isSystemDefault: true },
+  { id: 'promiseLibrary', name: 'প্রমিজ লাইব্রেরি (Promise Library)', nameEn: 'Promise Library', type: 'offline', source: 'press', pressId: 'faridBhaiPress', category: 'ডিলার লাইব্রেরি (প্রেস থেকে সরাসরি)', isSystemDefault: true },
+  { id: 'joystarLibrary', name: 'জয়স্টার লাইব্রেরি (Joystar Library)', nameEn: 'Joystar Library', type: 'offline', source: 'press', pressId: 'faridBhaiPress', category: 'ডিলার লাইব্রেরি (প্রেস থেকে সরাসরি)', isSystemDefault: true },
   { id: 'nilkhetLibrary', name: 'নীলক্ষেত লাইব্রেরি (Nilkhet)', nameEn: 'Nilkhet Library', type: 'offline', source: 'headOffice', category: 'লোকাল মার্কেট (হেড অফিস সরবরাহ)', isSystemDefault: true },
   { id: 'headOfficeSellOffline', name: 'হেড অফিস সরাসরি অফলাইন বিক্রয়', nameEn: 'Head Office Direct Counter', type: 'offline', source: 'headOffice', category: 'হেড অফিস সরাসরি', isSystemDefault: true },
 ];
@@ -140,7 +153,7 @@ export const DEFAULT_CHANNELS: ChannelConfig[] = [
 export interface ChannelInfo {
   key: string;
   name: string;
-  type: 'online' | 'offline';
+  type: ChannelType;
   category: string;
 }
 

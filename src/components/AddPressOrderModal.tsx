@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { X, Layers, Save } from 'lucide-react';
-import { BookRecord, PressOrderRecord } from '../types/book';
+import { X, Layers, Save, Building2 } from 'lucide-react';
+import { BookRecord, PressOrderRecord, ChannelConfig } from '../types/book';
 import { formatBDT } from '../utils/calculations';
 import { Language, tr } from '../utils/i18n';
 import { VoucherImageUploader } from './VoucherImageUploader';
@@ -9,6 +9,7 @@ interface AddPressOrderModalProps {
   isOpen: boolean;
   onClose: () => void;
   books: BookRecord[];
+  channels?: ChannelConfig[];
   onAddOrder: (order: Omit<PressOrderRecord, 'id' | 'createdAt'>) => void;
   preSelectedBookId?: string;
   language?: Language;
@@ -18,6 +19,7 @@ export const AddPressOrderModal: React.FC<AddPressOrderModalProps> = ({
   isOpen,
   onClose,
   books,
+  channels = [],
   onAddOrder,
   preSelectedBookId,
   language = 'en',
@@ -37,6 +39,11 @@ export const AddPressOrderModal: React.FC<AddPressOrderModalProps> = ({
   const [makingCost, setMakingCost] = useState<number>(250);
   const [notes, setNotes] = useState<string>('');
 
+  const availablePresses = channels.filter(c => c.type === 'press' || c.id === 'faridBhaiPress');
+  const [selectedPressId, setSelectedPressId] = useState<string>(
+    availablePresses[0]?.id || 'faridBhaiPress'
+  );
+
   useEffect(() => {
     if (preSelectedBookId) {
       setSelectedBookId(preSelectedBookId);
@@ -52,9 +59,16 @@ export const AddPressOrderModal: React.FC<AddPressOrderModalProps> = ({
     }
   }, [selectedBookId, books]);
 
+  useEffect(() => {
+    if (availablePresses.length > 0 && !selectedPressId) {
+      setSelectedPressId(availablePresses[0].id);
+    }
+  }, [channels]);
+
   if (!isOpen) return null;
 
   const currentBook = books.find((b) => b.id === selectedBookId);
+  const currentPress = availablePresses.find((p) => p.id === selectedPressId);
   const totalBill = (Number(orderQuantity) || 0) * (Number(makingCost) || 0);
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -64,6 +78,8 @@ export const AddPressOrderModal: React.FC<AddPressOrderModalProps> = ({
     onAddOrder({
       bookId: selectedBookId,
       bookName: currentBook?.bookName || tr('অজানা বই', 'Unknown Book', language),
+      pressId: selectedPressId,
+      pressName: currentPress?.name || 'ফরিদ ভাই প্রেস',
       orderDate,
       orderQuantity: Number(orderQuantity),
       lotName: lotName.trim() || tr('প্রেস অর্ডার', 'Press Order', language),
@@ -92,7 +108,7 @@ export const AddPressOrderModal: React.FC<AddPressOrderModalProps> = ({
                 {tr('নতুন প্রেস অর্ডার এন্ট্রি', 'New Press Order Entry', language)}
               </h3>
               <p className="text-xs text-zinc-400">
-                {tr('ফরিদ ভাই প্রেসে বই ছাপার নতুন অর্ডার বা রি-অর্ডার লট যোগ করুন', 'Add print order or re-order lot placed at Farid Bhai Press', language)}
+                {tr('প্রেসে বই ছাপার নতুন অর্ডার বা রি-অর্ডার লট যোগ করুন', 'Add print order or re-order lot placed at press', language)}
               </p>
             </div>
           </div>
@@ -107,6 +123,30 @@ export const AddPressOrderModal: React.FC<AddPressOrderModalProps> = ({
         <form onSubmit={handleSubmit}>
           <div className="p-6 space-y-4">
             
+            {/* Press Selection (If multiple presses exist or for clarity) */}
+            <div>
+              <label className="block text-xs font-bold text-zinc-800 mb-1.5 flex items-center gap-1.5">
+                <Building2 className="w-3.5 h-3.5 text-zinc-500" />
+                <span>{tr('ছাপাখানা / প্রেস নির্বাচন করুন (Select Press) *', 'Select Printing Press *', language)}</span>
+              </label>
+              <select
+                value={selectedPressId}
+                onChange={(e) => setSelectedPressId(e.target.value)}
+                className="w-full text-xs font-bold border border-zinc-300 rounded-lg p-2.5 focus:ring-2 focus:ring-zinc-900 bg-white"
+                required
+              >
+                {availablePresses.length > 0 ? (
+                  availablePresses.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.name} {p.address ? `(${p.address})` : ''}
+                    </option>
+                  ))
+                ) : (
+                  <option value="faridBhaiPress">ফরিদ ভাই প্রেস (Farid Bhai Press)</option>
+                )}
+              </select>
+            </div>
+
             {/* Book Selection (Bookwise) */}
             <div>
               <label className="block text-xs font-bold text-zinc-800 mb-1.5">
@@ -133,6 +173,19 @@ export const AddPressOrderModal: React.FC<AddPressOrderModalProps> = ({
               <div>
                 <label className="block text-xs font-bold text-zinc-800 mb-1.5">
                   {tr('অর্ডারের তারিখ (Order Date) *', 'Order Date *', language)}
+                </label>
+                <input
+                  type="date"
+                  required
+                  value={orderDate}
+                  onChange={(e) => setOrderDate(e.target.value)}
+                  className="w-full text-xs border border-zinc-300 rounded-lg p-2.5 focus:ring-2 focus:ring-zinc-900 font-mono"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-zinc-800 mb-1.5">
+                  {tr('ভাউচার / অর্ডার স্লিপ নং (Voucher No) *', 'Voucher / PO No *', language)}
                 </label>
                 <input
                   type="date"

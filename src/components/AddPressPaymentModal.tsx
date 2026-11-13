@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import { X, CreditCard } from 'lucide-react';
-import { BookRecord, PressPaymentRecord, PaymentMethod } from '../types/book';
+import React, { useState, useEffect } from 'react';
+import { X, CreditCard, Building2 } from 'lucide-react';
+import { BookRecord, PressPaymentRecord, PaymentMethod, ChannelConfig } from '../types/book';
 import { Language, tr } from '../utils/i18n';
 import { VoucherImageUploader } from './VoucherImageUploader';
 
@@ -8,6 +8,7 @@ interface AddPressPaymentModalProps {
   isOpen: boolean;
   onClose: () => void;
   books: BookRecord[];
+  channels?: ChannelConfig[];
   onSavePayment: (payment: Omit<PressPaymentRecord, 'id' | 'createdAt'>) => void;
   language?: Language;
 }
@@ -16,6 +17,7 @@ export const AddPressPaymentModal: React.FC<AddPressPaymentModalProps> = ({
   isOpen,
   onClose,
   books,
+  channels = [],
   onSavePayment,
   language = 'en',
 }) => {
@@ -27,7 +29,20 @@ export const AddPressPaymentModal: React.FC<AddPressPaymentModalProps> = ({
   const [voucherImage, setVoucherImage] = useState<string | undefined>(undefined);
   const [notes, setNotes] = useState<string>('');
 
+  const availablePresses = channels.filter(c => c.type === 'press' || c.id === 'faridBhaiPress');
+  const [selectedPressId, setSelectedPressId] = useState<string>(
+    availablePresses[0]?.id || 'faridBhaiPress'
+  );
+
+  useEffect(() => {
+    if (availablePresses.length > 0 && !selectedPressId) {
+      setSelectedPressId(availablePresses[0].id);
+    }
+  }, [channels]);
+
   if (!isOpen) return null;
+
+  const currentPress = availablePresses.find(p => p.id === selectedPressId);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,6 +57,8 @@ export const AddPressPaymentModal: React.FC<AddPressPaymentModalProps> = ({
       date,
       bookId: bookId || undefined,
       bookName: selectedBook ? selectedBook.bookName : tr('সার্বিক প্রেস অর্ডার', 'General Press Orders', language),
+      pressId: selectedPressId,
+      pressName: currentPress?.name || 'ফরিদ ভাই প্রেস',
       amount: Number(amount),
       paymentMethod,
       voucherNo: voucherNo.trim() || undefined,
@@ -67,7 +84,7 @@ export const AddPressPaymentModal: React.FC<AddPressPaymentModalProps> = ({
                 {tr('প্রেস পেমেন্ট ভাউচার এন্ট্রি', 'Enter Press Payment Voucher', language)}
               </h3>
               <p className="text-xs text-zinc-500">
-                {tr('ফরিদ ভাই প্রেসে পরিশোধকৃত টাকার হিসাব লিপিবদ্ধ করুন', 'Record payment made to Farid Bhai Press', language)}
+                {tr('প্রেসে পরিশোধকৃত টাকার হিসাব লিপিবদ্ধ করুন', 'Record payment made to printing press', language)}
               </p>
             </div>
           </div>
@@ -80,6 +97,31 @@ export const AddPressPaymentModal: React.FC<AddPressPaymentModalProps> = ({
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          
+          {/* Press Selection */}
+          <div>
+            <label className="block text-xs font-bold text-zinc-800 mb-1 flex items-center gap-1.5">
+              <Building2 className="w-3.5 h-3.5 text-zinc-500" />
+              <span>{tr('প্রাপক প্রেস (Payee Press) *', 'Payee Press *', language)}</span>
+            </label>
+            <select
+              value={selectedPressId}
+              onChange={(e) => setSelectedPressId(e.target.value)}
+              className="w-full text-xs font-semibold border border-zinc-300 rounded-xl p-2.5 bg-zinc-50 focus:bg-white focus:ring-2 focus:ring-zinc-900"
+              required
+            >
+              {availablePresses.length > 0 ? (
+                availablePresses.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name} {p.address ? `(${p.address})` : ''}
+                  </option>
+                ))
+              ) : (
+                <option value="faridBhaiPress">ফরিদ ভাই প্রেস (Farid Bhai Press)</option>
+              )}
+            </select>
+          </div>
+
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {/* Date */}
             <div>

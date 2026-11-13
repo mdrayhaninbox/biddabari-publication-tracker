@@ -13,7 +13,8 @@ import {
   Filter,
   Edit2,
   Image as ImageIcon,
-  Printer
+  Printer,
+  Building2
 } from 'lucide-react';
 import { ImageViewerModal } from './ImageViewerModal';
 import { 
@@ -23,6 +24,7 @@ import {
   PressOrderRecord, 
   PressDeliveryRecord,
   ChannelConfig,
+  ChannelType,
   DEFAULT_CHANNELS
 } from '../types/book';
 import { 
@@ -51,7 +53,7 @@ interface AccountsDueLedgerProps {
   selectedYear?: number;
   language?: Language;
   channels?: ChannelConfig[];
-  onOpenAddChannel?: (defaultType: 'online' | 'offline') => void;
+  onOpenAddChannel?: (defaultType: ChannelType) => void;
   onOpenEditChannel?: (channel: ChannelConfig) => void;
   onOpenPrintCollectionVouchers?: (libraryKey?: string) => void;
   onOpenPrintPressVouchers?: () => void;
@@ -80,6 +82,7 @@ export const AccountsDueLedger: React.FC<AccountsDueLedgerProps> = ({
 }) => {
   const [activeSubTab, setActiveSubTab] = useState<'press' | 'orders' | 'channels'>('press');
   const [selectedBookFilter, setSelectedBookFilter] = useState<string>('all');
+  const [selectedPressFilter, setSelectedPressFilter] = useState<string>('all');
   const [voucherSearchQuery, setVoucherSearchQuery] = useState<string>('');
   const [previewImage, setPreviewImage] = useState<{ url: string; title: string; subtitle?: string } | null>(null);
 
@@ -89,14 +92,33 @@ export const AccountsDueLedger: React.FC<AccountsDueLedgerProps> = ({
   };
 
   const effectiveChannels = channels && channels.length > 0 ? channels : DEFAULT_CHANNELS;
+  const presses = effectiveChannels.filter(c => c.type === 'press' || c.id === 'faridBhaiPress');
 
-  // Compute live press financials (incorporating multi press orders)
-  const pressAccounts = calculatePressAccounts(books, pressPayments, pressOrders);
+  // Compute live press financials (incorporating multi press orders and press filter)
+  const pressAccounts = calculatePressAccounts(books, pressPayments, pressOrders, selectedPressFilter);
   const channelAccounts = calculateChannelDueAccounts(books, channelCollections, effectiveChannels);
+
+  // Filter press payments
+  const filteredPayments = pressPayments.filter((p) => {
+    const matchPress =
+      selectedPressFilter === 'all' ||
+      (p.pressId || 'faridBhaiPress') === selectedPressFilter;
+    const q = voucherSearchQuery.trim().toLowerCase();
+    const matchQuery =
+      !q ||
+      (p.voucherNo && p.voucherNo.toLowerCase().includes(q)) ||
+      (p.bookName && p.bookName.toLowerCase().includes(q)) ||
+      (p.date && p.date.includes(q)) ||
+      (p.notes && p.notes.toLowerCase().includes(q));
+    return matchPress && matchQuery;
+  });
 
   // Filter press orders for Press Order Management
   const filteredOrders = pressOrders.filter((o) => {
     const matchBook = selectedBookFilter === 'all' || o.bookId === selectedBookFilter;
+    const matchPress =
+      selectedPressFilter === 'all' ||
+      (o.pressId || 'faridBhaiPress') === selectedPressFilter;
     const q = voucherSearchQuery.trim().toLowerCase();
     const matchQuery =
       !q ||
@@ -105,12 +127,15 @@ export const AccountsDueLedger: React.FC<AccountsDueLedgerProps> = ({
       (o.bookName && o.bookName.toLowerCase().includes(q)) ||
       (o.orderDate && o.orderDate.includes(q)) ||
       (o.notes && o.notes.toLowerCase().includes(q));
-    return matchBook && matchQuery;
+    return matchBook && matchPress && matchQuery;
   });
 
   // Filter press deliveries for Press Order Management
   const filteredDeliveries = pressDeliveries.filter((d) => {
     const matchBook = selectedBookFilter === 'all' || d.bookId === selectedBookFilter;
+    const matchPress =
+      selectedPressFilter === 'all' ||
+      (d.pressId || 'faridBhaiPress') === selectedPressFilter;
     const q = voucherSearchQuery.trim().toLowerCase();
     const matchQuery =
       !q ||
@@ -120,7 +145,7 @@ export const AccountsDueLedger: React.FC<AccountsDueLedgerProps> = ({
       (d.deliveryDate && d.deliveryDate.includes(q)) ||
       (d.receivedBy && d.receivedBy.toLowerCase().includes(q)) ||
       (d.notes && d.notes.toLowerCase().includes(q));
-    return matchBook && matchQuery;
+    return matchBook && matchPress && matchQuery;
   });
 
   const totalOrderedCopies = filteredOrders.reduce((sum, o) => sum + (Number(o.orderQuantity) || 0), 0);
@@ -283,12 +308,63 @@ export const AccountsDueLedger: React.FC<AccountsDueLedgerProps> = ({
       {activeSubTab === 'press' && (
         <div className="space-y-6">
           
+          {/* Press Filter Pills / Selector */}
+          <div className="flex items-center justify-between flex-wrap gap-2.5 p-3.5 bg-white border border-zinc-200 rounded-2xl shadow-xs">
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <span className="text-xs font-bold text-zinc-700 flex items-center gap-1 mr-1">
+                <Building2 className="w-3.5 h-3.5 text-zinc-600" />
+                <span>{tr('প্রেস ফিল্টার:', 'Press Filter:', language)}</span>
+              </span>
+              <button
+                type="button"
+                onClick={() => setSelectedPressFilter('all')}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                  selectedPressFilter === 'all'
+                    ? 'bg-zinc-900 text-white shadow-xs'
+                    : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200 border border-zinc-200'
+                }`}
+              >
+                {tr('সকল প্রেস', 'All Presses', language)} ({presses.length})
+              </button>
+              {presses.map(p => (
+                <button
+                  key={p.id}
+                  type="button"
+                  onClick={() => setSelectedPressFilter(p.id)}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                    selectedPressFilter === p.id
+                      ? 'bg-zinc-900 text-white shadow-xs'
+                      : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200 border border-zinc-200'
+                  }`}
+                >
+                  {p.name.split(' (')[0]}
+                </button>
+              ))}
+            </div>
+
+            {onOpenAddChannel && (
+              <button
+                type="button"
+                onClick={() => onOpenAddChannel('press')}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-xl transition-all shadow-2xs"
+              >
+                <PlusCircle className="w-3.5 h-3.5 text-blue-600" />
+                <span>{tr('+ নতুন প্রেস এন্ট্রি', '+ Add New Press', language)}</span>
+              </button>
+            )}
+          </div>
+
           {/* Press Accounts Per-Book Table */}
           <div className="bg-white rounded-2xl border border-zinc-200 shadow-xs overflow-hidden">
             <div className="p-4 border-b border-zinc-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <div>
                 <h3 className="font-bold text-zinc-900 text-sm">
-                  {tr('বই ভিত্তিক প্রেস হিসাব খতিয়ান (ফরিদ ভাই প্রেস)', 'Book-wise Press Ledger (Farid Bhai Press)', language)}
+                  {tr('বই ভিত্তিক প্রেস হিসাব খতিয়ান', 'Book-wise Press Ledger', language)}{' '}
+                  <span className="text-blue-700 font-extrabold">
+                    {selectedPressFilter !== 'all'
+                      ? `(${presses.find(p => p.id === selectedPressFilter)?.name.split(' (')[0] || selectedPressFilter})`
+                      : `(${tr('সকল প্রেস', 'All Presses', language)})`}
+                  </span>
                 </h3>
                 <p className="text-xs text-zinc-500">
                   {tr(
@@ -424,8 +500,8 @@ export const AccountsDueLedger: React.FC<AccountsDueLedgerProps> = ({
                 </h3>
                 <p className="text-xs text-zinc-500">
                   {tr(
-                    `প্রেসে প্রদানকৃত সকল চেক, ব্যাংক ও ক্যাশ ট্রানজেকশনের তালিকা (${pressPayments.length} টি)`,
-                    `All cheque, bank, and cash transactions to press (${pressPayments.length})`,
+                    `প্রেসে প্রদানকৃত সকল চেক, ব্যাংক ও ক্যাশ ট্রানজেকশনের তালিকা (${filteredPayments.length} টি)`,
+                    `All cheque, bank, and cash transactions to press (${filteredPayments.length})`,
                     language
                   )}
                 </p>
@@ -443,7 +519,7 @@ export const AccountsDueLedger: React.FC<AccountsDueLedgerProps> = ({
               )}
             </div>
 
-            {pressPayments.length === 0 ? (
+            {filteredPayments.length === 0 ? (
               <div className="p-8 text-center text-zinc-500 text-xs">
                 {tr(
                   'এখনও কোনো প্রেস পেমেন্ট এন্ট্রি করা হয়নি। উপরে "প্রেস পেমেন্ট ভাউচার এন্ট্রি" বাটনে ক্লিক করে যুক্ত করুন।',
@@ -453,10 +529,11 @@ export const AccountsDueLedger: React.FC<AccountsDueLedgerProps> = ({
               </div>
             ) : (
               <div className="overflow-x-auto w-full">
-                <table className="w-full text-left border-collapse text-xs min-w-[700px]">
+                <table className="w-full text-left border-collapse text-xs min-w-[750px]">
                   <thead>
                     <tr className="bg-zinc-50 text-zinc-800 font-semibold border-b border-zinc-200">
                       <th className="py-2.5 px-3">{tr('তারিখ', 'Date', language)}</th>
+                      <th className="py-2.5 px-3">{tr('প্রাপক প্রেস', 'Payee Press', language)}</th>
                       <th className="py-2.5 px-3">{tr('খাত / বইয়ের নাম', 'Account / Book Name', language)}</th>
                       <th className="py-2.5 px-3 text-right">{tr('পরিশোধিত পরিমাণ', 'Amount Paid', language)}</th>
                       <th className="py-2.5 px-3 text-center">{tr('পেমেন্ট মাধ্যম', 'Payment Method', language)}</th>
@@ -466,9 +543,14 @@ export const AccountsDueLedger: React.FC<AccountsDueLedgerProps> = ({
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-zinc-100">
-                    {pressPayments.map((p) => (
+                    {filteredPayments.map((p) => (
                       <tr key={p.id} className="hover:bg-zinc-50/70 transition-colors">
                         <td className="py-2.5 px-3 font-mono font-medium text-zinc-900">{p.date}</td>
+                        <td className="py-2.5 px-3">
+                          <span className="font-bold text-zinc-900 bg-zinc-100 px-2 py-0.5 rounded text-[11px] border border-zinc-200">
+                            {p.pressName || 'ফরিদ ভাই প্রেস'}
+                          </span>
+                        </td>
                         <td className="py-2.5 px-3 font-semibold text-zinc-800">{p.bookName || tr('সার্বিক প্রেস অর্ডার', 'General Press Account', language)}</td>
                         <td className="py-2.5 px-3 text-right font-mono font-bold text-zinc-900">{formatBDT(p.amount, language)}</td>
                         <td className="py-2.5 px-3 text-center">
@@ -526,9 +608,24 @@ export const AccountsDueLedger: React.FC<AccountsDueLedgerProps> = ({
           {/* Top Control Bar: Book-wise Filter, Voucher Search, and Add Action Buttons */}
           <div className="bg-white p-4 rounded-2xl border border-zinc-200 shadow-xs flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
             
-            {/* Book-wise selector & Voucher Search Input */}
+            {/* Book-wise selector, Press selector & Voucher Search Input */}
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 flex-1">
               
+              {/* Press Selector */}
+              <div className="flex items-center gap-2">
+                <Building2 className="w-4 h-4 text-zinc-500 shrink-0" />
+                <select
+                  value={selectedPressFilter}
+                  onChange={(e) => setSelectedPressFilter(e.target.value)}
+                  className="text-xs font-bold border border-zinc-300 rounded-xl px-3 py-2 bg-white focus:ring-2 focus:ring-zinc-900 w-full sm:w-auto"
+                >
+                  <option value="all">{tr(`সকল প্রেস (${presses.length} টি)`, `All Presses (${presses.length})`, language)}</option>
+                  {presses.map((p) => (
+                    <option key={p.id} value={p.id}>{p.name.split(' (')[0]}</option>
+                  ))}
+                </select>
+              </div>
+
               {/* Book-wise dropdown */}
               <div className="flex items-center gap-2">
                 <Filter className="w-4 h-4 text-zinc-500 shrink-0" />
@@ -689,10 +786,11 @@ export const AccountsDueLedger: React.FC<AccountsDueLedgerProps> = ({
               </div>
             ) : (
               <div className="overflow-x-auto w-full">
-                <table className="w-full text-left border-collapse text-xs min-w-[750px]">
+                <table className="w-full text-left border-collapse text-xs min-w-[850px]">
                   <thead>
                     <tr className="bg-zinc-50 text-zinc-800 font-semibold border-b border-zinc-200">
                       <th className="py-2.5 px-3">{tr('অর্ডারের তারিখ', 'Order Date', language)}</th>
+                      <th className="py-2.5 px-3">{tr('প্রেস / ছাপাখানা', 'Printing Press', language)}</th>
                       <th className="py-2.5 px-3">{tr('ভাউচার / অর্ডার নং', 'Voucher / PO No', language)}</th>
                       <th className="py-2.5 px-3 min-w-[180px]">{tr('বইয়ের নাম', 'Book Name', language)}</th>
                       <th className="py-2.5 px-3">{tr('সংস্করণ / লট', 'Edition / Lot', language)}</th>
@@ -707,6 +805,11 @@ export const AccountsDueLedger: React.FC<AccountsDueLedgerProps> = ({
                     {filteredOrders.map((o) => (
                       <tr key={o.id} className="hover:bg-zinc-50/70 transition-colors">
                         <td className="py-2.5 px-3 font-mono font-medium text-zinc-900">{o.orderDate}</td>
+                        <td className="py-2.5 px-3">
+                          <span className="font-bold text-zinc-900 bg-zinc-100 px-2 py-0.5 rounded text-[11px] border border-zinc-200">
+                            {o.pressName || 'ফরিদ ভাই প্রেস'}
+                          </span>
+                        </td>
                         <td className="py-2.5 px-3">
                           <div className="flex items-center gap-1.5 flex-wrap">
                             <span className="font-mono font-bold text-zinc-900 bg-zinc-100 px-2 py-0.5 rounded border border-zinc-200">
@@ -759,7 +862,7 @@ export const AccountsDueLedger: React.FC<AccountsDueLedgerProps> = ({
                   </tbody>
                   <tfoot>
                     <tr className="bg-zinc-100 font-black text-zinc-900 border-t-2 border-zinc-300">
-                      <td colSpan={4} className="py-3 px-3 text-right">{tr('মোট প্রেস অর্ডার যোগফল:', 'Total Press Orders:', language)}</td>
+                      <td colSpan={5} className="py-3 px-3 text-right">{tr('মোট প্রেস অর্ডার যোগফল:', 'Total Press Orders:', language)}</td>
                       <td className="py-3 px-3 text-center font-mono">{formatNumber(totalOrderedCopies, language)} {tr('কপি', 'copies', language)}</td>
                       <td></td>
                       <td className="py-3 px-3 text-right font-mono">{formatBDT(totalOrdersBill, language)}</td>
@@ -815,10 +918,11 @@ export const AccountsDueLedger: React.FC<AccountsDueLedgerProps> = ({
               </div>
             ) : (
               <div className="overflow-x-auto w-full">
-                <table className="w-full text-left border-collapse text-xs min-w-[750px]">
+                <table className="w-full text-left border-collapse text-xs min-w-[850px]">
                   <thead>
                     <tr className="bg-zinc-50 text-zinc-800 font-semibold border-b border-zinc-200">
                       <th className="py-2.5 px-3">{tr('গ্রহণের তারিখ', 'Receipt Date', language)}</th>
+                      <th className="py-2.5 px-3">{tr('সরবরাহকারী প্রেস', 'Delivering Press', language)}</th>
                       <th className="py-2.5 px-3">{tr('প্রেস চালান / ভাউচার নং', 'Chalan / Voucher No', language)}</th>
                       <th className="py-2.5 px-3 min-w-[180px]">{tr('বইয়ের নাম', 'Book Name', language)}</th>
                       <th className="py-2.5 px-3 text-center">{tr('গ্রহণকৃত কপি', 'Received Copies', language)}</th>
@@ -832,6 +936,11 @@ export const AccountsDueLedger: React.FC<AccountsDueLedgerProps> = ({
                     {filteredDeliveries.map((d) => (
                       <tr key={d.id} className="hover:bg-zinc-50/70 transition-colors">
                         <td className="py-2.5 px-3 font-mono font-medium text-zinc-900">{d.deliveryDate}</td>
+                        <td className="py-2.5 px-3">
+                          <span className="font-bold text-zinc-900 bg-zinc-100 px-2 py-0.5 rounded text-[11px] border border-zinc-200">
+                            {d.pressName || 'ফরিদ ভাই প্রেস'}
+                          </span>
+                        </td>
                         <td className="py-2.5 px-3">
                           <div className="flex items-center gap-1.5 flex-wrap">
                             <span className="font-mono font-bold text-zinc-900 bg-zinc-100 px-2 py-0.5 rounded border border-zinc-200">
@@ -881,7 +990,7 @@ export const AccountsDueLedger: React.FC<AccountsDueLedgerProps> = ({
                   </tbody>
                   <tfoot>
                     <tr className="bg-zinc-100 font-black text-zinc-900 border-t-2 border-zinc-300">
-                      <td colSpan={3} className="py-3 px-3 text-right">{tr('মোট গ্রহণকৃত চালান কপি:', 'Total Received Copies:', language)}</td>
+                      <td colSpan={4} className="py-3 px-3 text-right">{tr('মোট গ্রহণকৃত চালান কপি:', 'Total Received Copies:', language)}</td>
                       <td className="py-3 px-3 text-center font-mono">{formatNumber(totalDeliveredCopies, language)} {tr('কপি', 'copies', language)}</td>
                       <td colSpan={4}></td>
                     </tr>
@@ -1017,6 +1126,16 @@ export const AccountsDueLedger: React.FC<AccountsDueLedgerProps> = ({
                   >
                     <PlusCircle className="w-3.5 h-3.5" />
                     <span>{tr('+ নতুন চ্যানেল যোগ', '+ Add Channel', language)}</span>
+                  </button>
+                )}
+                {onOpenAddChannel && (
+                  <button
+                    type="button"
+                    onClick={() => onOpenAddChannel('press')}
+                    className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-xl transition-all shadow-xs"
+                  >
+                    <Building2 className="w-3.5 h-3.5 text-blue-600" />
+                    <span>{tr('+ নতুন প্রেস এন্ট্রি', '+ New Press Entry', language)}</span>
                   </button>
                 )}
                 <button
@@ -1255,6 +1374,96 @@ export const AccountsDueLedger: React.FC<AccountsDueLedgerProps> = ({
                 </table>
               </div>
             )}
+          </div>
+
+          {/* Registered Printing Presses Section */}
+          <div className="bg-white rounded-2xl border border-zinc-200 shadow-xs overflow-hidden">
+            <div className="p-4 border-b border-zinc-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <div className="p-2 bg-blue-50 text-blue-700 rounded-lg">
+                  <Building2 className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-zinc-900 text-sm">
+                    {tr('নিবন্ধিত প্রেস ও ছাপাখানা তালিকা (Registered Printing Presses)', 'Registered Printing Presses', language)}
+                  </h3>
+                  <p className="text-xs text-zinc-500">
+                    {tr('যেসব প্রেসে বই মুদ্রণ ও বাঁধাইয়ের কাজ করানো হয় (ভবিষ্যতে নতুন প্রেস যুক্ত বা সম্পাদনা করতে পারেন)', 'Printing presses handling book printing and binding (add or edit new presses)', language)}
+                  </p>
+                </div>
+              </div>
+
+              {onOpenAddChannel && (
+                <button
+                  type="button"
+                  onClick={() => onOpenAddChannel('press')}
+                  className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition-all shadow-xs"
+                >
+                  <PlusCircle className="w-3.5 h-3.5" />
+                  <span>{tr('+ নতুন প্রেস এন্ট্রি', '+ New Press Entry', language)}</span>
+                </button>
+              )}
+            </div>
+
+            <div className="overflow-x-auto w-full">
+              <table className="w-full text-left border-collapse text-xs min-w-[700px]">
+                <thead>
+                  <tr className="bg-zinc-100 text-zinc-900 font-bold border-b border-zinc-200">
+                    <th className="py-2.5 px-3">{tr('প্রেস / ছাপাখানার নাম', 'Press Name', language)}</th>
+                    <th className="py-2.5 px-3">{tr('ক্যাটেগরি', 'Category', language)}</th>
+                    <th className="py-2.5 px-3">{tr('ঠিকানা / অবস্থান', 'Address', language)}</th>
+                    <th className="py-2.5 px-3">{tr('যোগাযোগ / ফোন', 'Contact Phone', language)}</th>
+                    <th className="py-2.5 px-3 text-center">{tr('অর্ডার লট', 'Order Lots', language)}</th>
+                    <th className="py-2.5 px-3 text-right">{tr('মোট পরিশোধিত বিল', 'Total Paid', language)}</th>
+                    <th className="py-2.5 px-3 text-center w-24">{tr('অ্যাকশন', 'Action', language)}</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-zinc-100">
+                  {presses.map(p => {
+                    const pOrders = pressOrders.filter(o => (o.pressId || 'faridBhaiPress') === p.id);
+                    const pPayments = pressPayments.filter(pay => (pay.pressId || 'faridBhaiPress') === p.id);
+                    const pPaid = pPayments.reduce((s, pay) => s + (Number(pay.amount) || 0), 0);
+                    return (
+                      <tr key={p.id} className="hover:bg-zinc-50/80 transition-colors">
+                        <td className="py-3 px-3">
+                          <div className="font-bold text-zinc-900 flex items-center gap-1.5">
+                            <span>🏭</span>
+                            <span>{p.name}</span>
+                          </div>
+                          {p.nameEn && <div className="text-[10px] text-zinc-400">{p.nameEn}</div>}
+                        </td>
+                        <td className="py-3 px-3 text-zinc-600">
+                          <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
+                            {p.category || tr('মুদ্রণ ও বাঁধাই প্রেস', 'Printing Press', language)}
+                          </span>
+                        </td>
+                        <td className="py-3 px-3 text-zinc-600">{p.address || '—'}</td>
+                        <td className="py-3 px-3 text-zinc-600 font-mono">{p.phone || '—'}</td>
+                        <td className="py-3 px-3 text-center font-mono font-bold text-zinc-800">
+                          {formatNumber(pOrders.length, language)} {tr('টি', '', language)}
+                        </td>
+                        <td className="py-3 px-3 text-right font-mono font-bold text-zinc-900">
+                          {formatBDT(pPaid, language)}
+                        </td>
+                        <td className="py-3 px-3 text-center">
+                          {onOpenEditChannel && (
+                            <button
+                              type="button"
+                              onClick={() => onOpenEditChannel(p)}
+                              className="p-1.5 text-zinc-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors inline-flex items-center gap-1 text-[11px] font-bold border border-zinc-200 hover:border-blue-200"
+                              title={tr('প্রেস সম্পাদনা বা মুছুন', 'Edit or Delete Press', language)}
+                            >
+                              <Edit2 className="w-3.5 h-3.5" />
+                              <span>{tr('এডিট', 'Edit', language)}</span>
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           </div>
 
         </div>
