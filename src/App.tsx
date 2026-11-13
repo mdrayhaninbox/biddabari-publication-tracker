@@ -32,6 +32,8 @@ import { AddPressOrderModal } from './components/AddPressOrderModal';
 import { AddPressDeliveryModal } from './components/AddPressDeliveryModal';
 import { AddChannelCollectionModal } from './components/AddChannelCollectionModal';
 import { AddEditChannelModal } from './components/AddEditChannelModal';
+import { FileStorageModal } from './components/FileStorageModal';
+import { StoredFileRecord, NotebookNoteRecord } from './types/storage';
 import { ResetConfirmModal } from './components/ResetConfirmModal';
 import { exportBooksToExcel, FullDatabaseImportResult } from './utils/excelHandler';
 import { idbSet, idbGet, idbClear } from './utils/indexedDBStorage';
@@ -68,6 +70,8 @@ const CHANNEL_COLLECTIONS_STORAGE_KEY = 'biddabari_channel_collections_v4';
 const CHANNELS_STORAGE_KEY = 'biddabari_sales_channels_v5';
 const THEME_STORAGE_KEY = 'biddabari_theme_v2';
 const LANGUAGE_STORAGE_KEY = 'biddabari_language_v2';
+const STORED_FILES_KEY = 'biddabari_stored_files_v1';
+const NOTEBOOK_NOTES_KEY = 'biddabari_notebook_notes_v1';
 
 const getMonthlyStorageKey = (year: number, month: number) => 
   `biddabari_books_data_v4_${year}-${String(month).padStart(2, '0')}`;
@@ -429,6 +433,11 @@ export const App: React.FC = () => {
   const [reportScope, setReportScope] = useState<PrintScope>('all');
   const [reportLibraryFilter, setReportLibraryFilter] = useState<string>('all');
 
+  // File Storage & Notebook Modals & State
+  const [isStorageOpen, setIsStorageOpen] = useState(false);
+  const [storedFiles, setStoredFiles] = useState<StoredFileRecord[]>([]);
+  const [notebookNotes, setNotebookNotes] = useState<NotebookNoteRecord[]>([]);
+
   // Auto-save month & year selection
   useEffect(() => {
     try {
@@ -485,6 +494,17 @@ export const App: React.FC = () => {
               localStorage.setItem(CHANNEL_COLLECTIONS_STORAGE_KEY, idbCollections);
             }
           }
+        }
+
+        // Hydrate Stored Files & Notebook Notes from IndexedDB
+        const idbFiles = await idbGet<StoredFileRecord[]>(STORED_FILES_KEY);
+        if (Array.isArray(idbFiles)) {
+          setStoredFiles(idbFiles);
+        }
+
+        const idbNotes = await idbGet<NotebookNoteRecord[]>(NOTEBOOK_NOTES_KEY);
+        if (Array.isArray(idbNotes)) {
+          setNotebookNotes(idbNotes);
         }
       } catch (e) {
         console.error('IndexedDB hydrate error:', e);
@@ -1239,6 +1259,49 @@ export const App: React.FC = () => {
     }
   };
 
+  // Storage & Notebook Handlers
+  const handleAddFile = (newFile: Omit<StoredFileRecord, 'id' | 'createdAt'>) => {
+    const record: StoredFileRecord = {
+      ...newFile,
+      id: `FILE-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+      createdAt: new Date().toISOString(),
+    };
+    const updated = [record, ...storedFiles];
+    setStoredFiles(updated);
+    idbSet(STORED_FILES_KEY, updated).catch(console.error);
+  };
+
+  const handleDeleteFile = (fileId: string) => {
+    const updated = storedFiles.filter(f => f.id !== fileId);
+    setStoredFiles(updated);
+    idbSet(STORED_FILES_KEY, updated).catch(console.error);
+  };
+
+  const handleAddNote = (newNote: Omit<NotebookNoteRecord, 'id' | 'createdAt' | 'updatedAt'>) => {
+    const now = new Date().toISOString();
+    const record: NotebookNoteRecord = {
+      ...newNote,
+      id: `NOTE-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+      createdAt: now,
+      updatedAt: now,
+    };
+    const updated = [record, ...notebookNotes];
+    setNotebookNotes(updated);
+    idbSet(NOTEBOOK_NOTES_KEY, updated).catch(console.error);
+  };
+
+  const handleUpdateNote = (updatedNote: NotebookNoteRecord) => {
+    const updated = notebookNotes.map(n => n.id === updatedNote.id ? updatedNote : n);
+    setNotebookNotes(updated);
+    idbSet(NOTEBOOK_NOTES_KEY, updated).catch(console.error);
+  };
+
+  const handleDeleteNote = (noteId: string) => {
+    const updated = notebookNotes.filter(n => n.id !== noteId);
+    setNotebookNotes(updated);
+    idbSet(NOTEBOOK_NOTES_KEY, updated).catch(console.error);
+  };
+
   return (
     <div className="min-h-screen bg-[#fafafa] flex flex-col font-sans text-zinc-900">
       
@@ -1270,6 +1333,8 @@ export const App: React.FC = () => {
         bookCount={books.length}
         zoom={uiZoom}
         onSetZoom={setUiZoom}
+        onOpenStorage={() => setIsStorageOpen(true)}
+        storageCount={storedFiles.length + notebookNotes.length}
         language={language}
         onSetLanguage={setLanguage}
         theme={theme}
@@ -1540,6 +1605,20 @@ export const App: React.FC = () => {
         paymentsCount={pressPayments.length}
         deliveriesCount={pressDeliveries.length}
         collectionsCount={channelCollections.length}
+        language={language}
+      />
+
+      {/* File Storage & Digital Notebook Modal */}
+      <FileStorageModal
+        isOpen={isStorageOpen}
+        onClose={() => setIsStorageOpen(false)}
+        files={storedFiles}
+        notes={notebookNotes}
+        onAddFile={handleAddFile}
+        onDeleteFile={handleDeleteFile}
+        onAddNote={handleAddNote}
+        onUpdateNote={handleUpdateNote}
+        onDeleteNote={handleDeleteNote}
         language={language}
       />
 

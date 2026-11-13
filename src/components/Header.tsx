@@ -15,7 +15,8 @@ import {
   Calendar,
   Receipt,
   RotateCcw,
-  Palette
+  Palette,
+  FolderOpen
 } from 'lucide-react';
 import { ActiveTab } from '../types/book';
 import { 
@@ -39,6 +40,8 @@ interface HeaderProps {
   bookCount: number;
   zoom?: '75' | '100';
   onSetZoom?: (zoom: '75' | '100') => void;
+  onOpenStorage?: () => void;
+  storageCount?: number;
 
   // Language & Theme
   language: Language;
@@ -66,6 +69,8 @@ export const Header: React.FC<HeaderProps> = ({
   bookCount,
   zoom = '75',
   onSetZoom,
+  onOpenStorage,
+  storageCount = 0,
   language,
   onSetLanguage,
   theme,
@@ -255,6 +260,26 @@ export const Header: React.FC<HeaderProps> = ({
               >
                 <RotateCcw className="w-3.5 h-3.5 text-zinc-500" />
                 <span className="hidden md:inline">{language === 'bn' ? 'রিসেট (০)' : 'Reset (0)'}</span>
+              </button>
+            )}
+
+            {/* STORAGE & NOTEBOOK BUTTON - ON THE LEFT OF THEME */}
+            {onOpenStorage && (
+              <button
+                type="button"
+                onClick={onOpenStorage}
+                className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold text-zinc-700 bg-white hover:bg-zinc-100 rounded-lg transition-colors border border-zinc-200"
+                title={language === 'bn' ? 'ফাইল স্টোরেজ ও ডিজিটাল নোটবুক' : 'File Storage & Digital Notebook'}
+              >
+                <FolderOpen className="w-3.5 h-3.5 text-zinc-600" />
+                <span className="hidden sm:inline">
+                  {language === 'bn' ? 'স্টোরেজ' : 'Storage'}
+                </span>
+                {storageCount > 0 && (
+                  <span className="px-1.5 py-0.2 text-[10px] font-mono font-bold bg-zinc-900 text-white rounded-full">
+                    {storageCount}
+                  </span>
+                )}
               </button>
             )}
 
