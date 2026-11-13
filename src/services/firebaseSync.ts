@@ -1,4 +1,4 @@
-import { doc, setDoc, getDoc } from 'firebase/firestore';
+import { doc, setDoc, getDoc, deleteDoc, collection, getDocs } from 'firebase/firestore';
 import { db } from '../firebase';
 import { 
   BookRecord, 
@@ -9,6 +9,7 @@ import {
   ChannelConfig,
   DEFAULT_BOOK_CATEGORIES
 } from '../types/book';
+import { StoredFileRecord, NotebookNoteRecord } from '../types/storage';
 
 const COLLECTION_NAME = 'publication_data';
 
@@ -143,6 +144,149 @@ export async function syncBookCategoriesToFirestore(categories: string[]): Promi
     await setDoc(docRef, { categories: cleanCategories, updatedAt: new Date().toISOString() });
   } catch (err) {
     console.error('Firestore syncBookCategories error:', err);
+  }
+}
+
+/**
+ * Saves publication notebook notes to Cloud Firestore
+ */
+export async function syncNotebookNotesToFirestore(notes: NotebookNoteRecord[]): Promise<void> {
+  try {
+    const cleanNotes = sanitizeForFirestore(notes);
+    const docRef = doc(db, COLLECTION_NAME, 'notebook_notes');
+    await setDoc(docRef, { notes: cleanNotes, updatedAt: new Date().toISOString() });
+  } catch (err) {
+    console.error('Firestore syncNotebookNotes error:', err);
+  }
+}
+
+const FILES_COLLECTION = 'publication_stored_files';
+const CHUNK_SIZE = 600000; // ~600KB base64 chunk to safely stay under Firestore 1MB limit
+
+/**
+ * Saves a stored file to Cloud Firestore (with auto-chunking if > 600KB)
+ */
+export async function saveStoredFileToFirestore(file: StoredFileRecord): Promise<void> {
+  try {
+    const cleanFile = sanitizeForFirestore(file);
+    const fileDocRef = doc(db, FILES_COLLECTION, cleanFile.id);
+
+    if (cleanFile.dataUrl.length <= CHUNK_SIZE) {
+      await setDoc(fileDocRef, {
+        ...cleanFile,
+        isChunked: false,
+        totalChunks: 1,
+        updatedAt: new Date().toISOString(),
+      });
+    } else {
+      // Large file: chunk dataUrl
+      const chunks: string[] = [];
+      for (let i = 0; i < cleanFile.dataUrl.length; i += CHUNK_SIZE) {
+        chunks.push(cleanFile.dataUrl.substring(i, i + CHUNK_SIZE));
+      }
+
+      // Write master file metadata
+      await setDoc(fileDocRef, {
+        id: cleanFile.id,
+        name: cleanFile.name,
+        size: cleanFile.size,
+        type: cleanFile.type,
+        category: cleanFile.category,
+        notes: cleanFile.notes || '',
+        createdAt: cleanFile.createdAt,
+        isChunked: true,
+        totalChunks: chunks.length,
+        updatedAt: new Date().toISOString(),
+      });
+
+      // Write chunk sub-docs
+      const chunkPromises = chunks.map((chunk, idx) =>
+        setDoc(doc(db, FILES_COLLECTION, `${cleanFile.id}_chk_${idx}`), {
+          parentFileId: cleanFile.id,
+          chunkIndex: idx,
+          chunkData: chunk,
+        })
+      );
+      await Promise.all(chunkPromises);
+    }
+  } catch (err) {
+    console.error('Firestore saveStoredFile error:', err);
+  }
+}
+
+/**
+ * Deletes a stored file from Cloud Firestore (and its chunks if any)
+ */
+export async function deleteStoredFileFromFirestore(fileId: string): Promise<void> {
+  try {
+    await deleteDoc(doc(db, FILES_COLLECTION, fileId));
+    // Clean up any chunks if present
+    for (let i = 0; i < 25; i++) {
+      deleteDoc(doc(db, FILES_COLLECTION, `${fileId}_chk_${i}`)).catch(() => {});
+    }
+  } catch (err) {
+    console.error('Firestore deleteStoredFile error:', err);
+  }
+}
+
+/**
+ * Reassembles all stored files from Firestore
+ */
+export async function fetchStoredFilesFromFirestore(): Promise<StoredFileRecord[]> {
+  try {
+    const colRef = collection(db, FILES_COLLECTION);
+    const snapshot = await getDocs(colRef);
+    if (snapshot.empty) return [];
+
+    const fileDocs: any[] = [];
+    const chunksMap = new Map<string, { chunkIndex: number; chunkData: string }[]>();
+
+    snapshot.docs.forEach(d => {
+      const data = d.data();
+      if (d.id.includes('_chk_')) {
+        const parentId = data.parentFileId;
+        if (!chunksMap.has(parentId)) chunksMap.set(parentId, []);
+        chunksMap.get(parentId)!.push({
+          chunkIndex: data.chunkIndex || 0,
+          chunkData: data.chunkData || '',
+        });
+      } else {
+        fileDocs.push(data);
+      }
+    });
+
+    const fullFiles: StoredFileRecord[] = fileDocs.map(f => {
+      if (f.isChunked) {
+        const parts = chunksMap.get(f.id) || [];
+        parts.sort((a, b) => a.chunkIndex - b.chunkIndex);
+        const fullDataUrl = parts.map(p => p.chunkData).join('');
+        return {
+          id: f.id,
+          name: f.name,
+          size: f.size,
+          type: f.type,
+          category: f.category,
+          notes: f.notes,
+          dataUrl: fullDataUrl || f.dataUrl || '',
+          createdAt: f.createdAt,
+        };
+      }
+      return {
+        id: f.id,
+        name: f.name,
+        size: f.size,
+        type: f.type,
+        category: f.category,
+        notes: f.notes,
+        dataUrl: f.dataUrl || '',
+        createdAt: f.createdAt,
+      };
+    });
+
+    return fullFiles;
+  } catch (err) {
+    console.error('Firestore fetchStoredFiles error:', err);
+    return [];
   }
 }
 

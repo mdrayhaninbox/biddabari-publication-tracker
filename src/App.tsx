@@ -39,7 +39,7 @@ import { StoredFileRecord, NotebookNoteRecord } from './types/storage';
 import { ResetConfirmModal } from './components/ResetConfirmModal';
 import { exportBooksToExcel, FullDatabaseImportResult } from './utils/excelHandler';
 import { idbSet, idbGet, idbClear } from './utils/indexedDBStorage';
-import { doc, onSnapshot } from 'firebase/firestore';
+import { doc, onSnapshot, collection } from 'firebase/firestore';
 import { db } from './firebase';
 import { 
   syncBooksToFirestore, 
@@ -49,6 +49,10 @@ import {
   syncChannelCollectionsToFirestore, 
   syncChannelsToFirestore,
   syncBookCategoriesToFirestore,
+  syncNotebookNotesToFirestore,
+  saveStoredFileToFirestore,
+  deleteStoredFileFromFirestore,
+  fetchStoredFilesFromFirestore,
   resetFirestoreData
 } from './services/firebaseSync';
 import { 
@@ -516,14 +520,25 @@ export const App: React.FC = () => {
 
         // Hydrate Stored Files & Notebook Notes from IndexedDB
         const idbFiles = await idbGet<StoredFileRecord[]>(STORED_FILES_KEY);
-        if (Array.isArray(idbFiles)) {
+        if (Array.isArray(idbFiles) && idbFiles.length > 0) {
           setStoredFiles(idbFiles);
         }
 
         const idbNotes = await idbGet<NotebookNoteRecord[]>(NOTEBOOK_NOTES_KEY);
-        if (Array.isArray(idbNotes)) {
+        if (Array.isArray(idbNotes) && idbNotes.length > 0) {
           setNotebookNotes(idbNotes);
         }
+
+        // Fetch cloud files from Firestore to ensure all browsers get files!
+        fetchStoredFilesFromFirestore().then(cloudFiles => {
+          if (cloudFiles.length > 0) {
+            setStoredFiles(cloudFiles);
+            idbSet(STORED_FILES_KEY, cloudFiles).catch(() => {});
+          } else if (Array.isArray(idbFiles) && idbFiles.length > 0) {
+            // Local files exist from previous session, upload them to cloud
+            idbFiles.forEach(f => saveStoredFileToFirestore(f).catch(() => {}));
+          }
+        }).catch(console.error);
       } catch (e) {
         console.error('IndexedDB hydrate error:', e);
       }
@@ -660,6 +675,39 @@ export const App: React.FC = () => {
       }
     });
 
+    // Notebook Notes Listener (Sync across all browsers)
+    const unsubNotes = onSnapshot(doc(db, 'publication_data', 'notebook_notes'), (snap) => {
+      if (snap.metadata.hasPendingWrites) return;
+      if (snap.exists()) {
+        const data = snap.data();
+        if (Array.isArray(data?.notes)) {
+          setNotebookNotes(prev => {
+            if (JSON.stringify(prev) === JSON.stringify(data.notes)) return prev;
+            idbSet(NOTEBOOK_NOTES_KEY, data.notes).catch(() => {});
+            return data.notes;
+          });
+        }
+      }
+    });
+
+    // Stored Files Collection Listener (Sync across all browsers)
+    const unsubFiles = onSnapshot(collection(db, 'publication_stored_files'), (snap) => {
+      if (snap.metadata.hasPendingWrites) return;
+      if (!snap.empty) {
+        fetchStoredFilesFromFirestore().then(cloudFiles => {
+          if (cloudFiles.length > 0) {
+            setStoredFiles(prev => {
+              const prevIds = prev.map(f => f.id).sort().join(',');
+              const cloudIds = cloudFiles.map(f => f.id).sort().join(',');
+              if (prevIds === cloudIds && prev.length === cloudFiles.length) return prev;
+              idbSet(STORED_FILES_KEY, cloudFiles).catch(() => {});
+              return cloudFiles;
+            });
+          }
+        }).catch(console.error);
+      }
+    });
+
     return () => {
       unsubPayments();
       unsubOrders();
@@ -667,6 +715,8 @@ export const App: React.FC = () => {
       unsubCollections();
       unsubChannels();
       unsubCategories();
+      unsubNotes();
+      unsubFiles();
     };
   }, []);
 
@@ -1359,12 +1409,14 @@ export const App: React.FC = () => {
     const updated = [record, ...storedFiles];
     setStoredFiles(updated);
     idbSet(STORED_FILES_KEY, updated).catch(console.error);
+    saveStoredFileToFirestore(record).catch(console.error);
   };
 
   const handleDeleteFile = (fileId: string) => {
     const updated = storedFiles.filter(f => f.id !== fileId);
     setStoredFiles(updated);
     idbSet(STORED_FILES_KEY, updated).catch(console.error);
+    deleteStoredFileFromFirestore(fileId).catch(console.error);
   };
 
   const handleAddNote = (newNote: Omit<NotebookNoteRecord, 'id' | 'createdAt' | 'updatedAt'>) => {
@@ -1378,18 +1430,21 @@ export const App: React.FC = () => {
     const updated = [record, ...notebookNotes];
     setNotebookNotes(updated);
     idbSet(NOTEBOOK_NOTES_KEY, updated).catch(console.error);
+    syncNotebookNotesToFirestore(updated).catch(console.error);
   };
 
   const handleUpdateNote = (updatedNote: NotebookNoteRecord) => {
     const updated = notebookNotes.map(n => n.id === updatedNote.id ? updatedNote : n);
     setNotebookNotes(updated);
     idbSet(NOTEBOOK_NOTES_KEY, updated).catch(console.error);
+    syncNotebookNotesToFirestore(updated).catch(console.error);
   };
 
   const handleDeleteNote = (noteId: string) => {
     const updated = notebookNotes.filter(n => n.id !== noteId);
     setNotebookNotes(updated);
     idbSet(NOTEBOOK_NOTES_KEY, updated).catch(console.error);
+    syncNotebookNotesToFirestore(updated).catch(console.error);
   };
 
   return (
