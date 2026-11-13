@@ -34,6 +34,7 @@ import { AddChannelCollectionModal } from './components/AddChannelCollectionModa
 import { AddEditChannelModal } from './components/AddEditChannelModal';
 import { ResetConfirmModal } from './components/ResetConfirmModal';
 import { exportBooksToExcel } from './utils/excelHandler';
+import { idbSet, idbGet, idbClear } from './utils/indexedDBStorage';
 import { 
   getDaysInMonth, 
   createFreshMonthBooks, 
@@ -61,17 +62,22 @@ const getMonthlyStorageKey = (year: number, month: number) =>
   `biddabari_books_data_v4_${year}-${String(month).padStart(2, '0')}`;
 
 /**
- * Safe localStorage writer that catches quota errors and avoids crashes
+ * Safe localStorage & native browser IndexedDB writer (Firefox, Chrome, Edge)
+ * Dual-sync ensures quota-free storage and deep persistence.
  */
 export function safeLocalStorageSet(key: string, value: string): boolean {
   try {
     if (typeof window !== 'undefined') {
       localStorage.setItem(key, value);
+      // Dual-sync to browser database (IndexedDB in Firefox, Chrome, etc.)
+      idbSet(key, value).catch(() => {});
       return true;
     }
     return false;
   } catch (err: any) {
     console.error(`Safe storage save error on "${key}":`, err);
+    // Even if localStorage is full or throws, save to browser IndexedDB
+    idbSet(key, value).catch(() => {});
     return false;
   }
 }
@@ -418,6 +424,61 @@ export const App: React.FC = () => {
       console.error(e);
     }
   }, [selectedYear, selectedMonth]);
+
+  // Startup sync: if localStorage has no books or ledgers, attempt recovery from native browser IndexedDB
+  useEffect(() => {
+    const hydrateFromIndexedDB = async () => {
+      try {
+        if (books.length === 0) {
+          const currentKey = getMonthlyStorageKey(selectedYear, selectedMonth);
+          const idbBooks = await idbGet<string>(currentKey);
+          if (idbBooks) {
+            const parsed = JSON.parse(idbBooks);
+            if (Array.isArray(parsed) && parsed.length > 0) {
+              setBooks(parsed);
+              localStorage.setItem(currentKey, idbBooks);
+            }
+          } else {
+            const idbMaster = await idbGet<string>(MASTER_CATALOG_STORAGE_KEY);
+            if (idbMaster) {
+              const parsedMaster = JSON.parse(idbMaster);
+              if (Array.isArray(parsedMaster) && parsedMaster.length > 0) {
+                const fresh = createFreshMonthBooks(parsedMaster);
+                setBooks(fresh);
+                syncSaveBooks(fresh);
+              }
+            }
+          }
+        }
+
+        if (pressPayments.length === 0) {
+          const idbPayments = await idbGet<string>(PRESS_PAYMENTS_STORAGE_KEY);
+          if (idbPayments) {
+            const parsed = JSON.parse(idbPayments);
+            if (Array.isArray(parsed) && parsed.length > 0) {
+              setPressPayments(parsed);
+              localStorage.setItem(PRESS_PAYMENTS_STORAGE_KEY, idbPayments);
+            }
+          }
+        }
+
+        if (channelCollections.length === 0) {
+          const idbCollections = await idbGet<string>(CHANNEL_COLLECTIONS_STORAGE_KEY);
+          if (idbCollections) {
+            const parsed = JSON.parse(idbCollections);
+            if (Array.isArray(parsed) && parsed.length > 0) {
+              setChannelCollections(parsed);
+              localStorage.setItem(CHANNEL_COLLECTIONS_STORAGE_KEY, idbCollections);
+            }
+          }
+        }
+      } catch (e) {
+        console.error('IndexedDB hydrate error:', e);
+      }
+    };
+
+    hydrateFromIndexedDB();
+  }, []);
 
   // Auto-save active month's books to its dedicated localStorage key
   useEffect(() => {
@@ -892,6 +953,7 @@ export const App: React.FC = () => {
       }
       keysToRemove.forEach(k => localStorage.removeItem(k));
       localStorage.setItem(CLEAN_SLATE_ZERO_KEY, 'true');
+      idbClear().catch(() => {});
     } catch (e) {
       console.error(e);
     }
