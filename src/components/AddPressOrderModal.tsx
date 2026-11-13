@@ -3,6 +3,7 @@ import { X, Layers, Save } from 'lucide-react';
 import { BookRecord, PressOrderRecord } from '../types/book';
 import { formatBDT } from '../utils/calculations';
 import { Language, tr } from '../utils/i18n';
+import { VoucherImageUploader } from './VoucherImageUploader';
 
 interface AddPressOrderModalProps {
   isOpen: boolean;
@@ -32,6 +33,7 @@ export const AddPressOrderModal: React.FC<AddPressOrderModalProps> = ({
   const [orderNo, setOrderNo] = useState<string>(
     `PO-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 900) + 100)}`
   );
+  const [voucherImage, setVoucherImage] = useState<string | undefined>(undefined);
   const [makingCost, setMakingCost] = useState<number>(250);
   const [notes, setNotes] = useState<string>('');
 
@@ -68,6 +70,7 @@ export const AddPressOrderModal: React.FC<AddPressOrderModalProps> = ({
       makingCost: Number(makingCost) || 0,
       totalBill,
       orderNo: orderNo.trim() || undefined,
+      voucherImage: voucherImage || undefined,
       notes: notes.trim() || undefined,
     });
 
@@ -242,6 +245,15 @@ export const AddPressOrderModal: React.FC<AddPressOrderModalProps> = ({
                 {formatBDT(totalBill, language)}
               </div>
             </div>
+
+            {/* Optional Voucher / PO Slip Image Upload */}
+            <VoucherImageUploader
+              image={voucherImage}
+              onChange={setVoucherImage}
+              label={tr('অর্ডার স্লিপ বা ভাউচারের ছবি (ঐচ্ছিক)', 'PO Slip or Voucher Photo (Optional)', language)}
+              subLabel={tr('JPG, PNG, WebP • অপ্টিমাইজড', 'JPG, PNG, WebP • Optimized', language)}
+              language={language}
+            />
 
             {/* Notes / Remarks */}
             <div>

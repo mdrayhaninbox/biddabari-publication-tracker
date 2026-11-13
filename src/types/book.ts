@@ -70,6 +70,7 @@ export interface PressOrderRecord {
   totalBill?: number;
   orderNo?: string;
   notes?: string;
+  voucherImage?: string; // Base64 image data URL (Optional voucher / PO slip photo)
   createdAt: string;
 }
 
@@ -83,6 +84,7 @@ export interface PressDeliveryRecord {
   lotName?: string;
   receivedBy?: string;
   notes?: string;
+  voucherImage?: string; // Base64 image data URL (Optional delivery chalan photo)
   createdAt: string;
 }
 
@@ -95,6 +97,7 @@ export interface PressPaymentRecord {
   paymentMethod: PaymentMethod;
   voucherNo?: string;
   notes?: string;
+  voucherImage?: string; // Base64 image data URL (Optional voucher / cheque photo)
   createdAt: string;
 }
 
@@ -107,6 +110,8 @@ export interface ChannelCollectionRecord {
   paymentMethod: PaymentMethod;
   receiptNo?: string;
   notes?: string;
+  voucherImage?: string; // Base64 image data URL (Optional money receipt / voucher photo)
+  receiptImage?: string; // Alias
   createdAt: string;
 }
 

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X, Truck, Save } from 'lucide-react';
 import { BookRecord, PressDeliveryRecord } from '../types/book';
 import { Language, tr } from '../utils/i18n';
+import { VoucherImageUploader } from './VoucherImageUploader';
 
 interface AddPressDeliveryModalProps {
   isOpen: boolean;
@@ -32,6 +33,7 @@ export const AddPressDeliveryModal: React.FC<AddPressDeliveryModalProps> = ({
   );
   const [lotName, setLotName] = useState<string>('১ম মুদ্রণ (লট-১)');
   const [receivedBy, setReceivedBy] = useState<string>('হেড অফিস স্টোর');
+  const [voucherImage, setVoucherImage] = useState<string | undefined>(undefined);
   const [notes, setNotes] = useState<string>('');
 
   useEffect(() => {
@@ -58,6 +60,7 @@ export const AddPressDeliveryModal: React.FC<AddPressDeliveryModalProps> = ({
       chalanNo: chalanNo.trim() || `CH-${Date.now()}`,
       lotName: lotName.trim() || undefined,
       receivedBy: receivedBy.trim() || undefined,
+      voucherImage: voucherImage || undefined,
       notes: notes.trim() || undefined,
     });
 
@@ -187,6 +190,15 @@ export const AddPressDeliveryModal: React.FC<AddPressDeliveryModalProps> = ({
                 className="w-full text-xs border border-zinc-300 rounded-lg p-2.5 focus:ring-2 focus:ring-zinc-900"
               />
             </div>
+
+            {/* Optional Voucher / Chalan Image Upload */}
+            <VoucherImageUploader
+              image={voucherImage}
+              onChange={setVoucherImage}
+              label={tr('প্রেস চালান বা ভাউচারের ছবি (ঐচ্ছিক)', 'Press Chalan or Voucher Photo (Optional)', language)}
+              subLabel={tr('JPG, PNG, WebP • অপ্টিমাইজড', 'JPG, PNG, WebP • Optimized', language)}
+              language={language}
+            />
 
             {/* Notes / Remarks */}
             <div>

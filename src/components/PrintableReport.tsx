@@ -22,8 +22,11 @@ import {
   FileText,
   Receipt,
   Search,
-  Building2
+  Building2,
+  Camera,
+  Image as ImageIcon
 } from 'lucide-react';
+import { ImageViewerModal } from './ImageViewerModal';
 import { BookRecord, PressPaymentRecord, ChannelCollectionRecord, PressOrderRecord, PressDeliveryRecord, ChannelConfig, DEFAULT_CHANNELS } from '../types/book';
 import { 
   calculateBookMetrics, 
@@ -148,6 +151,12 @@ export const PrintableReport: React.FC<PrintableReportProps> = ({
   const [voucherLayoutMode, setVoucherLayoutMode] = useState<'table' | 'slips'>('table');
   const [voucherSearchQuery, setVoucherSearchQuery] = useState<string>('');
   const [selectedLibraryFilter, setSelectedLibraryFilter] = useState<string>('all');
+  const [previewImage, setPreviewImage] = useState<{ url: string; title: string; subtitle?: string } | null>(null);
+
+  const openImagePreview = (url?: string, title = 'ভাউচার কপি', subtitle?: string) => {
+    if (!url) return;
+    setPreviewImage({ url, title, subtitle });
+  };
 
   // Handler for Preset Scope Selection
   const handleSelectScope = (newScope: PrintScope) => {
@@ -604,7 +613,19 @@ export const PrintableReport: React.FC<PrintableReportProps> = ({
                                   {p.date}
                                 </td>
                                 <td className="py-1.5 px-2.5 font-mono font-bold text-zinc-900 border-r border-zinc-200 text-[11px]">
-                                  {p.voucherNo || `VCH-${itemNumber}`}
+                                  <div className="flex items-center gap-1 justify-between">
+                                    <span>{p.voucherNo || `VCH-${itemNumber}`}</span>
+                                    {p.voucherImage && (
+                                      <button
+                                        type="button"
+                                        onClick={() => openImagePreview(p.voucherImage, `${p.bookName || tr('প্রেস পেমেন্ট', 'Press Payment', language)} (${p.voucherNo || 'ভাউচার'})`, `${p.date} • ${formatBDT(p.amount, language)}`)}
+                                        className="print:hidden p-0.5 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded"
+                                        title={tr('ভাউচারের ছবি দেখুন', 'View Voucher Image', language)}
+                                      >
+                                        <ImageIcon className="w-3.5 h-3.5" />
+                                      </button>
+                                    )}
+                                  </div>
                                 </td>
                                 <td className="py-1.5 px-3 font-semibold text-zinc-900 border-r border-zinc-200 text-[11px]">
                                   {p.bookName || tr('সার্বিক প্রেস অর্ডার বাবদ', 'General Press Order', language)}
@@ -686,9 +707,21 @@ export const PrintableReport: React.FC<PrintableReportProps> = ({
                                 <span className="font-bold text-[11px] text-zinc-900">{tr('বিদ্যাবাড়ি পাবলিকেশন', 'Biddabari Publication', language)}</span>
                                 <span className="text-[10px] text-zinc-500 font-medium">({tr('পেমেন্ট ভাউচার', 'Payment Voucher', language)})</span>
                               </div>
-                              <span className="font-mono text-[10px] px-1.5 py-0.2 bg-zinc-200 text-zinc-800 rounded font-bold">
-                                #{p.voucherNo || `VCH-${itemNumber}`}
-                              </span>
+                              <div className="flex items-center gap-1">
+                                <span className="font-mono text-[10px] px-1.5 py-0.2 bg-zinc-200 text-zinc-800 rounded font-bold">
+                                  #{p.voucherNo || `VCH-${itemNumber}`}
+                                </span>
+                                {p.voucherImage && (
+                                  <button
+                                    type="button"
+                                    onClick={() => openImagePreview(p.voucherImage, `${p.bookName || tr('প্রেস পেমেন্ট', 'Press Payment', language)} (${p.voucherNo || 'ভাউচার'})`, `${p.date} • ${formatBDT(p.amount, language)}`)}
+                                    className="print:hidden p-0.5 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded"
+                                    title={tr('ভাউচারের ছবি দেখুন', 'View Voucher Image', language)}
+                                  >
+                                    <ImageIcon className="w-3.5 h-3.5" />
+                                  </button>
+                                )}
+                              </div>
                             </div>
 
                             <div className="grid grid-cols-2 gap-1 text-[11px] py-1">
@@ -899,7 +932,19 @@ export const PrintableReport: React.FC<PrintableReportProps> = ({
                             {c.date}
                           </td>
                           <td className="py-1.5 px-2.5 font-mono font-bold text-zinc-900 border-r border-zinc-200 text-[11px]">
-                            {c.receiptNo || `MR-${itemNumber}`}
+                            <div className="flex items-center gap-1 justify-between">
+                              <span>{c.receiptNo || `MR-${itemNumber}`}</span>
+                              {(c.voucherImage || c.receiptImage) && (
+                                <button
+                                  type="button"
+                                  onClick={() => openImagePreview(c.voucherImage || c.receiptImage, `${c.channelName} (${c.receiptNo || 'রশিদ'})`, `${c.date} • ${formatBDT(c.amount, language)}`)}
+                                  className="print:hidden p-0.5 text-emerald-600 hover:text-emerald-800 hover:bg-emerald-50 rounded"
+                                  title={tr('মানি রিসিটের ছবি দেখুন', 'View Receipt Image', language)}
+                                >
+                                  <ImageIcon className="w-3.5 h-3.5" />
+                                </button>
+                              )}
+                            </div>
                           </td>
                           <td className="py-1.5 px-3 font-semibold text-zinc-900 border-r border-zinc-200 text-[11px]">
                             {c.channelName}
@@ -991,9 +1036,21 @@ export const PrintableReport: React.FC<PrintableReportProps> = ({
                             <span className="font-bold text-[11px] text-zinc-900">{tr('বিদ্যাবাড়ি পাবলিকেশন', 'Biddabari Publication', language)}</span>
                             <span className="text-[10px] text-emerald-700 font-medium">({tr('মানি রিসিট', 'Money Receipt', language)})</span>
                           </div>
-                          <span className="font-mono text-[10px] px-1.5 py-0.2 bg-zinc-200 text-zinc-800 rounded font-bold">
-                            #{c.receiptNo || `MR-${itemNumber}`}
-                          </span>
+                          <div className="flex items-center gap-1">
+                            <span className="font-mono text-[10px] px-1.5 py-0.2 bg-zinc-200 text-zinc-800 rounded font-bold">
+                              #{c.receiptNo || `MR-${itemNumber}`}
+                            </span>
+                            {(c.voucherImage || c.receiptImage) && (
+                              <button
+                                type="button"
+                                onClick={() => openImagePreview(c.voucherImage || c.receiptImage, `${c.channelName} (${c.receiptNo || 'রশিদ'})`, `${c.date} • ${formatBDT(c.amount, language)}`)}
+                                className="print:hidden p-0.5 text-emerald-600 hover:text-emerald-800 hover:bg-emerald-50 rounded"
+                                title={tr('মানি রিসিটের ছবি দেখুন', 'View Receipt Image', language)}
+                              >
+                                <ImageIcon className="w-3.5 h-3.5" />
+                              </button>
+                            )}
+                          </div>
                         </div>
 
                         <div className="grid grid-cols-2 gap-1 text-[11px] py-1">
@@ -2524,6 +2581,16 @@ export const PrintableReport: React.FC<PrintableReportProps> = ({
 
       </div>
       )}
+
+      {/* Fullscreen Image Preview Lightbox */}
+      <ImageViewerModal
+        isOpen={!!previewImage}
+        onClose={() => setPreviewImage(null)}
+        imageUrl={previewImage?.url}
+        title={previewImage?.title}
+        subtitle={previewImage?.subtitle}
+        language={language}
+      />
 
     </div>
   );

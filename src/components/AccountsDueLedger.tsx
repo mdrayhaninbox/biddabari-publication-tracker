@@ -11,8 +11,10 @@ import {
   Globe, 
   Store,
   Filter,
-  Edit2
+  Edit2,
+  Image as ImageIcon
 } from 'lucide-react';
+import { ImageViewerModal } from './ImageViewerModal';
 import { 
   BookRecord, 
   PressPaymentRecord, 
@@ -74,6 +76,12 @@ export const AccountsDueLedger: React.FC<AccountsDueLedgerProps> = ({
   const [activeSubTab, setActiveSubTab] = useState<'press' | 'orders' | 'channels'>('press');
   const [selectedBookFilter, setSelectedBookFilter] = useState<string>('all');
   const [voucherSearchQuery, setVoucherSearchQuery] = useState<string>('');
+  const [previewImage, setPreviewImage] = useState<{ url: string; title: string; subtitle?: string } | null>(null);
+
+  const openImagePreview = (url?: string, title = 'ভাউচার কপি', subtitle?: string) => {
+    if (!url) return;
+    setPreviewImage({ url, title, subtitle });
+  };
 
   const effectiveChannels = channels && channels.length > 0 ? channels : DEFAULT_CHANNELS;
 
@@ -452,7 +460,22 @@ export const AccountsDueLedger: React.FC<AccountsDueLedgerProps> = ({
                             {p.paymentMethod}
                           </span>
                         </td>
-                        <td className="py-2.5 px-3 font-mono text-zinc-600">{p.voucherNo || '—'}</td>
+                        <td className="py-2.5 px-3 font-mono text-zinc-600">
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span>{p.voucherNo || '—'}</span>
+                            {p.voucherImage && (
+                              <button
+                                type="button"
+                                onClick={() => openImagePreview(p.voucherImage, `${p.bookName || tr('প্রেস পেমেন্ট', 'Press Payment', language)} (${p.voucherNo || 'ভাউচার'})`, `${p.date} • ${formatBDT(p.amount, language)}`)}
+                                className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200 transition-colors shadow-2xs"
+                                title={tr('ভাউচারের ছবি দেখুন', 'View Voucher Image', language)}
+                              >
+                                <ImageIcon className="w-3 h-3" />
+                                <span>{tr('ছবি', 'Photo', language)}</span>
+                              </button>
+                            )}
+                          </div>
+                        </td>
                         <td className="py-2.5 px-3 text-zinc-500 max-w-xs truncate">{p.notes || '—'}</td>
                         <td className="py-2.5 px-3 text-center">
                           <button
@@ -669,9 +692,22 @@ export const AccountsDueLedger: React.FC<AccountsDueLedgerProps> = ({
                       <tr key={o.id} className="hover:bg-zinc-50/70 transition-colors">
                         <td className="py-2.5 px-3 font-mono font-medium text-zinc-900">{o.orderDate}</td>
                         <td className="py-2.5 px-3">
-                          <span className="font-mono font-bold text-zinc-900 bg-zinc-100 px-2 py-0.5 rounded border border-zinc-200">
-                            {o.orderNo || 'PO-DEFAULT'}
-                          </span>
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className="font-mono font-bold text-zinc-900 bg-zinc-100 px-2 py-0.5 rounded border border-zinc-200">
+                              {o.orderNo || 'PO-DEFAULT'}
+                            </span>
+                            {o.voucherImage && (
+                              <button
+                                type="button"
+                                onClick={() => openImagePreview(o.voucherImage, `${o.bookName} (${o.orderNo || tr('অর্ডার স্লিপ', 'PO Slip', language)})`, `${o.orderDate} • ${o.lotName || ''} • ${formatNumber(o.orderQuantity, language)} ${tr('কপি', 'copies', language)}`)}
+                                className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200 transition-colors shadow-2xs"
+                                title={tr('অর্ডার স্লিপের ছবি দেখুন', 'View PO Slip Image', language)}
+                              >
+                                <ImageIcon className="w-3 h-3" />
+                                <span>{tr('স্লিপ', 'Slip', language)}</span>
+                              </button>
+                            )}
+                          </div>
                         </td>
                         <td className="py-2.5 px-3 font-bold text-zinc-900">{o.bookName}</td>
                         <td className="py-2.5 px-3 font-medium text-zinc-700">
@@ -781,9 +817,22 @@ export const AccountsDueLedger: React.FC<AccountsDueLedgerProps> = ({
                       <tr key={d.id} className="hover:bg-zinc-50/70 transition-colors">
                         <td className="py-2.5 px-3 font-mono font-medium text-zinc-900">{d.deliveryDate}</td>
                         <td className="py-2.5 px-3">
-                          <span className="font-mono font-bold text-zinc-900 bg-zinc-100 px-2 py-0.5 rounded border border-zinc-200">
-                            {d.chalanNo}
-                          </span>
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className="font-mono font-bold text-zinc-900 bg-zinc-100 px-2 py-0.5 rounded border border-zinc-200">
+                              {d.chalanNo}
+                            </span>
+                            {d.voucherImage && (
+                              <button
+                                type="button"
+                                onClick={() => openImagePreview(d.voucherImage, `${d.bookName} (${d.chalanNo})`, `${d.deliveryDate} • ${formatNumber(d.quantity, language)} ${tr('কপি গ্রহণ', 'copies received', language)} • ${d.receivedBy || ''}`)}
+                                className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-800 hover:bg-amber-100 border border-amber-200 transition-colors shadow-2xs"
+                                title={tr('চালানের ছবি দেখুন', 'View Chalan Image', language)}
+                              >
+                                <ImageIcon className="w-3 h-3" />
+                                <span>{tr('চালান', 'Chalan', language)}</span>
+                              </button>
+                            )}
+                          </div>
                         </td>
                         <td className="py-2.5 px-3 font-bold text-zinc-900">{d.bookName}</td>
                         <td className="py-2.5 px-3 text-center font-mono font-bold text-zinc-900">
@@ -1121,7 +1170,22 @@ export const AccountsDueLedger: React.FC<AccountsDueLedgerProps> = ({
                             {c.paymentMethod}
                           </span>
                         </td>
-                        <td className="py-2.5 px-3 font-mono text-zinc-600">{c.receiptNo || '—'}</td>
+                        <td className="py-2.5 px-3 font-mono text-zinc-600">
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span>{c.receiptNo || '—'}</span>
+                            {(c.voucherImage || c.receiptImage) && (
+                              <button
+                                type="button"
+                                onClick={() => openImagePreview(c.voucherImage || c.receiptImage, `${c.channelName} (${c.receiptNo || tr('রশিদ', 'Receipt', language)})`, `${c.date} • ${formatBDT(c.amount, language)}`)}
+                                className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 transition-colors shadow-2xs"
+                                title={tr('মানি রিসিটের ছবি দেখুন', 'View Receipt Image', language)}
+                              >
+                                <ImageIcon className="w-3 h-3" />
+                                <span>{tr('রশিদ', 'Receipt', language)}</span>
+                              </button>
+                            )}
+                          </div>
+                        </td>
                         <td className="py-2.5 px-3 text-zinc-500 max-w-xs truncate">{c.notes || '—'}</td>
                         <td className="py-2.5 px-3 text-center">
                           <button
@@ -1146,6 +1210,16 @@ export const AccountsDueLedger: React.FC<AccountsDueLedgerProps> = ({
 
         </div>
       )}
+
+      {/* Fullscreen Image Preview Lightbox */}
+      <ImageViewerModal
+        isOpen={!!previewImage}
+        onClose={() => setPreviewImage(null)}
+        imageUrl={previewImage?.url}
+        title={previewImage?.title}
+        subtitle={previewImage?.subtitle}
+        language={language}
+      />
 
     </div>
   );

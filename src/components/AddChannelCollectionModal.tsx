@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { X, HandCoins } from 'lucide-react';
 import { ChannelCollectionRecord, PaymentMethod, SALES_CHANNELS } from '../types/book';
 import { Language, tr } from '../utils/i18n';
+import { VoucherImageUploader } from './VoucherImageUploader';
 
 interface AddChannelCollectionModalProps {
   isOpen: boolean;
@@ -23,6 +24,7 @@ export const AddChannelCollectionModal: React.FC<AddChannelCollectionModalProps>
   const [amount, setAmount] = useState<number | ''>('');
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('bank');
   const [receiptNo, setReceiptNo] = useState<string>('');
+  const [voucherImage, setVoucherImage] = useState<string | undefined>(undefined);
   const [notes, setNotes] = useState<string>('');
 
   if (!isOpen) return null;
@@ -43,6 +45,8 @@ export const AddChannelCollectionModal: React.FC<AddChannelCollectionModalProps>
       amount: Number(amount),
       paymentMethod,
       receiptNo: receiptNo.trim() || undefined,
+      voucherImage: voucherImage || undefined,
+      receiptImage: voucherImage || undefined,
       notes: notes.trim() || undefined,
     });
 
@@ -170,6 +174,15 @@ export const AddChannelCollectionModal: React.FC<AddChannelCollectionModalProps>
               className="w-full text-xs border border-zinc-300 rounded-xl p-2.5 bg-zinc-50 focus:bg-white focus:ring-2 focus:ring-zinc-900"
             />
           </div>
+
+          {/* Optional Voucher / Receipt Image Upload */}
+          <VoucherImageUploader
+            image={voucherImage}
+            onChange={setVoucherImage}
+            label={tr('মানি রিসিট বা জমার ভাউচারের ছবি (ঐচ্ছিক)', 'Money Receipt or Voucher Photo (Optional)', language)}
+            subLabel={tr('JPG, PNG, WebP • অপ্টিমাইজড', 'JPG, PNG, WebP • Optimized', language)}
+            language={language}
+          />
 
           {/* Notes */}
           <div>

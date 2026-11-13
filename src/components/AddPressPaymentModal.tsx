@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { X, CreditCard } from 'lucide-react';
 import { BookRecord, PressPaymentRecord, PaymentMethod } from '../types/book';
 import { Language, tr } from '../utils/i18n';
+import { VoucherImageUploader } from './VoucherImageUploader';
 
 interface AddPressPaymentModalProps {
   isOpen: boolean;
@@ -23,6 +24,7 @@ export const AddPressPaymentModal: React.FC<AddPressPaymentModalProps> = ({
   const [amount, setAmount] = useState<number | ''>('');
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('bank');
   const [voucherNo, setVoucherNo] = useState<string>('');
+  const [voucherImage, setVoucherImage] = useState<string | undefined>(undefined);
   const [notes, setNotes] = useState<string>('');
 
   if (!isOpen) return null;
@@ -43,6 +45,7 @@ export const AddPressPaymentModal: React.FC<AddPressPaymentModalProps> = ({
       amount: Number(amount),
       paymentMethod,
       voucherNo: voucherNo.trim() || undefined,
+      voucherImage: voucherImage || undefined,
       notes: notes.trim() || undefined,
     });
 
@@ -162,6 +165,15 @@ export const AddPressPaymentModal: React.FC<AddPressPaymentModalProps> = ({
               className="w-full text-xs border border-zinc-300 rounded-xl p-2.5 bg-zinc-50 focus:bg-white focus:ring-2 focus:ring-zinc-900"
             />
           </div>
+
+          {/* Optional Voucher Image Upload */}
+          <VoucherImageUploader
+            image={voucherImage}
+            onChange={setVoucherImage}
+            label={tr('ভাউচার বা চেকের ছবি (ঐচ্ছিক)', 'Voucher or Cheque Photo (Optional)', language)}
+            subLabel={tr('JPG, PNG, WebP • অপ্টিমাইজড', 'JPG, PNG, WebP • Optimized', language)}
+            language={language}
+          />
 
           {/* Notes */}
           <div>
