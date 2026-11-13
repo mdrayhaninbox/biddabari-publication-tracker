@@ -26,6 +26,7 @@ interface ExcelSyncModalProps {
   channelCollections?: ChannelCollectionRecord[];
   channels?: ChannelConfig[];
   notebookNotes?: NotebookNoteRecord[];
+  bookCategories?: string[];
   onImportSuccess: (result: FullDatabaseImportResult) => void;
   language?: Language;
 }
@@ -40,6 +41,7 @@ export const ExcelSyncModal: React.FC<ExcelSyncModalProps> = ({
   channelCollections = [],
   channels = [],
   notebookNotes = [],
+  bookCategories = [],
   onImportSuccess,
   language = 'en',
 }) => {
@@ -183,6 +185,7 @@ export const ExcelSyncModal: React.FC<ExcelSyncModalProps> = ({
                   channelCollections,
                   channels,
                   notebookNotes,
+                  bookCategories,
                 });
                 onClose();
               }}

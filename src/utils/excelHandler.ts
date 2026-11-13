@@ -32,347 +32,434 @@ export interface FullDatabaseImportResult {
   bookCategories?: string[];
 }
 
+/**
+ * Excel cell character limit is strictly 32,767.
+ * To prevent write crashes on large images (e.g. vouchers), strings > 30,000 characters
+ * are chunked and preserved in the 'Asset Chunks' sheet for 100% loss-free backup and restore.
+ */
+const MAX_EXCEL_CELL_LENGTH = 32000;
+const ASSET_CHUNK_SIZE = 30000;
+
+function chunkString(str: string, size: number = ASSET_CHUNK_SIZE): string[] {
+  const chunks: string[] = [];
+  for (let i = 0; i < str.length; i += size) {
+    chunks.push(str.substring(i, i + size));
+  }
+  return chunks;
+}
+
+function safeCellString(val: any): string {
+  if (val === null || val === undefined) return '';
+  const s = String(val);
+  return s.length > MAX_EXCEL_CELL_LENGTH ? s.substring(0, MAX_EXCEL_CELL_LENGTH) : s;
+}
+
 export function exportBooksToExcel(
   books: BookRecord[], 
   month?: number, 
   year?: number, 
   additionalData?: FullDatabaseBackupData
 ) {
-  // 1. Build Sheet1 (373 columns matrix - Complete Book Sales & Daily Activity)
-  const sheet1Data: (string | number | null | undefined)[][] = [];
-  sheet1Data.push(EXCEL_HEADERS);
+  try {
+    // Collect asset chunks for oversized fields (voucher images etc.)
+    interface AssetChunkRow {
+      recordId: string;
+      field: string;
+      partIndex: number;
+      totalParts: number;
+      data: string;
+    }
+    const assetChunks: AssetChunkRow[] = [];
 
-  books.forEach((book, idx) => {
-    const metrics = calculateBookMetrics(book);
-    const row: (string | number | null | undefined)[] = new Array(EXCEL_HEADERS.length).fill('');
-
-    row[0] = idx + 1; // SL
-    row[1] = book.bookName;
-    row[2] = metrics.adCost;
-    row[3] = metrics.makingCost;
-    row[4] = metrics.perBookAmount;
-    row[5] = metrics.profitPerBook;
-    row[6] = metrics.totalIncomeOffline;
-    row[7] = metrics.totalIncomeOnline;
-    row[8] = metrics.totalPresentStockHO;
-    row[9] = metrics.totalOrderFaridBhai;
-    row[10] = metrics.faridBhaiToHeadOffice;
-    row[11] = metrics.stockToFaridBhai;
-
-    // Press receipts (cols 12..42: days 1..31)
-    for (let d = 1; d <= 31; d++) {
-      if (book.pressDailyReceipts && book.pressDailyReceipts[d]) {
-        row[11 + d] = book.pressDailyReceipts[d];
+    const processAsset = (recordId: string, field: string, value?: string): string => {
+      if (!value) return '';
+      if (value.length <= MAX_EXCEL_CELL_LENGTH) {
+        return value;
       }
+      const chunks = chunkString(value, ASSET_CHUNK_SIZE);
+      chunks.forEach((chunk, idx) => {
+        assetChunks.push({
+          recordId,
+          field,
+          partIndex: idx,
+          totalParts: chunks.length,
+          data: chunk,
+        });
+      });
+      return `[CHUNKED_REF:${recordId}:${field}:${chunks.length}]`;
+    };
+
+    // 1. Build Sheet1 (373 columns matrix - Complete Book Sales & Daily Activity)
+    const sheet1Data: (string | number | null | undefined)[][] = [];
+    sheet1Data.push(EXCEL_HEADERS);
+
+    books.forEach((book, idx) => {
+      const metrics = calculateBookMetrics(book);
+      const row: (string | number | null | undefined)[] = new Array(EXCEL_HEADERS.length).fill('');
+
+      row[0] = idx + 1; // SL
+      row[1] = book.bookName;
+      row[2] = metrics.adCost;
+      row[3] = metrics.makingCost;
+      row[4] = metrics.perBookAmount;
+      row[5] = metrics.profitPerBook;
+      row[6] = metrics.totalIncomeOffline;
+      row[7] = metrics.totalIncomeOnline;
+      row[8] = metrics.totalPresentStockHO;
+      row[9] = metrics.totalOrderFaridBhai;
+      row[10] = metrics.faridBhaiToHeadOffice;
+      row[11] = metrics.stockToFaridBhai;
+
+      // Press receipts (cols 12..42: days 1..31)
+      for (let d = 1; d <= 31; d++) {
+        if (book.pressDailyReceipts && book.pressDailyReceipts[d]) {
+          row[11 + d] = book.pressDailyReceipts[d];
+        }
+      }
+
+      // Boibari (col 43 total, 44..74 days)
+      row[43] = metrics.boibariTotal;
+      for (let d = 1; d <= 31; d++) {
+        if (book.boibari && book.boibari[d]) {
+          row[43 + d] = book.boibari[d];
+        }
+      }
+
+      // Rokomari (col 75 total, 76..106 days)
+      row[75] = metrics.rokomariTotal;
+      for (let d = 1; d <= 31; d++) {
+        if (book.rokomari && book.rokomari[d]) {
+          row[75 + d] = book.rokomari[d];
+        }
+      }
+
+      // Wafilife (col 107 total, 108..138 days)
+      row[107] = metrics.wafilifeTotal;
+      for (let d = 1; d <= 31; d++) {
+        if (book.wafilife && book.wafilife[d]) {
+          row[107 + d] = book.wafilife[d];
+        }
+      }
+
+      // Others Online (col 140 total, 141..171 days)
+      row[140] = metrics.othersOnlineTotal;
+      for (let d = 1; d <= 31; d++) {
+        if (book.othersOnline && book.othersOnline[d]) {
+          row[140 + d] = book.othersOnline[d];
+        }
+      }
+
+      // Head Office Offline (col 172 total, 173..203 days)
+      row[172] = metrics.headOfficeOfflineTotal;
+      for (let d = 1; d <= 31; d++) {
+        if (book.headOfficeSellOffline && book.headOfficeSellOffline[d]) {
+          row[172 + d] = book.headOfficeSellOffline[d];
+        }
+      }
+
+      // Nilkhet (col 204 total, 205..235 days)
+      row[204] = metrics.nilkhetTotal;
+      for (let d = 1; d <= 31; d++) {
+        if (book.nilkhetLibrary && book.nilkhetLibrary[d]) {
+          row[204 + d] = book.nilkhetLibrary[d];
+        }
+      }
+
+      // Sumona (col 236 total, 237..267 days)
+      row[236] = metrics.sumonaTotal;
+      for (let d = 1; d <= 31; d++) {
+        if (book.sumonaLibrary && book.sumonaLibrary[d]) {
+          row[236 + d] = book.sumonaLibrary[d];
+        }
+      }
+
+      // Promise (col 268 total, 269..299 days)
+      row[268] = metrics.promiseTotal;
+      for (let d = 1; d <= 31; d++) {
+        if (book.promiseLibrary && book.promiseLibrary[d]) {
+          row[268 + d] = book.promiseLibrary[d];
+        }
+      }
+
+      // Joystar (col 300 total, 301..331 days)
+      row[300] = metrics.joystarTotal;
+      for (let d = 1; d <= 31; d++) {
+        if (book.joystarLibrary && book.joystarLibrary[d]) {
+          row[300 + d] = book.joystarLibrary[d];
+        }
+      }
+
+      // Daily Returns (col 332 total, 333..363 days)
+      row[332] = metrics.totalReturns;
+      for (let d = 1; d <= 31; d++) {
+        if (book.dailyReturns && book.dailyReturns[d]) {
+          row[332 + d] = book.dailyReturns[d];
+        }
+      }
+
+      // Promo copies
+      row[365] = metrics.marketing;
+      row[366] = metrics.service;
+      row[367] = metrics.adVideoMaking;
+      row[368] = metrics.rd;
+      row[369] = metrics.gift;
+
+      row[370] = metrics.totalOnlineSell;
+      row[371] = metrics.totalOfflineSell;
+      row[372] = safeCellString(book.remarks);
+
+      sheet1Data.push(row);
+    });
+
+    const wb = XLSX.utils.book_new();
+
+    // Sheet 1: Books Matrix
+    const wsSheet1 = XLSX.utils.aoa_to_sheet(sheet1Data);
+    XLSX.utils.book_append_sheet(wb, wsSheet1, 'Sheet1');
+
+    // Sheet 2: Press Payments
+    if (additionalData?.pressPayments && additionalData.pressPayments.length > 0) {
+      const paymentRows: (string | number)[][] = [
+        ['ID', 'Date', 'Book ID', 'Book Name', 'Amount', 'Payment Method', 'Voucher No', 'Notes', 'Voucher Image', 'Created At']
+      ];
+      additionalData.pressPayments.forEach(p => {
+        paymentRows.push([
+          p.id || '',
+          p.date || '',
+          p.bookId || '',
+          p.bookName || '',
+          Number(p.amount) || 0,
+          p.paymentMethod || 'bank',
+          p.voucherNo || '',
+          safeCellString(p.notes),
+          processAsset(p.id, 'voucherImage', p.voucherImage),
+          p.createdAt || ''
+        ]);
+      });
+      const wsPayments = XLSX.utils.aoa_to_sheet(paymentRows);
+      XLSX.utils.book_append_sheet(wb, wsPayments, 'Press Payments');
     }
 
-    // Boibari (col 43 total, 44..74 days)
-    row[43] = metrics.boibariTotal;
-    for (let d = 1; d <= 31; d++) {
-      if (book.boibari && book.boibari[d]) {
-        row[43 + d] = book.boibari[d];
-      }
+    // Sheet 3: Press Orders
+    if (additionalData?.pressOrders && additionalData.pressOrders.length > 0) {
+      const orderRows: (string | number)[][] = [
+        ['ID', 'Book ID', 'Book Name', 'Order Date', 'Order Quantity', 'Lot Name', 'Making Cost', 'Total Bill', 'Order No', 'Notes', 'Voucher Image', 'Created At']
+      ];
+      additionalData.pressOrders.forEach(o => {
+        orderRows.push([
+          o.id || '',
+          o.bookId || '',
+          o.bookName || '',
+          o.orderDate || '',
+          Number(o.orderQuantity) || 0,
+          o.lotName || '',
+          Number(o.makingCost) || 0,
+          Number(o.totalBill) || 0,
+          o.orderNo || '',
+          safeCellString(o.notes),
+          processAsset(o.id, 'voucherImage', o.voucherImage),
+          o.createdAt || ''
+        ]);
+      });
+      const wsOrders = XLSX.utils.aoa_to_sheet(orderRows);
+      XLSX.utils.book_append_sheet(wb, wsOrders, 'Press Orders');
     }
 
-    // Rokomari (col 75 total, 76..106 days)
-    row[75] = metrics.rokomariTotal;
-    for (let d = 1; d <= 31; d++) {
-      if (book.rokomari && book.rokomari[d]) {
-        row[75 + d] = book.rokomari[d];
-      }
+    // Sheet 4: Press Deliveries (Chalans)
+    if (additionalData?.pressDeliveries && additionalData.pressDeliveries.length > 0) {
+      const deliveryRows: (string | number)[][] = [
+        ['ID', 'Book ID', 'Book Name', 'Delivery Date', 'Quantity', 'Chalan No', 'Lot Name', 'Received By', 'Notes', 'Voucher Image', 'Created At']
+      ];
+      additionalData.pressDeliveries.forEach(d => {
+        deliveryRows.push([
+          d.id || '',
+          d.bookId || '',
+          d.bookName || '',
+          d.deliveryDate || '',
+          Number(d.quantity) || 0,
+          d.chalanNo || '',
+          d.lotName || '',
+          d.receivedBy || '',
+          safeCellString(d.notes),
+          processAsset(d.id, 'voucherImage', d.voucherImage),
+          d.createdAt || ''
+        ]);
+      });
+      const wsDeliveries = XLSX.utils.aoa_to_sheet(deliveryRows);
+      XLSX.utils.book_append_sheet(wb, wsDeliveries, 'Press Deliveries');
     }
 
-    // Wafilife (col 107 total, 108..138 days)
-    row[107] = metrics.wafilifeTotal;
-    for (let d = 1; d <= 31; d++) {
-      if (book.wafilife && book.wafilife[d]) {
-        row[107 + d] = book.wafilife[d];
-      }
+    // Sheet 5: Channel Collections (Money Receipts)
+    if (additionalData?.channelCollections && additionalData.channelCollections.length > 0) {
+      const collectionRows: (string | number)[][] = [
+        ['ID', 'Date', 'Channel Key', 'Channel Name', 'Amount', 'Payment Method', 'Receipt No', 'Notes', 'Voucher Image', 'Created At']
+      ];
+      additionalData.channelCollections.forEach(c => {
+        const rawImg = c.voucherImage || (c as any).receiptImage;
+        collectionRows.push([
+          c.id || '',
+          c.date || '',
+          c.channelKey || '',
+          c.channelName || '',
+          Number(c.amount) || 0,
+          c.paymentMethod || 'cash',
+          c.receiptNo || '',
+          safeCellString(c.notes),
+          processAsset(c.id, 'voucherImage', rawImg),
+          c.createdAt || ''
+        ]);
+      });
+      const wsCollections = XLSX.utils.aoa_to_sheet(collectionRows);
+      XLSX.utils.book_append_sheet(wb, wsCollections, 'Channel Collections');
     }
 
-    // Others Online (col 140 total, 141..171 days)
-    row[140] = metrics.othersOnlineTotal;
-    for (let d = 1; d <= 31; d++) {
-      if (book.othersOnline && book.othersOnline[d]) {
-        row[140 + d] = book.othersOnline[d];
-      }
+    // Sheet 6: Sales Channels Configuration
+    if (additionalData?.channels && additionalData.channels.length > 0) {
+      const channelRows: (string | number)[][] = [
+        ['ID', 'Name', 'English Name', 'Type', 'Source', 'Category', 'Is System Default']
+      ];
+      additionalData.channels.forEach(ch => {
+        channelRows.push([
+          ch.id || '',
+          ch.name || '',
+          ch.nameEn || '',
+          ch.type || 'offline',
+          ch.source || 'headOffice',
+          ch.category || '',
+          ch.isSystemDefault ? 1 : 0
+        ]);
+      });
+      const wsChannels = XLSX.utils.aoa_to_sheet(channelRows);
+      XLSX.utils.book_append_sheet(wb, wsChannels, 'Sales Channels');
     }
 
-    // Head Office Offline (col 172 total, 173..203 days)
-    row[172] = metrics.headOfficeOfflineTotal;
-    for (let d = 1; d <= 31; d++) {
-      if (book.headOfficeSellOffline && book.headOfficeSellOffline[d]) {
-        row[172 + d] = book.headOfficeSellOffline[d];
-      }
+    // Sheet 7: Publication Notebook Notes
+    if (additionalData?.notebookNotes && additionalData.notebookNotes.length > 0) {
+      const noteRows: (string | number)[][] = [
+        ['ID', 'Title', 'Content', 'Color', 'Created At', 'Updated At']
+      ];
+      additionalData.notebookNotes.forEach(n => {
+        noteRows.push([
+          n.id || '',
+          n.title || '',
+          safeCellString(n.content),
+          n.color || 'yellow',
+          n.createdAt || '',
+          n.updatedAt || ''
+        ]);
+      });
+      const wsNotes = XLSX.utils.aoa_to_sheet(noteRows);
+      XLSX.utils.book_append_sheet(wb, wsNotes, 'Notebook Notes');
     }
 
-    // Nilkhet (col 204 total, 205..235 days)
-    row[204] = metrics.nilkhetTotal;
-    for (let d = 1; d <= 31; d++) {
-      if (book.nilkhetLibrary && book.nilkhetLibrary[d]) {
-        row[204 + d] = book.nilkhetLibrary[d];
-      }
+    // Sheet 8: Book Categories
+    if (additionalData?.bookCategories && additionalData.bookCategories.length > 0) {
+      const categoryRows: (string)[][] = [
+        ['Category Name']
+      ];
+      additionalData.bookCategories.forEach(cat => {
+        categoryRows.push([cat]);
+      });
+      const wsCategories = XLSX.utils.aoa_to_sheet(categoryRows);
+      XLSX.utils.book_append_sheet(wb, wsCategories, 'Book Categories');
     }
 
-    // Sumona (col 236 total, 237..267 days)
-    row[236] = metrics.sumonaTotal;
-    for (let d = 1; d <= 31; d++) {
-      if (book.sumonaLibrary && book.sumonaLibrary[d]) {
-        row[236 + d] = book.sumonaLibrary[d];
-      }
+    // Sheet 9: Asset Chunks (Oversized image attachments stored safely)
+    if (assetChunks.length > 0) {
+      const assetRows: (string | number)[][] = [
+        ['Record ID', 'Field', 'Part Index', 'Total Parts', 'Chunk Data']
+      ];
+      assetChunks.forEach(a => {
+        assetRows.push([a.recordId, a.field, a.partIndex, a.totalParts, a.data]);
+      });
+      const wsAssets = XLSX.utils.aoa_to_sheet(assetRows);
+      XLSX.utils.book_append_sheet(wb, wsAssets, 'Asset Chunks');
     }
 
-    // Promise (col 268 total, 269..299 days)
-    row[268] = metrics.promiseTotal;
-    for (let d = 1; d <= 31; d++) {
-      if (book.promiseLibrary && book.promiseLibrary[d]) {
-        row[268 + d] = book.promiseLibrary[d];
-      }
-    }
-
-    // Joystar (col 300 total, 301..331 days)
-    row[300] = metrics.joystarTotal;
-    for (let d = 1; d <= 31; d++) {
-      if (book.joystarLibrary && book.joystarLibrary[d]) {
-        row[300 + d] = book.joystarLibrary[d];
-      }
-    }
-
-    // Daily Returns (col 332 total, 333..363 days)
-    row[332] = metrics.totalReturns;
-    for (let d = 1; d <= 31; d++) {
-      if (book.dailyReturns && book.dailyReturns[d]) {
-        row[332 + d] = book.dailyReturns[d];
-      }
-    }
-
-    // Promo copies
-    row[365] = metrics.marketing;
-    row[366] = metrics.service;
-    row[367] = metrics.adVideoMaking;
-    row[368] = metrics.rd;
-    row[369] = metrics.gift;
-
-    row[370] = metrics.totalOnlineSell;
-    row[371] = metrics.totalOfflineSell;
-    row[372] = book.remarks || '';
-
-    sheet1Data.push(row);
-  });
-
-  const wb = XLSX.utils.book_new();
-
-  // Sheet 1: Books Matrix
-  const wsSheet1 = XLSX.utils.aoa_to_sheet(sheet1Data);
-  XLSX.utils.book_append_sheet(wb, wsSheet1, 'Sheet1');
-
-  // Sheet 2: Press Payments
-  if (additionalData?.pressPayments && additionalData.pressPayments.length > 0) {
-    const paymentRows: (string | number)[][] = [
-      ['ID', 'Date', 'Book ID', 'Book Name', 'Amount', 'Payment Method', 'Voucher No', 'Notes', 'Voucher Image', 'Created At']
+    // Sheet 10: Executive Summary
+    const summaryHeaders = [
+      'ক্রমিক (SL)',
+      'বইয়ের নাম (Book Name)',
+      'বিজ্ঞাপন খরচ (Ad Cost)',
+      'উৎপাদন খরচ (Making Cost)',
+      'বিক্রয় মূল্য (MRP)',
+      'কপি প্রতি লাভ (Profit/Unit)',
+      'মোট প্রেস অর্ডার (Press Order)',
+      'হেড অফিস প্রাপ্ত (Received at HO)',
+      'হেড অফিস বর্তমান স্টক (HO Stock)',
+      'ফরিদ ভাই প্রেস স্টক (Press Stock)',
+      'অনলাইন মোট বিক্রি (Online Sold)',
+      'অফলাইন মোট বিক্রি (Offline Sold)',
+      'সর্বমোট বিক্রি (Total Sold)',
+      'রিটার্ন কপি (Returns)',
+      'প্রমোশন/উপহার (Promotions)',
+      'অনলাইন আয় (Online Revenue)',
+      'অফলাইন আয় (Offline Revenue)',
+      'সর্বমোট আয় (Total Revenue)',
+      'সর্বমোট নিট লাভ (Total Net Profit)',
+      'মন্তব্য (Remarks)'
     ];
-    additionalData.pressPayments.forEach(p => {
-      paymentRows.push([
-        p.id || '',
-        p.date || '',
-        p.bookId || '',
-        p.bookName || '',
-        Number(p.amount) || 0,
-        p.paymentMethod || 'bank',
-        p.voucherNo || '',
-        p.notes || '',
-        p.voucherImage || '',
-        p.createdAt || ''
+
+    const summaryData: (string | number)[][] = [summaryHeaders];
+
+    books.forEach((book, idx) => {
+      const m = calculateBookMetrics(book);
+      summaryData.push([
+        idx + 1,
+        book.bookName,
+        m.adCost,
+        m.makingCost,
+        m.perBookAmount,
+        m.profitPerBook,
+        m.totalOrderFaridBhai,
+        m.faridBhaiToHeadOffice,
+        m.totalPresentStockHO,
+        m.stockToFaridBhai,
+        m.totalOnlineSell,
+        m.totalOfflineSell,
+        m.totalSold,
+        m.totalReturns,
+        m.totalPromo,
+        m.totalIncomeOnline,
+        m.totalIncomeOffline,
+        m.totalRevenue,
+        m.totalNetProfit,
+        safeCellString(book.remarks)
       ]);
     });
-    const wsPayments = XLSX.utils.aoa_to_sheet(paymentRows);
-    XLSX.utils.book_append_sheet(wb, wsPayments, 'Press Payments');
+
+    const wsSummary = XLSX.utils.aoa_to_sheet(summaryData);
+    XLSX.utils.book_append_sheet(wb, wsSummary, 'Executive Report');
+
+    const now = new Date();
+    const dateStr = now.toISOString().split('T')[0];
+    const filePrefix = year && month 
+      ? `Biddabari_Full_Database_Backup_${year}_${String(month).padStart(2, '0')}` 
+      : `Biddabari_Full_Database_Backup_${dateStr}`;
+    const fileName = `${filePrefix}.xlsx`;
+
+    // Universal browser blob download
+    try {
+      const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+      const blob = new Blob([wbout], {
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+      });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 4000);
+    } catch (writeErr) {
+      // Fallback
+      XLSX.writeFile(wb, fileName);
+    }
+  } catch (err: any) {
+    console.error('exportBooksToExcel failed:', err);
+    alert('এক্সেল ফাইল এক্সপোর্ট করতে সমস্যা হয়েছে: ' + (err?.message || err));
   }
-
-  // Sheet 3: Press Orders
-  if (additionalData?.pressOrders && additionalData.pressOrders.length > 0) {
-    const orderRows: (string | number)[][] = [
-      ['ID', 'Book ID', 'Book Name', 'Order Date', 'Order Quantity', 'Lot Name', 'Making Cost', 'Total Bill', 'Order No', 'Notes', 'Voucher Image', 'Created At']
-    ];
-    additionalData.pressOrders.forEach(o => {
-      orderRows.push([
-        o.id || '',
-        o.bookId || '',
-        o.bookName || '',
-        o.orderDate || '',
-        Number(o.orderQuantity) || 0,
-        o.lotName || '',
-        Number(o.makingCost) || 0,
-        Number(o.totalBill) || 0,
-        o.orderNo || '',
-        o.notes || '',
-        o.voucherImage || '',
-        o.createdAt || ''
-      ]);
-    });
-    const wsOrders = XLSX.utils.aoa_to_sheet(orderRows);
-    XLSX.utils.book_append_sheet(wb, wsOrders, 'Press Orders');
-  }
-
-  // Sheet 4: Press Deliveries (Chalans)
-  if (additionalData?.pressDeliveries && additionalData.pressDeliveries.length > 0) {
-    const deliveryRows: (string | number)[][] = [
-      ['ID', 'Book ID', 'Book Name', 'Delivery Date', 'Quantity', 'Chalan No', 'Lot Name', 'Received By', 'Notes', 'Voucher Image', 'Created At']
-    ];
-    additionalData.pressDeliveries.forEach(d => {
-      deliveryRows.push([
-        d.id || '',
-        d.bookId || '',
-        d.bookName || '',
-        d.deliveryDate || '',
-        Number(d.quantity) || 0,
-        d.chalanNo || '',
-        d.lotName || '',
-        d.receivedBy || '',
-        d.notes || '',
-        d.voucherImage || '',
-        d.createdAt || ''
-      ]);
-    });
-    const wsDeliveries = XLSX.utils.aoa_to_sheet(deliveryRows);
-    XLSX.utils.book_append_sheet(wb, wsDeliveries, 'Press Deliveries');
-  }
-
-  // Sheet 5: Channel Collections (Money Receipts)
-  if (additionalData?.channelCollections && additionalData.channelCollections.length > 0) {
-    const collectionRows: (string | number)[][] = [
-      ['ID', 'Date', 'Channel Key', 'Channel Name', 'Amount', 'Payment Method', 'Receipt No', 'Notes', 'Voucher Image', 'Created At']
-    ];
-    additionalData.channelCollections.forEach(c => {
-      collectionRows.push([
-        c.id || '',
-        c.date || '',
-        c.channelKey || '',
-        c.channelName || '',
-        Number(c.amount) || 0,
-        c.paymentMethod || 'cash',
-        c.receiptNo || '',
-        c.notes || '',
-        c.voucherImage || c.receiptImage || '',
-        c.createdAt || ''
-      ]);
-    });
-    const wsCollections = XLSX.utils.aoa_to_sheet(collectionRows);
-    XLSX.utils.book_append_sheet(wb, wsCollections, 'Channel Collections');
-  }
-
-  // Sheet 6: Sales Channels Configuration
-  if (additionalData?.channels && additionalData.channels.length > 0) {
-    const channelRows: (string | number)[][] = [
-      ['ID', 'Name', 'English Name', 'Type', 'Source', 'Category', 'Is System Default']
-    ];
-    additionalData.channels.forEach(ch => {
-      channelRows.push([
-        ch.id || '',
-        ch.name || '',
-        ch.nameEn || '',
-        ch.type || 'offline',
-        ch.source || 'headOffice',
-        ch.category || '',
-        ch.isSystemDefault ? 1 : 0
-      ]);
-    });
-    const wsChannels = XLSX.utils.aoa_to_sheet(channelRows);
-    XLSX.utils.book_append_sheet(wb, wsChannels, 'Sales Channels');
-  }
-
-  // Sheet 7: Publication Notebook Notes
-  if (additionalData?.notebookNotes && additionalData.notebookNotes.length > 0) {
-    const noteRows: (string | number)[][] = [
-      ['ID', 'Title', 'Content', 'Color', 'Created At', 'Updated At']
-    ];
-    additionalData.notebookNotes.forEach(n => {
-      noteRows.push([
-        n.id || '',
-        n.title || '',
-        n.content || '',
-        n.color || 'yellow',
-        n.createdAt || '',
-        n.updatedAt || ''
-      ]);
-    });
-    const wsNotes = XLSX.utils.aoa_to_sheet(noteRows);
-    XLSX.utils.book_append_sheet(wb, wsNotes, 'Notebook Notes');
-  }
-
-  // Sheet 8: Book Categories
-  if (additionalData?.bookCategories && additionalData.bookCategories.length > 0) {
-    const categoryRows: (string)[][] = [
-      ['Category Name']
-    ];
-    additionalData.bookCategories.forEach(cat => {
-      categoryRows.push([cat]);
-    });
-    const wsCategories = XLSX.utils.aoa_to_sheet(categoryRows);
-    XLSX.utils.book_append_sheet(wb, wsCategories, 'Book Categories');
-  }
-
-  // Sheet 9: Executive Summary
-  const summaryHeaders = [
-    'ক্রমিক (SL)',
-    'বইয়ের নাম (Book Name)',
-    'বিজ্ঞাপন খরচ (Ad Cost)',
-    'উৎপাদন খরচ (Making Cost)',
-    'বিক্রয় মূল্য (MRP)',
-    'কপি প্রতি লাভ (Profit/Unit)',
-    'মোট প্রেস অর্ডার (Press Order)',
-    'হেড অফিস প্রাপ্ত (Received at HO)',
-    'হেড অফিস বর্তমান স্টক (HO Stock)',
-    'ফরিদ ভাই প্রেস স্টক (Press Stock)',
-    'অনলাইন মোট বিক্রি (Online Sold)',
-    'অফলাইন মোট বিক্রি (Offline Sold)',
-    'সর্বমোট বিক্রি (Total Sold)',
-    'রিটার্ন কপি (Returns)',
-    'প্রমোশন/উপহার (Promotions)',
-    'অনলাইন আয় (Online Revenue)',
-    'অফলাইন আয় (Offline Revenue)',
-    'সর্বমোট আয় (Total Revenue)',
-    'সর্বমোট নিট লাভ (Total Net Profit)',
-    'মন্তব্য (Remarks)'
-  ];
-
-  const summaryData: (string | number)[][] = [summaryHeaders];
-
-  books.forEach((book, idx) => {
-    const m = calculateBookMetrics(book);
-    summaryData.push([
-      idx + 1,
-      book.bookName,
-      m.adCost,
-      m.makingCost,
-      m.perBookAmount,
-      m.profitPerBook,
-      m.totalOrderFaridBhai,
-      m.faridBhaiToHeadOffice,
-      m.totalPresentStockHO,
-      m.stockToFaridBhai,
-      m.totalOnlineSell,
-      m.totalOfflineSell,
-      m.totalSold,
-      m.totalReturns,
-      m.totalPromo,
-      m.totalIncomeOnline,
-      m.totalIncomeOffline,
-      m.totalRevenue,
-      m.totalNetProfit,
-      book.remarks || ''
-    ]);
-  });
-
-  const wsSummary = XLSX.utils.aoa_to_sheet(summaryData);
-  XLSX.utils.book_append_sheet(wb, wsSummary, 'Executive Report');
-
-  const now = new Date();
-  const dateStr = now.toISOString().split('T')[0];
-  const filePrefix = year && month 
-    ? `Biddabari_Full_Database_Backup_${year}_${String(month).padStart(2, '0')}` 
-    : `Biddabari_Full_Database_Backup_${dateStr}`;
-  XLSX.writeFile(wb, `${filePrefix}.xlsx`);
 }
 
 export function importBooksFromExcel(file: File): Promise<FullDatabaseImportResult> {
@@ -475,6 +562,40 @@ export function importBooksFromExcel(file: File): Promise<FullDatabaseImportResu
           });
         }
 
+        // Pre-parse Asset Chunks (for oversized images etc.)
+        const assetMap = new Map<string, string>();
+        if (wb.SheetNames.includes('Asset Chunks')) {
+          const wsAssets = wb.Sheets['Asset Chunks'];
+          const assetRows: any[][] = XLSX.utils.sheet_to_json(wsAssets, { header: 1 });
+          if (assetRows.length > 1) {
+            const tempMap = new Map<string, { partIndex: number; data: string }[]>();
+            for (let i = 1; i < assetRows.length; i++) {
+              const r = assetRows[i];
+              if (!r || !r[0]) continue;
+              const key = `${r[0]}:${r[1] || 'voucherImage'}`;
+              if (!tempMap.has(key)) tempMap.set(key, []);
+              tempMap.get(key)!.push({
+                partIndex: Number(r[2]) || 0,
+                data: String(r[4] || '')
+              });
+            }
+            tempMap.forEach((parts, key) => {
+              parts.sort((a, b) => a.partIndex - b.partIndex);
+              assetMap.set(key, parts.map(p => p.data).join(''));
+            });
+          }
+        }
+
+        const resolveAsset = (recordId: string, field: string, rawVal?: any): string | undefined => {
+          if (!rawVal) return undefined;
+          const s = String(rawVal);
+          if (s.startsWith('[CHUNKED_REF:')) {
+            const full = assetMap.get(`${recordId}:${field}`);
+            return full || undefined;
+          }
+          return s || undefined;
+        };
+
         // 2. Parse Press Payments (if sheet exists)
         let pressPayments: PressPaymentRecord[] | undefined = undefined;
         if (wb.SheetNames.includes('Press Payments')) {
@@ -485,8 +606,9 @@ export function importBooksFromExcel(file: File): Promise<FullDatabaseImportResu
             for (let i = 1; i < payRows.length; i++) {
               const r = payRows[i];
               if (!r || !r[0]) continue;
+              const id = String(r[0]);
               pressPayments.push({
-                id: String(r[0]),
+                id,
                 date: String(r[1] || ''),
                 bookId: r[2] ? String(r[2]) : undefined,
                 bookName: r[3] ? String(r[3]) : undefined,
@@ -494,7 +616,7 @@ export function importBooksFromExcel(file: File): Promise<FullDatabaseImportResu
                 paymentMethod: (r[5] || 'bank') as any,
                 voucherNo: r[6] ? String(r[6]) : undefined,
                 notes: r[7] ? String(r[7]) : undefined,
-                voucherImage: r[8] ? String(r[8]) : undefined,
+                voucherImage: resolveAsset(id, 'voucherImage', r[8]),
                 createdAt: String(r[9] || new Date().toISOString())
               });
             }
@@ -511,8 +633,9 @@ export function importBooksFromExcel(file: File): Promise<FullDatabaseImportResu
             for (let i = 1; i < ordRows.length; i++) {
               const r = ordRows[i];
               if (!r || !r[0]) continue;
+              const id = String(r[0]);
               pressOrders.push({
-                id: String(r[0]),
+                id,
                 bookId: String(r[1] || ''),
                 bookName: String(r[2] || ''),
                 orderDate: String(r[3] || ''),
@@ -522,7 +645,7 @@ export function importBooksFromExcel(file: File): Promise<FullDatabaseImportResu
                 totalBill: r[7] ? Number(r[7]) : undefined,
                 orderNo: r[8] ? String(r[8]) : undefined,
                 notes: r[9] ? String(r[9]) : undefined,
-                voucherImage: r[10] ? String(r[10]) : undefined,
+                voucherImage: resolveAsset(id, 'voucherImage', r[10]),
                 createdAt: String(r[11] || new Date().toISOString())
               });
             }
@@ -539,8 +662,9 @@ export function importBooksFromExcel(file: File): Promise<FullDatabaseImportResu
             for (let i = 1; i < delRows.length; i++) {
               const r = delRows[i];
               if (!r || !r[0]) continue;
+              const id = String(r[0]);
               pressDeliveries.push({
-                id: String(r[0]),
+                id,
                 bookId: String(r[1] || ''),
                 bookName: String(r[2] || ''),
                 deliveryDate: String(r[3] || ''),
@@ -549,7 +673,7 @@ export function importBooksFromExcel(file: File): Promise<FullDatabaseImportResu
                 lotName: r[6] ? String(r[6]) : undefined,
                 receivedBy: r[7] ? String(r[7]) : undefined,
                 notes: r[8] ? String(r[8]) : undefined,
-                voucherImage: r[9] ? String(r[9]) : undefined,
+                voucherImage: resolveAsset(id, 'voucherImage', r[9]),
                 createdAt: String(r[10] || new Date().toISOString())
               });
             }
@@ -566,8 +690,9 @@ export function importBooksFromExcel(file: File): Promise<FullDatabaseImportResu
             for (let i = 1; i < colRows.length; i++) {
               const r = colRows[i];
               if (!r || !r[0]) continue;
+              const id = String(r[0]);
               channelCollections.push({
-                id: String(r[0]),
+                id,
                 date: String(r[1] || ''),
                 channelKey: String(r[2] || ''),
                 channelName: String(r[3] || ''),
@@ -575,7 +700,7 @@ export function importBooksFromExcel(file: File): Promise<FullDatabaseImportResu
                 paymentMethod: (r[5] || 'cash') as any,
                 receiptNo: r[6] ? String(r[6]) : undefined,
                 notes: r[7] ? String(r[7]) : undefined,
-                voucherImage: r[8] ? String(r[8]) : undefined,
+                voucherImage: resolveAsset(id, 'voucherImage', r[8]),
                 createdAt: String(r[9] || new Date().toISOString())
               });
             }

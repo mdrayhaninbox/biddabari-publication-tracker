@@ -1580,7 +1580,15 @@ export const App: React.FC = () => {
             <span>{language === 'bn' ? 'প্রেস পেমেন্ট ও চ্যানেল ডিউ ট্র্যাকিং সক্রিয়' : 'Press & Channel Tracking Active'}</span>
             <span className="hidden sm:inline">•</span>
             <button
-              onClick={() => exportBooksToExcel(books, selectedMonth, selectedYear)}
+              onClick={() => exportBooksToExcel(books, selectedMonth, selectedYear, {
+                pressPayments,
+                pressOrders,
+                pressDeliveries,
+                channelCollections,
+                channels,
+                notebookNotes,
+                bookCategories,
+              })}
               className="text-zinc-900 hover:underline font-semibold"
             >
               {language === 'bn' ? 'এক্সেল এক্সপোর্ট' : 'Excel Export'}
@@ -1634,6 +1642,7 @@ export const App: React.FC = () => {
         channelCollections={channelCollections}
         channels={channels}
         notebookNotes={notebookNotes}
+        bookCategories={bookCategories}
         onImportSuccess={handleImportBooksSuccess}
         language={language}
       />
