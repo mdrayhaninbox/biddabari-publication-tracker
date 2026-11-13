@@ -7,9 +7,11 @@ import {
   Edit3, 
   Trash2, 
   AlertTriangle,
-  Printer
+  Printer,
+  Layers,
+  X
 } from 'lucide-react';
-import { BookRecord } from '../types/book';
+import { BookRecord, DEFAULT_BOOK_CATEGORIES } from '../types/book';
 import { calculateBookMetrics, formatBDT, formatNumber } from '../utils/calculations';
 import { Language, tr } from '../utils/i18n';
 
@@ -22,6 +24,9 @@ interface BooksTableProps {
   onOpenAddBook: () => void;
   onPrintSingleBook?: (bookId: string) => void;
   language?: Language;
+  categories?: string[];
+  onAddCategory?: (categoryName: string) => void;
+  onDeleteCategory?: (categoryName: string) => void;
 }
 
 export const BooksTable: React.FC<BooksTableProps> = ({
@@ -33,16 +38,37 @@ export const BooksTable: React.FC<BooksTableProps> = ({
   onOpenAddBook,
   onPrintSingleBook,
   language = 'en',
+  categories = DEFAULT_BOOK_CATEGORIES,
+  onAddCategory,
+  onDeleteCategory,
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState<'sl' | 'name' | 'stock' | 'sold' | 'profit'>('sl');
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [isAddingCategory, setIsAddingCategory] = useState<boolean>(false);
+  const [newCategoryInput, setNewCategoryInput] = useState<string>('');
 
-  const filteredBooks = books.filter(b => 
-    b.bookName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (b.edition && b.edition.toLowerCase().includes(searchTerm.toLowerCase())) ||
-    (b.publishMonth && b.publishMonth.toLowerCase().includes(searchTerm.toLowerCase())) ||
-    (b.remarks && b.remarks.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
+  const bookMatchesCategory = (book: BookRecord, cat: string): boolean => {
+    if (cat === 'all') return true;
+    if (book.category && book.category.trim()) {
+      return book.category.trim().toLowerCase() === cat.trim().toLowerCase();
+    }
+    // Fallback if not explicitly set: check if bookName contains category name
+    return book.bookName.toLowerCase().includes(cat.toLowerCase());
+  };
+
+  const filteredBooks = books.filter(b => {
+    const matchesSearch = 
+      b.bookName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (b.edition && b.edition.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (b.publishMonth && b.publishMonth.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (b.category && b.category.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (b.remarks && b.remarks.toLowerCase().includes(searchTerm.toLowerCase()));
+
+    const matchesCategory = bookMatchesCategory(b, selectedCategory);
+
+    return matchesSearch && matchesCategory;
+  });
 
   const sortedBooks = [...filteredBooks].sort((a, b) => {
     const ma = calculateBookMetrics(a);
@@ -96,6 +122,154 @@ export const BooksTable: React.FC<BooksTableProps> = ({
         </div>
       </div>
 
+      {/* Book Category Tab Bar (Directly below Search & Controls Bar) */}
+      <div className="bg-white p-3 rounded-2xl border border-zinc-200 shadow-xs flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5">
+        <div className="flex items-center gap-1.5 flex-wrap flex-1">
+          <span className="text-xs font-bold text-zinc-600 mr-1 flex items-center gap-1">
+            <Layers className="w-3.5 h-3.5 text-zinc-500" />
+            {tr('বইয়ের ক্যাটেগরি:', 'Book Category:', language)}
+          </span>
+
+          {/* All Books Tab */}
+          <button
+            type="button"
+            onClick={() => setSelectedCategory('all')}
+            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+              selectedCategory === 'all'
+                ? 'bg-zinc-900 text-white shadow-xs'
+                : 'bg-zinc-100 hover:bg-zinc-200 text-zinc-700'
+            }`}
+          >
+            <span>{tr('সকল বই (All Books)', 'All Books', language)}</span>
+            <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-mono font-bold ${
+              selectedCategory === 'all' ? 'bg-white/20 text-white' : 'bg-zinc-200 text-zinc-700'
+            }`}>
+              {formatNumber(books.length, language)}
+            </span>
+          </button>
+
+          {/* Dynamic Categories (NTRCA, Digest, custom categories) */}
+          {categories.map((cat) => {
+            const isSelected = selectedCategory.toLowerCase() === cat.toLowerCase();
+            const count = books.filter(b => bookMatchesCategory(b, cat)).length;
+
+            return (
+              <div
+                key={cat}
+                className={`inline-flex items-center rounded-xl text-xs font-bold transition-all border ${
+                  isSelected
+                    ? 'bg-blue-600 text-white border-blue-700 shadow-xs'
+                    : 'bg-zinc-50 hover:bg-zinc-100 text-zinc-800 border-zinc-200'
+                }`}
+              >
+                <button
+                  type="button"
+                  onClick={() => setSelectedCategory(cat)}
+                  className="px-3 py-1.5 flex items-center gap-1.5"
+                >
+                  <span>{cat}</span>
+                  <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-mono font-bold ${
+                    isSelected ? 'bg-white/20 text-white' : 'bg-zinc-200 text-zinc-700'
+                  }`}>
+                    {formatNumber(count, language)}
+                  </span>
+                </button>
+
+                {/* Delete Category Button */}
+                {onDeleteCategory && (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (window.confirm(tr(`আপনি কি নিশ্চিত যে "${cat}" ক্যাটেগরি মুছে ফেলতে চান? (বইগুলো মুছে যাবে না)`, `Are you sure you want to delete category "${cat}"? (Books will not be deleted)`, language))) {
+                        onDeleteCategory(cat);
+                        if (selectedCategory.toLowerCase() === cat.toLowerCase()) {
+                          setSelectedCategory('all');
+                        }
+                      }
+                    }}
+                    title={tr(`"${cat}" ক্যাটেগরি মুছুন`, `Delete "${cat}" category`, language)}
+                    className={`p-1 pr-2 rounded-r-xl transition-colors ${
+                      isSelected ? 'text-blue-200 hover:text-white' : 'text-zinc-400 hover:text-red-600'
+                    }`}
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+            );
+          })}
+
+          {/* + Custom Category Button / Inline Input */}
+          {onAddCategory && (
+            isAddingCategory ? (
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  const trimmed = newCategoryInput.trim();
+                  if (trimmed) {
+                    onAddCategory(trimmed);
+                    setSelectedCategory(trimmed);
+                    setNewCategoryInput('');
+                    setIsAddingCategory(false);
+                  }
+                }}
+                className="inline-flex items-center gap-1 bg-zinc-100 border border-zinc-300 rounded-xl p-1 shadow-inner"
+              >
+                <input
+                  type="text"
+                  autoFocus
+                  value={newCategoryInput}
+                  onChange={(e) => setNewCategoryInput(e.target.value)}
+                  placeholder={tr('নতুন ক্যাটেগরির নাম...', 'New category name...', language)}
+                  className="text-xs px-2.5 py-1 bg-white border border-zinc-300 rounded-lg focus:outline-hidden focus:ring-1 focus:ring-blue-600 font-medium"
+                />
+                <button
+                  type="submit"
+                  className="px-2.5 py-1 text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors shadow-xs"
+                >
+                  {tr('যোগ করুন', 'Add', language)}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsAddingCategory(false);
+                    setNewCategoryInput('');
+                  }}
+                  className="p-1 text-zinc-500 hover:text-zinc-800 rounded-lg transition-colors"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </form>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setIsAddingCategory(true)}
+                className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-bold text-blue-700 hover:text-blue-900 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-xl transition-colors shadow-xs"
+                title={tr('নতুন কাস্টম ক্যাটেগরি যুক্ত করুন', 'Add custom book category', language)}
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>{tr('+ নতুন ক্যাটেগরি', '+ Custom Category', language)}</span>
+              </button>
+            )
+          )}
+        </div>
+
+        {/* Active Category Filter Status */}
+        {selectedCategory !== 'all' && (
+          <div className="flex items-center gap-1.5 text-xs text-blue-700 bg-blue-50 px-2.5 py-1 rounded-lg border border-blue-100 font-medium shrink-0">
+            <span>{tr('ফিল্টার:', 'Filter:', language)} <strong className="font-bold">{selectedCategory}</strong> ({formatNumber(filteredBooks.length, language)})</span>
+            <button
+              type="button"
+              onClick={() => setSelectedCategory('all')}
+              className="text-[11px] underline hover:text-blue-900 ml-1 font-semibold"
+            >
+              {tr('সকল বই দেখুন', 'View All', language)}
+            </button>
+          </div>
+        )}
+      </div>
+
       {/* Main Table */}
       <div className="bg-white rounded-2xl border border-zinc-200 shadow-xs overflow-hidden">
         <div className="text-[11px] text-zinc-500 font-medium px-4 py-2 sm:hidden border-b border-zinc-100 bg-zinc-50 flex items-center justify-between">
@@ -143,6 +317,11 @@ export const BooksTable: React.FC<BooksTableProps> = ({
                       <td className="py-3 px-4">
                         <div className="font-bold text-zinc-900 text-sm flex items-center gap-1.5 flex-wrap">
                           <span>{book.bookName}</span>
+                          {book.category && (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-purple-50 text-purple-700 border border-purple-200">
+                              📚 {book.category}
+                            </span>
+                          )}
                           {book.edition && (
                             <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-blue-50 text-blue-900 border border-blue-200">
                               {book.edition}

@@ -47,6 +47,7 @@ export interface BookRecord {
   initialLotName?: string;
   edition?: string; // e.g. "1st Edition", "2nd Edition", "১ম সংস্করণ"
   publishMonth?: string; // e.g. "January, 2025", "জানুয়ারি ২০২৫"
+  category?: string; // e.g. "NTRCA", "Digest", "Primary", "BCS"
 
   // Dynamic / Custom Channel Daily Sales
   customChannelSales?: {
@@ -54,6 +55,8 @@ export interface BookRecord {
   };
   [key: string]: any;
 }
+
+export const DEFAULT_BOOK_CATEGORIES: string[] = ['NTRCA', 'Digest'];
 
 export type ActiveTab = 'dashboard' | 'period' | 'accounts' | 'entry' | 'books' | 'matrix' | 'reports';
 

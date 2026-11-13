@@ -6,7 +6,8 @@ import {
   PressOrderRecord, 
   PressDeliveryRecord, 
   ChannelCollectionRecord, 
-  ChannelConfig 
+  ChannelConfig,
+  DEFAULT_BOOK_CATEGORIES
 } from '../types/book';
 
 const COLLECTION_NAME = 'publication_data';
@@ -133,6 +134,19 @@ export async function syncChannelsToFirestore(channels: ChannelConfig[]): Promis
 }
 
 /**
+ * Saves book categories to Cloud Firestore
+ */
+export async function syncBookCategoriesToFirestore(categories: string[]): Promise<void> {
+  try {
+    const cleanCategories = sanitizeForFirestore(categories);
+    const docRef = doc(db, COLLECTION_NAME, 'book_categories');
+    await setDoc(docRef, { categories: cleanCategories, updatedAt: new Date().toISOString() });
+  } catch (err) {
+    console.error('Firestore syncBookCategories error:', err);
+  }
+}
+
+/**
  * One-time fetch of month books or master catalog from Firestore
  */
 export async function fetchMonthBooksFromFirestore(year: number, month: number): Promise<BookRecord[] | null> {
@@ -166,6 +180,7 @@ export async function resetFirestoreData(year?: number, month?: number): Promise
       setDoc(doc(db, COLLECTION_NAME, 'press_orders'), { orders: [], updatedAt: new Date().toISOString() }),
       setDoc(doc(db, COLLECTION_NAME, 'press_deliveries'), { deliveries: [], updatedAt: new Date().toISOString() }),
       setDoc(doc(db, COLLECTION_NAME, 'channel_collections'), { collections: [], updatedAt: new Date().toISOString() }),
+      setDoc(doc(db, COLLECTION_NAME, 'book_categories'), { categories: DEFAULT_BOOK_CATEGORIES, updatedAt: new Date().toISOString() }),
     ];
     if (year && month) {
       promises.push(

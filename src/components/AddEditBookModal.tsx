@@ -11,6 +11,7 @@ interface AddEditBookModalProps {
   onSaveBook: (bookData: Partial<BookRecord>) => void;
   nextSl: number;
   language?: Language;
+  categories?: string[];
 }
 
 export const AddEditBookModal: React.FC<AddEditBookModalProps> = ({
@@ -20,10 +21,12 @@ export const AddEditBookModal: React.FC<AddEditBookModalProps> = ({
   onSaveBook,
   nextSl,
   language = 'en',
+  categories = ['NTRCA', 'Digest'],
 }) => {
   const [bookName, setBookName] = useState('');
   const [edition, setEdition] = useState('1st Edition');
   const [publishMonth, setPublishMonth] = useState('');
+  const [category, setCategory] = useState('');
   const [adCost, setAdCost] = useState<number>(30);
   const [makingCost, setMakingCost] = useState<number>(250);
   const [perBookAmount, setPerBookAmount] = useState<number>(390);
@@ -34,6 +37,7 @@ export const AddEditBookModal: React.FC<AddEditBookModalProps> = ({
       setBookName(editingBook.bookName);
       setEdition(editingBook.edition || '1st Edition');
       setPublishMonth(editingBook.publishMonth || '');
+      setCategory(editingBook.category || '');
       setAdCost(editingBook.adCost);
       setMakingCost(editingBook.makingCost);
       setPerBookAmount(editingBook.perBookAmount);
@@ -44,6 +48,7 @@ export const AddEditBookModal: React.FC<AddEditBookModalProps> = ({
       const now = new Date();
       const defaultMonthName = now.toLocaleString('en-US', { month: 'long' });
       setPublishMonth(`${defaultMonthName}, ${now.getFullYear()}`);
+      setCategory('');
       setAdCost(30);
       setMakingCost(250);
       setPerBookAmount(390);
@@ -64,6 +69,7 @@ export const AddEditBookModal: React.FC<AddEditBookModalProps> = ({
       bookName: bookName.trim(),
       edition: edition.trim() || '1st Edition',
       publishMonth: publishMonth.trim(),
+      category: category.trim(),
       adCost: Number(adCost) || 0,
       makingCost: Number(makingCost) || 0,
       perBookAmount: Number(perBookAmount) || 0,
@@ -121,6 +127,33 @@ export const AddEditBookModal: React.FC<AddEditBookModalProps> = ({
                 placeholder={tr('যেমন: ৪৭তম বিসিএস প্রিলিমিনারি গাইড', 'e.g. 47th BCS Preliminary Guide', language)}
                 className="w-full text-xs font-semibold border border-zinc-300 rounded-lg p-2.5 focus:ring-2 focus:ring-zinc-900"
               />
+            </div>
+
+            {/* Book Category Dropdown */}
+            <div>
+              <label className="block text-xs font-bold text-zinc-800 mb-1.5 flex items-center justify-between">
+                <span>{tr('বইয়ের ক্যাটেগরি (Book Category)', 'Book Category', language)}</span>
+                {category && (
+                  <span className="text-[10px] font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200">
+                    🏷️ {category}
+                  </span>
+                )}
+              </label>
+              <select
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+                className="w-full text-xs font-semibold border border-zinc-300 rounded-lg p-2.5 focus:ring-2 focus:ring-zinc-900 bg-white"
+              >
+                <option value="">{tr('-- কোনো ক্যাটেগরি নেই / সাধারণ --', '-- No Category / General --', language)}</option>
+                {categories.map((cat) => (
+                  <option key={cat} value={cat}>
+                    📚 {cat}
+                  </option>
+                ))}
+              </select>
+              <p className="text-[10px] text-zinc-500 mt-1">
+                {tr('নির্দিষ্ট ক্যাটেগরি নির্বাচন করলে বইয়ের তালিকা ও রিপোর্টে ক্যাটেগরি অনুযায়ী ফিল্টার করা যাবে।', 'Selecting a category allows quick filtering in table views and reports.', language)}
+              </p>
             </div>
 
             {/* Book Edition & Publish Month */}

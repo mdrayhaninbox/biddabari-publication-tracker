@@ -18,6 +18,7 @@ export interface FullDatabaseBackupData {
   channelCollections?: ChannelCollectionRecord[];
   channels?: ChannelConfig[];
   notebookNotes?: NotebookNoteRecord[];
+  bookCategories?: string[];
 }
 
 export interface FullDatabaseImportResult {
@@ -28,6 +29,7 @@ export interface FullDatabaseImportResult {
   channelCollections?: ChannelCollectionRecord[];
   channels?: ChannelConfig[];
   notebookNotes?: NotebookNoteRecord[];
+  bookCategories?: string[];
 }
 
 export function exportBooksToExcel(
@@ -298,7 +300,19 @@ export function exportBooksToExcel(
     XLSX.utils.book_append_sheet(wb, wsNotes, 'Notebook Notes');
   }
 
-  // Sheet 8: Executive Summary
+  // Sheet 8: Book Categories
+  if (additionalData?.bookCategories && additionalData.bookCategories.length > 0) {
+    const categoryRows: (string)[][] = [
+      ['Category Name']
+    ];
+    additionalData.bookCategories.forEach(cat => {
+      categoryRows.push([cat]);
+    });
+    const wsCategories = XLSX.utils.aoa_to_sheet(categoryRows);
+    XLSX.utils.book_append_sheet(wb, wsCategories, 'Book Categories');
+  }
+
+  // Sheet 9: Executive Summary
   const summaryHeaders = [
     'ক্রমিক (SL)',
     'বইয়ের নাম (Book Name)',
@@ -613,6 +627,22 @@ export function importBooksFromExcel(file: File): Promise<FullDatabaseImportResu
           }
         }
 
+        // 8. Parse Book Categories (if sheet exists)
+        let bookCategories: string[] | undefined = undefined;
+        if (wb.SheetNames.includes('Book Categories')) {
+          const wsCat = wb.Sheets['Book Categories'];
+          const catRows: any[][] = XLSX.utils.sheet_to_json(wsCat, { header: 1 });
+          if (catRows.length > 1) {
+            bookCategories = [];
+            for (let i = 1; i < catRows.length; i++) {
+              const r = catRows[i];
+              if (r && r[0] && String(r[0]).trim()) {
+                bookCategories.push(String(r[0]).trim());
+              }
+            }
+          }
+        }
+
         resolve({
           books,
           pressPayments,
@@ -620,7 +650,8 @@ export function importBooksFromExcel(file: File): Promise<FullDatabaseImportResu
           pressDeliveries,
           channelCollections,
           channels,
-          notebookNotes
+          notebookNotes,
+          bookCategories
         });
       } catch (err) {
         reject(err);

@@ -8,7 +8,8 @@ import {
   PressDeliveryRecord,
   ChannelConfig,
   ChannelType,
-  DEFAULT_CHANNELS
+  DEFAULT_CHANNELS,
+  DEFAULT_BOOK_CATEGORIES
 } from './types/book';
 import { INITIAL_BOOKS } from './data/initialBooks';
 import { 
@@ -47,6 +48,7 @@ import {
   syncPressDeliveriesToFirestore, 
   syncChannelCollectionsToFirestore, 
   syncChannelsToFirestore,
+  syncBookCategoriesToFirestore,
   resetFirestoreData
 } from './services/firebaseSync';
 import { 
@@ -69,6 +71,7 @@ const PRESS_ORDERS_STORAGE_KEY = 'biddabari_press_orders_v4';
 const PRESS_DELIVERIES_STORAGE_KEY = 'biddabari_press_deliveries_v4';
 const CHANNEL_COLLECTIONS_STORAGE_KEY = 'biddabari_channel_collections_v4';
 const CHANNELS_STORAGE_KEY = 'biddabari_sales_channels_v5';
+const BOOK_CATEGORIES_STORAGE_KEY = 'biddabari_book_categories_v1';
 const THEME_STORAGE_KEY = 'biddabari_theme_v2';
 const LANGUAGE_STORAGE_KEY = 'biddabari_language_v2';
 const STORED_FILES_KEY = 'biddabari_stored_files_v1';
@@ -396,6 +399,20 @@ export const App: React.FC = () => {
     return DEFAULT_CHANNELS;
   });
 
+  // State: Book Categories (NTRCA, Digest, custom categories)
+  const [bookCategories, setBookCategories] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem(BOOK_CATEGORIES_STORAGE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch (e) {
+      console.error(e);
+    }
+    return DEFAULT_BOOK_CATEGORIES;
+  });
+
   const [activeTab, setActiveTab] = useState<ActiveTab>('dashboard');
   const [selectedMatrixBookId, setSelectedMatrixBookId] = useState<string>(books[0]?.id || 'book-1');
 
@@ -628,12 +645,28 @@ export const App: React.FC = () => {
       }
     });
 
+    // Book Categories Listener
+    const unsubCategories = onSnapshot(doc(db, 'publication_data', 'book_categories'), (snap) => {
+      if (snap.metadata.hasPendingWrites) return;
+      if (snap.exists()) {
+        const data = snap.data();
+        if (Array.isArray(data?.categories) && data.categories.length > 0) {
+          setBookCategories(prev => {
+            if (JSON.stringify(prev) === JSON.stringify(data.categories)) return prev;
+            safeLocalStorageSet(BOOK_CATEGORIES_STORAGE_KEY, JSON.stringify(data.categories));
+            return data.categories;
+          });
+        }
+      }
+    });
+
     return () => {
       unsubPayments();
       unsubOrders();
       unsubDeliveries();
       unsubCollections();
       unsubChannels();
+      unsubCategories();
     };
   }, []);
 
@@ -752,6 +785,28 @@ export const App: React.FC = () => {
     });
     setIsAddEditChannelOpen(false);
     setEditingChannel(null);
+  };
+
+  // Book Category Actions
+  const handleAddBookCategory = (categoryName: string) => {
+    const trimmed = categoryName.trim();
+    if (!trimmed) return;
+    setBookCategories(prev => {
+      if (prev.some(c => c.toLowerCase() === trimmed.toLowerCase())) return prev;
+      const updated = [...prev, trimmed];
+      safeLocalStorageSet(BOOK_CATEGORIES_STORAGE_KEY, JSON.stringify(updated));
+      syncBookCategoriesToFirestore(updated).catch(() => {});
+      return updated;
+    });
+  };
+
+  const handleDeleteBookCategory = (categoryName: string) => {
+    setBookCategories(prev => {
+      const updated = prev.filter(c => c.toLowerCase() !== categoryName.toLowerCase());
+      safeLocalStorageSet(BOOK_CATEGORIES_STORAGE_KEY, JSON.stringify(updated));
+      syncBookCategoriesToFirestore(updated).catch(() => {});
+      return updated;
+    });
   };
 
   // Switch month and year safely
@@ -884,6 +939,7 @@ export const App: React.FC = () => {
         bookName: bookData.bookName || 'নতুন বই',
         edition: bookData.edition || '1st Edition',
         publishMonth: bookData.publishMonth || '',
+        category: bookData.category || '',
         adCost: Number(bookData.adCost) || 0,
         makingCost: Number(bookData.makingCost) || 0,
         perBookAmount: Number(bookData.perBookAmount) || 0,
@@ -1169,6 +1225,7 @@ export const App: React.FC = () => {
     setPressPayments([]);
     setChannelCollections([]);
     setChannels(DEFAULT_CHANNELS);
+    setBookCategories(DEFAULT_BOOK_CATEGORIES);
     setIsResetConfirmOpen(false);
   };
 
@@ -1283,6 +1340,13 @@ export const App: React.FC = () => {
       setNotebookNotes(result.notebookNotes);
       idbSet(NOTEBOOK_NOTES_KEY, result.notebookNotes).catch(() => {});
     }
+
+    // 7. Book Categories
+    if (result.bookCategories !== undefined && result.bookCategories.length > 0) {
+      setBookCategories(result.bookCategories);
+      safeLocalStorageSet(BOOK_CATEGORIES_STORAGE_KEY, JSON.stringify(result.bookCategories));
+      syncBookCategoriesToFirestore(result.bookCategories).catch(() => {});
+    }
   };
 
   // Storage & Notebook Handlers
@@ -1349,6 +1413,7 @@ export const App: React.FC = () => {
           channelCollections,
           channels,
           notebookNotes,
+          bookCategories,
         })}
         onOpenImport={() => setIsExcelSyncOpen(true)}
         onResetData={handleResetAllData}
@@ -1463,6 +1528,9 @@ export const App: React.FC = () => {
               setIsAddEditOpen(true);
             }}
             language={language}
+            categories={bookCategories}
+            onAddCategory={handleAddBookCategory}
+            onDeleteCategory={handleDeleteBookCategory}
           />
         )}
 
@@ -1553,6 +1621,7 @@ export const App: React.FC = () => {
         onSaveBook={handleSaveBook}
         nextSl={books.length + 1}
         language={language}
+        categories={bookCategories}
       />
 
       <ExcelSyncModal
