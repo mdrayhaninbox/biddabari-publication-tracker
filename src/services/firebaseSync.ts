@@ -133,15 +133,21 @@ export async function fetchMonthBooksFromFirestore(year: number, month: number):
 /**
  * Resets Firestore data for all documents on intentional reset
  */
-export async function resetFirestoreData(): Promise<void> {
+export async function resetFirestoreData(year?: number, month?: number): Promise<void> {
   try {
-    await Promise.all([
+    const promises = [
       setDoc(doc(db, COLLECTION_NAME, 'master_catalog'), { books: [], updatedAt: new Date().toISOString() }),
       setDoc(doc(db, COLLECTION_NAME, 'press_payments'), { payments: [], updatedAt: new Date().toISOString() }),
       setDoc(doc(db, COLLECTION_NAME, 'press_orders'), { orders: [], updatedAt: new Date().toISOString() }),
       setDoc(doc(db, COLLECTION_NAME, 'press_deliveries'), { deliveries: [], updatedAt: new Date().toISOString() }),
       setDoc(doc(db, COLLECTION_NAME, 'channel_collections'), { collections: [], updatedAt: new Date().toISOString() }),
-    ]);
+    ];
+    if (year && month) {
+      promises.push(
+        setDoc(doc(db, COLLECTION_NAME, `books_${year}_${String(month).padStart(2, '0')}`), { books: [], updatedAt: new Date().toISOString() })
+      );
+    }
+    await Promise.all(promises);
   } catch (err) {
     console.error('Firestore reset error:', err);
   }

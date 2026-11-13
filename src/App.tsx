@@ -502,18 +502,22 @@ export const App: React.FC = () => {
     const unsubscribe = onSnapshot(docRef, (snapshot) => {
       if (snapshot.exists()) {
         const data = snapshot.data();
-        if (Array.isArray(data?.books) && data.books.length > 0) {
-          setBooks(prev => {
-            if (JSON.stringify(prev) === JSON.stringify(data.books)) return prev;
-            const currentKey = getMonthlyStorageKey(selectedYear, selectedMonth);
-            safeLocalStorageSet(currentKey, JSON.stringify(data.books));
-            idbSet(currentKey, JSON.stringify(data.books)).catch(() => {});
-            return data.books;
-          });
+        if (Array.isArray(data?.books)) {
+          if (data.books.length > 0) {
+            setBooks(prev => {
+              if (JSON.stringify(prev) === JSON.stringify(data.books)) return prev;
+              const currentKey = getMonthlyStorageKey(selectedYear, selectedMonth);
+              safeLocalStorageSet(currentKey, JSON.stringify(data.books));
+              idbSet(currentKey, JSON.stringify(data.books)).catch(() => {});
+              return data.books;
+            });
+          } else if (localStorage.getItem(CLEAN_SLATE_ZERO_KEY) === 'true') {
+            setBooks([]);
+          }
         }
       } else {
         // If Firestore document doesn't exist yet, seed it with current local books
-        if (books.length > 0) {
+        if (books.length > 0 && localStorage.getItem(CLEAN_SLATE_ZERO_KEY) !== 'true') {
           syncBooksToFirestore(selectedYear, selectedMonth, books).catch(() => {});
         }
       }
@@ -836,6 +840,9 @@ export const App: React.FC = () => {
 
   // Handle adding or editing a book
   const handleSaveBook = (bookData: Partial<BookRecord>) => {
+    try {
+      localStorage.removeItem(CLEAN_SLATE_ZERO_KEY);
+    } catch {}
     if (editingBook) {
       setBooks(prev => {
         const nextBooks = prev.map(b => (b.id === editingBook.id ? ({ ...b, ...bookData } as BookRecord) : b));
@@ -1110,17 +1117,11 @@ export const App: React.FC = () => {
       keysToRemove.forEach(k => localStorage.removeItem(k));
       localStorage.setItem(CLEAN_SLATE_ZERO_KEY, 'true');
       idbClear().catch(() => {});
-      resetFirestoreData().catch(() => {});
+      resetFirestoreData(selectedYear, selectedMonth).catch(() => {});
     } catch (e) {
       console.error(e);
     }
     setBooks([]);
-    setPressOrders([]);
-    setPressDeliveries([]);
-    setPressPayments([]);
-    setChannelCollections([]);
-    setChannels(DEFAULT_CHANNELS);
-    setIsResetConfirmOpen(false);
     setPressOrders([]);
     setPressDeliveries([]);
     setPressPayments([]);
@@ -1179,6 +1180,20 @@ export const App: React.FC = () => {
     setEntrySelectedBookId(bookId);
     setEntrySelectedDay(day);
     setActiveTab('entry');
+  };
+
+  const handleImportBooksSuccess = (importedBooks: BookRecord[]) => {
+    try {
+      localStorage.removeItem(CLEAN_SLATE_ZERO_KEY);
+    } catch {}
+    setBooks(importedBooks);
+    if (importedBooks.length > 0) {
+      setSelectedMatrixBookId(importedBooks[0].id);
+      setEntrySelectedBookId(importedBooks[0].id);
+      setModalBookId(importedBooks[0].id);
+    }
+    // Full sync-save to localStorage, IndexedDB, Master Catalog, and Google Cloud Firestore
+    syncSaveBooks(importedBooks, selectedYear, selectedMonth);
   };
 
   return (
@@ -1403,7 +1418,7 @@ export const App: React.FC = () => {
         isOpen={isExcelSyncOpen}
         onClose={() => setIsExcelSyncOpen(false)}
         books={books}
-        onImportSuccess={(newBooks) => setBooks(newBooks)}
+        onImportSuccess={handleImportBooksSuccess}
         language={language}
       />
 
