@@ -17,7 +17,7 @@ interface VoucherImageUploaderProps {
  * Resizes large photos to max 1200px width/height and compresses to quality 0.78 JPEG,
  * reducing a 5-10MB mobile photo to ~50-100KB without visible loss of document readability.
  */
-function compressImageFile(file: File, maxWidth = 1200, quality = 0.78): Promise<string> {
+function compressImageFile(file: File, maxWidth = 900, quality = 0.70): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onerror = () => reject(new Error('Failed to read file'));

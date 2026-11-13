@@ -44,6 +44,7 @@ import {
 import { Theme, Language } from './utils/i18n';
 
 const CLEAN_SLATE_ZERO_KEY = 'biddabari_clean_slate_zero_v4';
+const MASTER_CATALOG_STORAGE_KEY = 'biddabari_master_book_catalog_v4';
 
 const ZOOM_STORAGE_KEY = 'biddabari_ui_zoom_v1';
 const MONTH_STORAGE_KEY = 'biddabari_selected_month_v4';
@@ -59,21 +60,20 @@ const LANGUAGE_STORAGE_KEY = 'biddabari_language_v2';
 const getMonthlyStorageKey = (year: number, month: number) => 
   `biddabari_books_data_v4_${year}-${String(month).padStart(2, '0')}`;
 
-// Automatic clean slate initialization: wipes previous demo data across all browser keys once
-try {
-  if (typeof window !== 'undefined' && localStorage.getItem(CLEAN_SLATE_ZERO_KEY) !== 'true') {
-    const keysToRemove: string[] = [];
-    for (let i = 0; i < localStorage.length; i++) {
-      const k = localStorage.key(i);
-      if (k && k.startsWith('biddabari_') && k !== ZOOM_STORAGE_KEY) {
-        keysToRemove.push(k);
-      }
+/**
+ * Safe localStorage writer that catches quota errors and avoids crashes
+ */
+export function safeLocalStorageSet(key: string, value: string): boolean {
+  try {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(key, value);
+      return true;
     }
-    keysToRemove.forEach(k => localStorage.removeItem(k));
-    localStorage.setItem(CLEAN_SLATE_ZERO_KEY, 'true');
+    return false;
+  } catch (err: any) {
+    console.error(`Safe storage save error on "${key}":`, err);
+    return false;
   }
-} catch (e) {
-  console.error('Clean slate initialization error:', e);
 }
 
 export const App: React.FC = () => {
@@ -183,21 +183,116 @@ export const App: React.FC = () => {
   // Calculate dynamic days in the selected month
   const daysInMonth = getDaysInMonth(selectedYear, selectedMonth);
 
-  // Helper to load books for specific month & year
+  // Helper to load books for specific month & year with master catalog inheritance
   const loadBooksForPeriod = (year: number, month: number): BookRecord[] => {
     try {
       const currentKey = getMonthlyStorageKey(year, month);
       const saved = localStorage.getItem(currentKey);
+      let monthBooks: BookRecord[] = [];
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed)) {
-          return parsed;
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          monthBooks = parsed;
         }
       }
+
+      // Check master catalog
+      const masterSaved = localStorage.getItem(MASTER_CATALOG_STORAGE_KEY);
+      let masterCatalog: BookRecord[] = [];
+      if (masterSaved) {
+        try {
+          const parsedMaster = JSON.parse(masterSaved);
+          if (Array.isArray(parsedMaster) && parsedMaster.length > 0) {
+            masterCatalog = parsedMaster;
+          }
+        } catch (err) {
+          console.error(err);
+        }
+      }
+
+      // If this month already has saved books:
+      if (monthBooks.length > 0) {
+        // If master catalog has books that are missing in this month, merge them in cleanly
+        if (masterCatalog.length > 0) {
+          const existingIds = new Set(monthBooks.map(b => b.id));
+          const missing = masterCatalog.filter(mb => !existingIds.has(mb.id));
+          if (missing.length > 0) {
+            const freshMissing = createFreshMonthBooks(missing);
+            monthBooks = [...monthBooks, ...freshMissing];
+            safeLocalStorageSet(currentKey, JSON.stringify(monthBooks));
+          }
+        }
+        return monthBooks;
+      }
+
+      // If this month has NO saved books yet, but master catalog has books:
+      if (masterCatalog.length > 0) {
+        const freshFromMaster = createFreshMonthBooks(masterCatalog);
+        safeLocalStorageSet(currentKey, JSON.stringify(freshFromMaster));
+        return freshFromMaster;
+      }
+
+      // Fallback: search any other existing monthly keys for books!
+      if (typeof window !== 'undefined') {
+        for (let i = 0; i < localStorage.length; i++) {
+          const k = localStorage.key(i);
+          if (k && k.startsWith('biddabari_books_data_v4_') && k !== currentKey) {
+            try {
+              const fallbackSaved = localStorage.getItem(k);
+              if (fallbackSaved) {
+                const fallbackParsed = JSON.parse(fallbackSaved);
+                if (Array.isArray(fallbackParsed) && fallbackParsed.length > 0) {
+                  const freshFromFallback = createFreshMonthBooks(fallbackParsed);
+                  safeLocalStorageSet(currentKey, JSON.stringify(freshFromFallback));
+                  safeLocalStorageSet(MASTER_CATALOG_STORAGE_KEY, JSON.stringify(fallbackParsed));
+                  return freshFromFallback;
+                }
+              }
+            } catch (e) {
+              // ignore
+            }
+          }
+        }
+      }
+
       return INITIAL_BOOKS;
     } catch (e) {
       console.error('Failed to load books for period:', e);
       return INITIAL_BOOKS;
+    }
+  };
+
+  // Helper to synchronously save books to local storage and keep master catalog in sync
+  const syncSaveBooks = (updatedBooks: BookRecord[], year = selectedYear, month = selectedMonth) => {
+    try {
+      const currentKey = getMonthlyStorageKey(year, month);
+      safeLocalStorageSet(currentKey, JSON.stringify(updatedBooks));
+
+      if (updatedBooks.length > 0) {
+        // Strip monthly dynamic daily numbers to keep master catalog lightweight
+        const masterCatalog = updatedBooks.map(b => ({
+          ...b,
+          pressDailyReceipts: {},
+          boibari: {},
+          rokomari: {},
+          wafilife: {},
+          othersOnline: {},
+          headOfficeSellOffline: {},
+          nilkhetLibrary: {},
+          sumonaLibrary: {},
+          promiseLibrary: {},
+          joystarLibrary: {},
+          dailyReturns: {},
+          marketing: 0,
+          service: 0,
+          adVideoMaking: 0,
+          rd: 0,
+          gift: 0,
+        }));
+        safeLocalStorageSet(MASTER_CATALOG_STORAGE_KEY, JSON.stringify(masterCatalog));
+      }
+    } catch (e) {
+      console.error('Failed to sync-save books:', e);
     }
   };
 
@@ -428,17 +523,17 @@ export const App: React.FC = () => {
 
   // Switch month and year safely
   const handleSelectPeriod = (newMonth: number, newYear: number) => {
-    try {
-      const currentKey = getMonthlyStorageKey(selectedYear, selectedMonth);
-      localStorage.setItem(currentKey, JSON.stringify(books));
-    } catch (e) {
-      console.error(e);
-    }
+    // 1. Save current books before switching
+    syncSaveBooks(books, selectedYear, selectedMonth);
 
+    // 2. Load books for target month (with master catalog inheritance)
     const newBooks = loadBooksForPeriod(newYear, newMonth);
     setSelectedMonth(newMonth);
     setSelectedYear(newYear);
     setBooks(newBooks);
+
+    safeLocalStorageSet(YEAR_STORAGE_KEY, String(newYear));
+    safeLocalStorageSet(MONTH_STORAGE_KEY, String(newMonth));
 
     const maxDays = getDaysInMonth(newYear, newMonth);
     setEntrySelectedDay(prev => Math.min(prev, maxDays));
@@ -484,8 +579,8 @@ export const App: React.FC = () => {
       channelSales?: { [channelId: string]: number };
     }
   ) => {
-    setBooks(prev =>
-      prev.map(b => {
+    setBooks(prev => {
+      const nextBooks = prev.map(b => {
         if (b.id !== bookId) return b;
 
         let updatedBook: BookRecord = {
@@ -516,30 +611,36 @@ export const App: React.FC = () => {
         }
 
         return updatedBook;
-      })
-    );
+      });
+      syncSaveBooks(nextBooks);
+      return nextBooks;
+    });
   };
 
   // Handle inline cell update from Matrix view
   const handleUpdateDailyCell = (bookId: string, channelKey: string, day: number, value: number) => {
-    setBooks(prev =>
-      prev.map(b => {
+    setBooks(prev => {
+      const nextBooks = prev.map(b => {
         if (b.id !== bookId) return b;
         const updated = setBookChannelDailySales(b, channelKey, day, value);
         return {
           ...updated,
           updatedAt: new Date().toISOString(),
         };
-      })
-    );
+      });
+      syncSaveBooks(nextBooks);
+      return nextBooks;
+    });
   };
 
   // Handle adding or editing a book
   const handleSaveBook = (bookData: Partial<BookRecord>) => {
     if (editingBook) {
-      setBooks(prev =>
-        prev.map(b => (b.id === editingBook.id ? ({ ...b, ...bookData } as BookRecord) : b))
-      );
+      setBooks(prev => {
+        const nextBooks = prev.map(b => (b.id === editingBook.id ? ({ ...b, ...bookData } as BookRecord) : b));
+        syncSaveBooks(nextBooks);
+        return nextBooks;
+      });
     } else {
       const newBook: BookRecord = {
         id: `book-${Date.now()}`,
@@ -573,8 +674,13 @@ export const App: React.FC = () => {
         remarks: bookData.remarks || '',
         updatedAt: new Date().toISOString(),
       };
-      setBooks(prev => [...prev, newBook]);
+      setBooks(prev => {
+        const nextBooks = [...prev, newBook];
+        syncSaveBooks(nextBooks);
+        return nextBooks;
+      });
     }
+    setIsAddEditOpen(false);
     setEditingBook(null);
   };
 
@@ -583,7 +689,11 @@ export const App: React.FC = () => {
     const target = books.find(b => b.id === bookId);
     if (!target) return;
     if (window.confirm(`আপনি কি নিশ্চিত যে "${target.bookName}" তালিকা থেকে মুছে ফেলতে চান?`)) {
-      setBooks(prev => prev.filter(b => b.id !== bookId));
+      setBooks(prev => {
+        const nextBooks = prev.filter(b => b.id !== bookId);
+        syncSaveBooks(nextBooks);
+        return nextBooks;
+      });
     }
   };
 
@@ -594,11 +704,20 @@ export const App: React.FC = () => {
       id: `pay-${Date.now()}`,
       createdAt: new Date().toISOString(),
     };
-    setPressPayments(prev => [newRecord, ...prev]);
+    setPressPayments(prev => {
+      const updated = [newRecord, ...prev];
+      safeLocalStorageSet(PRESS_PAYMENTS_STORAGE_KEY, JSON.stringify(updated));
+      return updated;
+    });
+    setIsPressPaymentModalOpen(false);
   };
 
   const handleDeletePressPayment = (id: string) => {
-    setPressPayments(prev => prev.filter(p => p.id !== id));
+    setPressPayments(prev => {
+      const updated = prev.filter(p => p.id !== id);
+      safeLocalStorageSet(PRESS_PAYMENTS_STORAGE_KEY, JSON.stringify(updated));
+      return updated;
+    });
   };
 
   // Press Order Actions (Multi-press order management)
@@ -610,10 +729,11 @@ export const App: React.FC = () => {
     };
     const updatedOrders = [newRecord, ...pressOrders];
     setPressOrders(updatedOrders);
+    safeLocalStorageSet(PRESS_ORDERS_STORAGE_KEY, JSON.stringify(updatedOrders));
 
     // Synchronize the book's totalOrderFaridBhai to the exact sum of its press orders
-    setBooks(prev =>
-      prev.map(b => {
+    setBooks(prev => {
+      const nextBooks = prev.map(b => {
         if (b.id !== order.bookId) return b;
         const bookOrders = updatedOrders.filter(po => po.bookId === b.id);
         const newTotal = bookOrders.reduce((sum, o) => sum + (Number(o.orderQuantity) || 0), 0);
@@ -622,8 +742,10 @@ export const App: React.FC = () => {
           totalOrderFaridBhai: newTotal,
           updatedAt: new Date().toISOString(),
         };
-      })
-    );
+      });
+      syncSaveBooks(nextBooks);
+      return nextBooks;
+    });
   };
 
   const handleDeletePressOrder = (id: string) => {
@@ -631,10 +753,11 @@ export const App: React.FC = () => {
     if (!orderToDelete) return;
     const remaining = pressOrders.filter(o => o.id !== id);
     setPressOrders(remaining);
+    safeLocalStorageSet(PRESS_ORDERS_STORAGE_KEY, JSON.stringify(remaining));
 
     // Synchronize the book's totalOrderFaridBhai
-    setBooks(prev =>
-      prev.map(b => {
+    setBooks(prev => {
+      const nextBooks = prev.map(b => {
         if (b.id !== orderToDelete.bookId) return b;
         const bookOrders = remaining.filter(po => po.bookId === b.id);
         const newTotal = bookOrders.reduce((sum, o) => sum + (Number(o.orderQuantity) || 0), 0);
@@ -643,8 +766,10 @@ export const App: React.FC = () => {
           totalOrderFaridBhai: newTotal,
           updatedAt: new Date().toISOString(),
         };
-      })
-    );
+      });
+      syncSaveBooks(nextBooks);
+      return nextBooks;
+    });
   };
 
   const handleOpenAddPressOrder = (bookId?: string) => {
@@ -659,14 +784,18 @@ export const App: React.FC = () => {
       id: `del-${Date.now()}`,
       createdAt: new Date().toISOString(),
     };
-    setPressDeliveries(prev => [newRecord, ...prev]);
+    setPressDeliveries(prev => {
+      const updated = [newRecord, ...prev];
+      safeLocalStorageSet(PRESS_DELIVERIES_STORAGE_KEY, JSON.stringify(updated));
+      return updated;
+    });
 
     // If delivery date falls in active month, update book's pressDailyReceipts
     try {
       const [delYear, delMonth, delDay] = delivery.deliveryDate.split('-').map(Number);
       if (delYear === selectedYear && delMonth === selectedMonth && delDay >= 1 && delDay <= 31) {
-        setBooks(prev =>
-          prev.map(b => {
+        setBooks(prev => {
+          const nextBooks = prev.map(b => {
             if (b.id !== delivery.bookId) return b;
             const currentReceipts = { ...b.pressDailyReceipts };
             currentReceipts[delDay] = (Number(currentReceipts[delDay]) || 0) + Number(delivery.quantity);
@@ -675,8 +804,10 @@ export const App: React.FC = () => {
               pressDailyReceipts: currentReceipts,
               updatedAt: new Date().toISOString(),
             };
-          })
-        );
+          });
+          syncSaveBooks(nextBooks);
+          return nextBooks;
+        });
       }
     } catch (e) {
       console.error(e);
@@ -686,14 +817,18 @@ export const App: React.FC = () => {
   const handleDeletePressDelivery = (id: string) => {
     const deliveryToDelete = pressDeliveries.find(d => d.id === id);
     if (!deliveryToDelete) return;
-    setPressDeliveries(prev => prev.filter(d => d.id !== id));
+    setPressDeliveries(prev => {
+      const remaining = prev.filter(d => d.id !== id);
+      safeLocalStorageSet(PRESS_DELIVERIES_STORAGE_KEY, JSON.stringify(remaining));
+      return remaining;
+    });
 
     // If delivery date falls in active month, reduce book's pressDailyReceipts
     try {
       const [delYear, delMonth, delDay] = deliveryToDelete.deliveryDate.split('-').map(Number);
       if (delYear === selectedYear && delMonth === selectedMonth && delDay >= 1 && delDay <= 31) {
-        setBooks(prev =>
-          prev.map(b => {
+        setBooks(prev => {
+          const nextBooks = prev.map(b => {
             if (b.id !== deliveryToDelete.bookId) return b;
             const currentReceipts = { ...b.pressDailyReceipts };
             const currentVal = Number(currentReceipts[delDay]) || 0;
@@ -703,8 +838,10 @@ export const App: React.FC = () => {
               pressDailyReceipts: currentReceipts,
               updatedAt: new Date().toISOString(),
             };
-          })
-        );
+          });
+          syncSaveBooks(nextBooks);
+          return nextBooks;
+        });
       }
     } catch (e) {
       console.error(e);
@@ -714,6 +851,29 @@ export const App: React.FC = () => {
   const handleOpenAddPressDelivery = (bookId?: string) => {
     setPressDeliveryPreSelectedBookId(bookId);
     setIsPressDeliveryModalOpen(true);
+  };
+
+  // Channel Collection Actions
+  const handleAddChannelCollection = (collection: Omit<ChannelCollectionRecord, 'id' | 'createdAt'>) => {
+    const newRecord: ChannelCollectionRecord = {
+      ...collection,
+      id: `col-${Date.now()}`,
+      createdAt: new Date().toISOString(),
+    };
+    setChannelCollections(prev => {
+      const updated = [newRecord, ...prev];
+      safeLocalStorageSet(CHANNEL_COLLECTIONS_STORAGE_KEY, JSON.stringify(updated));
+      return updated;
+    });
+    setIsChannelCollectionModalOpen(false);
+  };
+
+  const handleDeleteChannelCollection = (id: string) => {
+    setChannelCollections(prev => {
+      const updated = prev.filter(c => c.id !== id);
+      safeLocalStorageSet(CHANNEL_COLLECTIONS_STORAGE_KEY, JSON.stringify(updated));
+      return updated;
+    });
   };
 
   // Reset all data to clean zero slate (Opens Secure Modal with Math Challenge)
@@ -742,20 +902,6 @@ export const App: React.FC = () => {
     setChannelCollections([]);
     setChannels(DEFAULT_CHANNELS);
     setIsResetConfirmOpen(false);
-  };
-
-  // Channel Collection Actions
-  const handleAddChannelCollection = (collection: Omit<ChannelCollectionRecord, 'id' | 'createdAt'>) => {
-    const newRecord: ChannelCollectionRecord = {
-      ...collection,
-      id: `col-${Date.now()}`,
-      createdAt: new Date().toISOString(),
-    };
-    setChannelCollections(prev => [newRecord, ...prev]);
-  };
-
-  const handleDeleteChannelCollection = (id: string) => {
-    setChannelCollections(prev => prev.filter(c => c.id !== id));
   };
 
   const handleOpenAddChannelCollection = (channelKey?: string) => {
