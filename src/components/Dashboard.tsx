@@ -459,61 +459,61 @@ export const Dashboard: React.FC<DashboardProps> = ({
               <div key={book.id} className="p-4 hover:bg-zinc-50/80 transition-colors flex flex-col md:flex-row md:items-center justify-between gap-4">
                 
                 {/* Book info */}
-                <div className="flex items-start gap-3">
+                <div className="flex items-start gap-3 flex-1 min-w-0 pr-2">
                   <div className="w-9 h-9 rounded-xl bg-zinc-100 text-zinc-900 font-bold flex items-center justify-center text-xs shrink-0 border border-zinc-200">
                     {book.sl}
                   </div>
-                  <div>
+                  <div className="min-w-0 flex-1">
                     <h4 className="font-bold text-zinc-900 text-sm flex items-center gap-2">
-                      {book.bookName}
+                      <span className="truncate">{book.bookName}</span>
                       {isLowStock && (
-                        <span className="text-[10px] bg-zinc-100 text-zinc-800 px-2 py-0.5 rounded font-semibold border border-zinc-300">
+                        <span className="text-[10px] bg-zinc-100 text-zinc-800 px-2 py-0.5 rounded font-semibold border border-zinc-300 shrink-0">
                           {tr('লো স্টক', 'Low Stock', language)}
                         </span>
                       )}
                     </h4>
-                    <div className="flex flex-wrap items-center gap-3 text-xs text-zinc-500 mt-1">
-                      <span>{tr('মূল্য:', 'MRP:', language)} <b className="text-zinc-800">{formatBDT(m.perBookAmount, language)}</b></span>
-                      <span>{tr('উৎপাদন:', 'Cost:', language)} {formatBDT(m.makingCost, language)}</span>
-                      <span>{tr('কপি প্রতি লাভ:', 'Profit/unit:', language)} <b className="text-zinc-900">+{formatBDT(m.profitPerBook, language)}</b></span>
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-zinc-500 mt-1">
+                      <span>{tr('মূল্য:', 'MRP:', language)} <b className="text-zinc-800 font-mono">{formatBDT(m.perBookAmount, language)}</b></span>
+                      <span>{tr('উৎপাদন:', 'Cost:', language)} <span className="font-mono">{formatBDT(m.makingCost, language)}</span></span>
+                      <span>{tr('কপি প্রতি লাভ:', 'Profit/unit:', language)} <b className="text-zinc-900 font-mono">+{formatBDT(m.profitPerBook, language)}</b></span>
                       {book.remarks && (
-                        <span className="text-zinc-400 italic">“{book.remarks}”</span>
+                        <span className="text-zinc-400 italic truncate max-w-[150px]">“{book.remarks}”</span>
                       )}
                     </div>
                   </div>
                 </div>
 
-                {/* Stock & Sales stats */}
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 text-left sm:text-right w-full md:w-auto">
-                  <div>
-                    <div className="text-[11px] text-zinc-400">{tr('হেড অফিস স্টক', 'HO Stock', language)}</div>
-                    <div className="text-sm font-bold text-zinc-900 font-mono">{formatNumber(m.totalPresentStockHO, language)} {tr('কপি', 'copies', language)}</div>
+                {/* Stock & Sales stats - Perfectly Aligned 4 Fixed Columns */}
+                <div className="shrink-0 w-full md:w-[420px] lg:w-[460px] xl:w-[500px] grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 text-left sm:text-right">
+                  <div className="text-left sm:text-right min-w-0">
+                    <div className="text-[11px] text-zinc-400 font-medium truncate">{tr('হেড অফিস স্টক', 'HO Stock', language)}</div>
+                    <div className="text-sm font-bold text-zinc-900 font-mono truncate">{formatNumber(m.totalPresentStockHO, language)} {tr('কপি', 'copies', language)}</div>
                   </div>
-                  <div>
-                    <div className="text-[11px] text-zinc-400">{tr('প্রেস স্টক', 'Press Stock', language)}</div>
-                    <div className="text-sm font-bold text-zinc-800 font-mono">{formatNumber(m.stockToFaridBhai, language)} {tr('কপি', 'copies', language)}</div>
+                  <div className="text-left sm:text-right min-w-0">
+                    <div className="text-[11px] text-zinc-400 font-medium truncate">{tr('প্রেস স্টক', 'Press Stock', language)}</div>
+                    <div className="text-sm font-bold text-zinc-800 font-mono truncate">{formatNumber(m.stockToFaridBhai, language)} {tr('কপি', 'copies', language)}</div>
                   </div>
-                  <div>
-                    <div className="text-[11px] text-zinc-400">{tr('মোট বিক্রয়', 'Total Sold', language)}</div>
-                    <div className="text-sm font-bold text-zinc-900 font-mono">{formatNumber(m.totalSold, language)} {tr('কপি', 'copies', language)}</div>
+                  <div className="text-left sm:text-right min-w-0">
+                    <div className="text-[11px] text-zinc-400 font-medium truncate">{tr('মোট বিক্রয়', 'Total Sold', language)}</div>
+                    <div className="text-sm font-bold text-zinc-900 font-mono truncate">{formatNumber(m.totalSold, language)} {tr('কপি', 'copies', language)}</div>
                   </div>
-                  <div>
-                    <div className="text-[11px] text-zinc-400">{tr('অর্জিত নিট লাভ', 'Net Profit', language)}</div>
-                    <div className="text-sm font-bold text-zinc-900 font-mono">+{formatBDT(m.totalNetProfit, language)}</div>
+                  <div className="text-left sm:text-right min-w-0">
+                    <div className="text-[11px] text-zinc-400 font-medium truncate">{tr('অর্জিত নিট লাভ', 'Net Profit', language)}</div>
+                    <div className="text-sm font-bold text-zinc-900 font-mono truncate">+{formatBDT(m.totalNetProfit, language)}</div>
                   </div>
                 </div>
 
                 {/* Quick actions */}
-                <div className="flex items-center gap-2 self-start md:self-center">
+                <div className="shrink-0 flex items-center justify-end gap-2 self-start md:self-center">
                   <button
                     onClick={() => onOpenDailyEntryForBook(book.id)}
-                    className="text-xs font-semibold text-zinc-800 hover:text-black bg-zinc-100 hover:bg-zinc-200 px-3 py-1.5 rounded-lg transition-colors border border-zinc-200"
+                    className="text-xs font-semibold text-zinc-800 hover:text-black bg-zinc-100 hover:bg-zinc-200 px-3 py-1.5 rounded-lg transition-colors border border-zinc-200 shrink-0"
                   >
                     <span>{tr('এন্ট্রি দিন', 'Quick Entry', language)}</span>
                   </button>
                   <button
                     onClick={() => onSelectBookForMatrix(book.id)}
-                    className="text-xs font-semibold text-white bg-zinc-900 hover:bg-black px-3 py-1.5 rounded-lg transition-colors shadow-xs flex items-center gap-1"
+                    className="text-xs font-semibold text-white bg-zinc-900 hover:bg-black px-3 py-1.5 rounded-lg transition-colors shadow-xs flex items-center gap-1 shrink-0"
                   >
                     <span>{formatNumber(daysInMonth, language)} {tr('দিন ম্যাট্রিক্স', 'Days Matrix', language)}</span>
                     <ArrowUpRight className="w-3.5 h-3.5" />
