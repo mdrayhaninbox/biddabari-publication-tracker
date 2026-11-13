@@ -1,4 +1,4 @@
-import { doc, setDoc, onSnapshot, getDoc } from 'firebase/firestore';
+import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 import { 
   BookRecord, 
@@ -12,39 +12,59 @@ import {
 const COLLECTION_NAME = 'publication_data';
 
 /**
+ * Removes any undefined fields or non-serializable properties for safe Firestore storage
+ */
+function sanitizeForFirestore<T>(data: T): T {
+  return JSON.parse(JSON.stringify(data));
+}
+
+let booksDebounceTimer: any = null;
+
+/**
  * Saves books of a specific month and master catalog to Cloud Firestore
  */
 export async function syncBooksToFirestore(year: number, month: number, books: BookRecord[]): Promise<void> {
-  try {
-    const docRef = doc(db, COLLECTION_NAME, `books_${year}_${String(month).padStart(2, '0')}`);
-    await setDoc(docRef, { books, updatedAt: new Date().toISOString() }, { merge: true });
-
-    if (books.length > 0) {
-      const masterCatalog = books.map(b => ({
-        ...b,
-        pressDailyReceipts: {},
-        boibari: {},
-        rokomari: {},
-        wafilife: {},
-        othersOnline: {},
-        headOfficeSellOffline: {},
-        nilkhetLibrary: {},
-        sumonaLibrary: {},
-        promiseLibrary: {},
-        joystarLibrary: {},
-        dailyReturns: {},
-        marketing: 0,
-        service: 0,
-        adVideoMaking: 0,
-        rd: 0,
-        gift: 0,
-      }));
-      const masterDoc = doc(db, COLLECTION_NAME, 'master_catalog');
-      await setDoc(masterDoc, { books: masterCatalog, updatedAt: new Date().toISOString() }, { merge: true });
-    }
-  } catch (err) {
-    console.error('Firestore syncBooks error:', err);
+  if (booksDebounceTimer) {
+    clearTimeout(booksDebounceTimer);
   }
+
+  return new Promise((resolve) => {
+    booksDebounceTimer = setTimeout(async () => {
+      try {
+        const cleanBooks = sanitizeForFirestore(books);
+        const docRef = doc(db, COLLECTION_NAME, `books_${year}_${String(month).padStart(2, '0')}`);
+        await setDoc(docRef, { books: cleanBooks, updatedAt: new Date().toISOString() });
+
+        if (cleanBooks.length > 0) {
+          const masterCatalog = cleanBooks.map(b => ({
+            ...b,
+            pressDailyReceipts: {},
+            boibari: {},
+            rokomari: {},
+            wafilife: {},
+            othersOnline: {},
+            headOfficeSellOffline: {},
+            nilkhetLibrary: {},
+            sumonaLibrary: {},
+            promiseLibrary: {},
+            joystarLibrary: {},
+            dailyReturns: {},
+            marketing: 0,
+            service: 0,
+            adVideoMaking: 0,
+            rd: 0,
+            gift: 0,
+          }));
+          const masterDoc = doc(db, COLLECTION_NAME, 'master_catalog');
+          await setDoc(masterDoc, { books: masterCatalog, updatedAt: new Date().toISOString() });
+        }
+        resolve();
+      } catch (err) {
+        console.error('Firestore syncBooks error:', err);
+        resolve();
+      }
+    }, 150);
+  });
 }
 
 /**
@@ -52,8 +72,9 @@ export async function syncBooksToFirestore(year: number, month: number, books: B
  */
 export async function syncPressPaymentsToFirestore(payments: PressPaymentRecord[]): Promise<void> {
   try {
+    const cleanPayments = sanitizeForFirestore(payments);
     const docRef = doc(db, COLLECTION_NAME, 'press_payments');
-    await setDoc(docRef, { payments, updatedAt: new Date().toISOString() }, { merge: true });
+    await setDoc(docRef, { payments: cleanPayments, updatedAt: new Date().toISOString() });
   } catch (err) {
     console.error('Firestore syncPressPayments error:', err);
   }
@@ -64,8 +85,9 @@ export async function syncPressPaymentsToFirestore(payments: PressPaymentRecord[
  */
 export async function syncPressOrdersToFirestore(orders: PressOrderRecord[]): Promise<void> {
   try {
+    const cleanOrders = sanitizeForFirestore(orders);
     const docRef = doc(db, COLLECTION_NAME, 'press_orders');
-    await setDoc(docRef, { orders, updatedAt: new Date().toISOString() }, { merge: true });
+    await setDoc(docRef, { orders: cleanOrders, updatedAt: new Date().toISOString() });
   } catch (err) {
     console.error('Firestore syncPressOrders error:', err);
   }
@@ -76,8 +98,9 @@ export async function syncPressOrdersToFirestore(orders: PressOrderRecord[]): Pr
  */
 export async function syncPressDeliveriesToFirestore(deliveries: PressDeliveryRecord[]): Promise<void> {
   try {
+    const cleanDeliveries = sanitizeForFirestore(deliveries);
     const docRef = doc(db, COLLECTION_NAME, 'press_deliveries');
-    await setDoc(docRef, { deliveries, updatedAt: new Date().toISOString() }, { merge: true });
+    await setDoc(docRef, { deliveries: cleanDeliveries, updatedAt: new Date().toISOString() });
   } catch (err) {
     console.error('Firestore syncPressDeliveries error:', err);
   }
@@ -88,8 +111,9 @@ export async function syncPressDeliveriesToFirestore(deliveries: PressDeliveryRe
  */
 export async function syncChannelCollectionsToFirestore(collections: ChannelCollectionRecord[]): Promise<void> {
   try {
+    const cleanCollections = sanitizeForFirestore(collections);
     const docRef = doc(db, COLLECTION_NAME, 'channel_collections');
-    await setDoc(docRef, { collections, updatedAt: new Date().toISOString() }, { merge: true });
+    await setDoc(docRef, { collections: cleanCollections, updatedAt: new Date().toISOString() });
   } catch (err) {
     console.error('Firestore syncChannelCollections error:', err);
   }
@@ -100,8 +124,9 @@ export async function syncChannelCollectionsToFirestore(collections: ChannelColl
  */
 export async function syncChannelsToFirestore(channels: ChannelConfig[]): Promise<void> {
   try {
+    const cleanChannels = sanitizeForFirestore(channels);
     const docRef = doc(db, COLLECTION_NAME, 'sales_channels');
-    await setDoc(docRef, { channels, updatedAt: new Date().toISOString() }, { merge: true });
+    await setDoc(docRef, { channels: cleanChannels, updatedAt: new Date().toISOString() });
   } catch (err) {
     console.error('Firestore syncChannels error:', err);
   }

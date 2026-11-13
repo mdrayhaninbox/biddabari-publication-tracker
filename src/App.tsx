@@ -500,6 +500,9 @@ export const App: React.FC = () => {
     const docRef = doc(db, 'publication_data', `books_${selectedYear}_${monthStr}`);
     
     const unsubscribe = onSnapshot(docRef, (snapshot) => {
+      // Ignore local writes that haven't been committed yet to avoid loops
+      if (snapshot.metadata.hasPendingWrites) return;
+
       if (snapshot.exists()) {
         const data = snapshot.data();
         if (Array.isArray(data?.books)) {
@@ -515,11 +518,6 @@ export const App: React.FC = () => {
             setBooks([]);
           }
         }
-      } else {
-        // If Firestore document doesn't exist yet, seed it with current local books
-        if (books.length > 0 && localStorage.getItem(CLEAN_SLATE_ZERO_KEY) !== 'true') {
-          syncBooksToFirestore(selectedYear, selectedMonth, books).catch(() => {});
-        }
       }
     }, (error) => {
       console.warn('Firestore books subscription note:', error);
@@ -532,6 +530,7 @@ export const App: React.FC = () => {
   useEffect(() => {
     // Press Payments Listener
     const unsubPayments = onSnapshot(doc(db, 'publication_data', 'press_payments'), (snap) => {
+      if (snap.metadata.hasPendingWrites) return;
       if (snap.exists()) {
         const data = snap.data();
         if (Array.isArray(data?.payments)) {
@@ -542,13 +541,12 @@ export const App: React.FC = () => {
             return data.payments;
           });
         }
-      } else if (pressPayments.length > 0) {
-        syncPressPaymentsToFirestore(pressPayments).catch(() => {});
       }
     });
 
     // Press Orders Listener
     const unsubOrders = onSnapshot(doc(db, 'publication_data', 'press_orders'), (snap) => {
+      if (snap.metadata.hasPendingWrites) return;
       if (snap.exists()) {
         const data = snap.data();
         if (Array.isArray(data?.orders)) {
@@ -559,13 +557,12 @@ export const App: React.FC = () => {
             return data.orders;
           });
         }
-      } else if (pressOrders.length > 0) {
-        syncPressOrdersToFirestore(pressOrders).catch(() => {});
       }
     });
 
     // Press Deliveries Listener
     const unsubDeliveries = onSnapshot(doc(db, 'publication_data', 'press_deliveries'), (snap) => {
+      if (snap.metadata.hasPendingWrites) return;
       if (snap.exists()) {
         const data = snap.data();
         if (Array.isArray(data?.deliveries)) {
@@ -576,13 +573,12 @@ export const App: React.FC = () => {
             return data.deliveries;
           });
         }
-      } else if (pressDeliveries.length > 0) {
-        syncPressDeliveriesToFirestore(pressDeliveries).catch(() => {});
       }
     });
 
     // Channel Collections Listener
     const unsubCollections = onSnapshot(doc(db, 'publication_data', 'channel_collections'), (snap) => {
+      if (snap.metadata.hasPendingWrites) return;
       if (snap.exists()) {
         const data = snap.data();
         if (Array.isArray(data?.collections)) {
@@ -593,13 +589,12 @@ export const App: React.FC = () => {
             return data.collections;
           });
         }
-      } else if (channelCollections.length > 0) {
-        syncChannelCollectionsToFirestore(channelCollections).catch(() => {});
       }
     });
 
     // Sales Channels Listener
     const unsubChannels = onSnapshot(doc(db, 'publication_data', 'sales_channels'), (snap) => {
+      if (snap.metadata.hasPendingWrites) return;
       if (snap.exists()) {
         const data = snap.data();
         if (Array.isArray(data?.channels) && data.channels.length > 0) {
@@ -609,8 +604,6 @@ export const App: React.FC = () => {
             return data.channels;
           });
         }
-      } else if (channels.length > 0) {
-        syncChannelsToFirestore(channels).catch(() => {});
       }
     });
 
@@ -669,11 +662,10 @@ export const App: React.FC = () => {
     }
   }, [channelCollections]);
 
-  // Auto-save Channels
+  // Auto-save Channels to localStorage only
   useEffect(() => {
     try {
       localStorage.setItem(CHANNELS_STORAGE_KEY, JSON.stringify(channels));
-      syncChannelsToFirestore(channels).catch(() => {});
     } catch (e) {
       console.error(e);
     }
@@ -694,9 +686,11 @@ export const App: React.FC = () => {
 
   const handleSaveChannel = (channelData: Partial<ChannelConfig>) => {
     if (editingChannel) {
-      setChannels(prev =>
-        prev.map(c => (c.id === editingChannel.id ? ({ ...c, ...channelData } as ChannelConfig) : c))
-      );
+      setChannels(prev => {
+        const updated = prev.map(c => (c.id === editingChannel.id ? ({ ...c, ...channelData } as ChannelConfig) : c));
+        syncChannelsToFirestore(updated).catch(() => {});
+        return updated;
+      });
     } else {
       const newId = `channel_${Date.now()}`;
       const newChannel: ChannelConfig = {
@@ -714,14 +708,22 @@ export const App: React.FC = () => {
             : 'হেড অফিস সরবরাহ'),
         isSystemDefault: false,
       };
-      setChannels(prev => [...prev, newChannel]);
+      setChannels(prev => {
+        const updated = [...prev, newChannel];
+        syncChannelsToFirestore(updated).catch(() => {});
+        return updated;
+      });
     }
     setIsAddEditChannelOpen(false);
     setEditingChannel(null);
   };
 
   const handleDeleteChannel = (channelId: string) => {
-    setChannels(prev => prev.filter(c => c.id !== channelId));
+    setChannels(prev => {
+      const updated = prev.filter(c => c.id !== channelId);
+      syncChannelsToFirestore(updated).catch(() => {});
+      return updated;
+    });
     setIsAddEditChannelOpen(false);
     setEditingChannel(null);
   };

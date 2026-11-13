@@ -2,12 +2,12 @@ import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getFirestore, enableIndexedDbPersistence } from 'firebase/firestore';
 
 const firebaseConfig = {
-  projectId: "biddabari-pub-tracker",
-  appId: "1:14043126876:web:620aea365a3cc21d295a99",
-  storageBucket: "biddabari-pub-tracker.firebasestorage.app",
-  apiKey: "AIzaSyBTTsZA5W2xKeJ99dgirx9Klj2tbaRACCI",
-  authDomain: "biddabari-pub-tracker.firebaseapp.com",
-  messagingSenderId: "14043126876",
+  projectId: "biddabari-pub-cloud",
+  appId: "1:921883409734:web:54e646a07f83cc87693947",
+  storageBucket: "biddabari-pub-cloud.firebasestorage.app",
+  apiKey: "AIzaSyBL0gUz04XazK7iryDleF7pLWw4pL6SgQ4",
+  authDomain: "biddabari-pub-cloud.firebaseapp.com",
+  messagingSenderId: "921883409734",
 };
 
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
