@@ -23,7 +23,7 @@ import { DailyEntryModal } from './components/DailyEntryModal';
 import { BookDetailMatrix } from './components/BookDetailMatrix';
 import { AddEditBookModal } from './components/AddEditBookModal';
 import { ExcelSyncModal } from './components/ExcelSyncModal';
-import { PrintableReport } from './components/PrintableReport';
+import { PrintableReport, PrintScope } from './components/PrintableReport';
 import { PeriodViewSystem } from './components/PeriodViewSystem';
 import { QuickDataEntry } from './components/QuickDataEntry';
 import { AccountsDueLedger } from './components/AccountsDueLedger';
@@ -309,8 +309,10 @@ export const App: React.FC = () => {
   // Reset Security Confirmation Modal
   const [isResetConfirmOpen, setIsResetConfirmOpen] = useState(false);
 
-  // Single Book Printing Pre-selection
+  // Single Book Printing Pre-selection & Print Scope routing
   const [reportPreSelectedBookId, setReportPreSelectedBookId] = useState<string | undefined>(undefined);
+  const [reportScope, setReportScope] = useState<PrintScope>('all');
+  const [reportLibraryFilter, setReportLibraryFilter] = useState<string>('all');
 
   // Auto-save month & year selection
   useEffect(() => {
@@ -779,6 +781,20 @@ export const App: React.FC = () => {
 
   const handlePrintSingleBook = (bookId: string) => {
     setReportPreSelectedBookId(bookId);
+    setReportScope('all');
+    setActiveTab('reports');
+  };
+
+  const handleOpenPrintCollectionVouchers = (libraryKey?: string) => {
+    setReportScope('collection_vouchers');
+    setReportLibraryFilter(libraryKey || 'all');
+    setReportPreSelectedBookId(undefined);
+    setActiveTab('reports');
+  };
+
+  const handleOpenPrintPressVouchers = () => {
+    setReportScope('press_vouchers');
+    setReportPreSelectedBookId(undefined);
     setActiveTab('reports');
   };
 
@@ -813,6 +829,7 @@ export const App: React.FC = () => {
         onResetData={handleResetAllData}
         onPrint={() => {
           setReportPreSelectedBookId(undefined);
+          setReportScope('all');
           setActiveTab('reports');
         }}
         bookCount={books.length}
@@ -885,6 +902,8 @@ export const App: React.FC = () => {
             channels={channels}
             onOpenAddChannel={handleOpenAddChannel}
             onOpenEditChannel={handleOpenEditChannel}
+            onOpenPrintCollectionVouchers={handleOpenPrintCollectionVouchers}
+            onOpenPrintPressVouchers={handleOpenPrintPressVouchers}
           />
         )}
 
@@ -948,6 +967,8 @@ export const App: React.FC = () => {
             pressDeliveries={pressDeliveries}
             channelCollections={channelCollections}
             initialSelectedBookId={reportPreSelectedBookId}
+            initialScope={reportScope}
+            initialLibraryFilter={reportLibraryFilter}
             language={language}
             channels={channels}
           />

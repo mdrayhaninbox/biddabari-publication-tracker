@@ -58,6 +58,8 @@ interface PrintableReportProps {
   pressDeliveries?: PressDeliveryRecord[];
   channelCollections?: ChannelCollectionRecord[];
   initialSelectedBookId?: string;
+  initialScope?: PrintScope;
+  initialLibraryFilter?: string;
   language?: Language;
   channels?: ChannelConfig[];
 }
@@ -76,6 +78,8 @@ export const PrintableReport: React.FC<PrintableReportProps> = ({
   pressDeliveries = [],
   channelCollections = [],
   initialSelectedBookId,
+  initialScope,
+  initialLibraryFilter,
   language = 'en',
   channels = DEFAULT_CHANNELS,
 }) => {
@@ -138,7 +142,7 @@ export const PrintableReport: React.FC<PrintableReportProps> = ({
   }, [books, bookSelectionMode, selectedSingleBookId, selectedMultipleBookIds]);
 
   // Selective Printing Controls (প্রেস, অনলাইন, অফলাইন আলাদা বা একসাথে)
-  const [scope, setScope] = useState<PrintScope>('all');
+  const [scope, setScope] = useState<PrintScope>(() => initialScope || 'all');
   const [salesMode, setSalesMode] = useState<SalesMode>('all');
   const [includePressAccounts, setIncludePressAccounts] = useState<boolean>(true);
   const [includePressPayments, setIncludePressPayments] = useState<boolean>(true);
@@ -150,7 +154,7 @@ export const PrintableReport: React.FC<PrintableReportProps> = ({
   const [isExportingExcel, setIsExportingExcel] = useState<boolean>(false);
   const [voucherLayoutMode, setVoucherLayoutMode] = useState<'table' | 'slips'>('table');
   const [voucherSearchQuery, setVoucherSearchQuery] = useState<string>('');
-  const [selectedLibraryFilter, setSelectedLibraryFilter] = useState<string>('all');
+  const [selectedLibraryFilter, setSelectedLibraryFilter] = useState<string>(() => initialLibraryFilter || 'all');
   const [previewImage, setPreviewImage] = useState<{ url: string; title: string; subtitle?: string } | null>(null);
 
   const openImagePreview = (url?: string, title = 'ভাউচার কপি', subtitle?: string) => {
@@ -205,6 +209,19 @@ export const PrintableReport: React.FC<PrintableReportProps> = ({
       setIncludeOfflineDue(false);
     }
   };
+
+  // Keep scope and libraryFilter in sync with incoming props
+  React.useEffect(() => {
+    if (initialScope) {
+      handleSelectScope(initialScope);
+    }
+  }, [initialScope]);
+
+  React.useEffect(() => {
+    if (initialLibraryFilter) {
+      setSelectedLibraryFilter(initialLibraryFilter);
+    }
+  }, [initialLibraryFilter]);
 
   const currentDate = language === 'en'
     ? new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
@@ -1366,195 +1383,351 @@ export const PrintableReport: React.FC<PrintableReportProps> = ({
             </button>
           </div>
 
-          <div className="flex flex-wrap bg-zinc-100 p-1 rounded-xl border border-zinc-200 gap-1">
-            <button
-              onClick={() => handleSelectScope('all')}
-              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                scope === 'all'
-                  ? 'bg-zinc-900 text-white shadow-xs'
-                  : 'text-zinc-600 hover:text-zinc-900'
-              }`}
-            >
-              <Layers className="w-3.5 h-3.5" />
-              <span>{tr('সবকিছু একসাথে (পূর্ণাঙ্গ রিপোর্ট)', 'All Combined (Complete Report)', language)}</span>
-            </button>
+          {/* Row 1: General Reports & Ledgers */}
+          <div>
+            <div className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider mb-1.5 flex items-center gap-1">
+              <Layers className="w-3 h-3 text-zinc-400" />
+              <span>{tr('📊 সাধারণ রিপোর্ট ও খতিয়ান (General Reports & Statements):', 'General Reports & Statements:', language)}</span>
+            </div>
+            <div className="flex flex-wrap bg-zinc-100 p-1 rounded-xl border border-zinc-200 gap-1">
+              <button
+                type="button"
+                onClick={() => handleSelectScope('all')}
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                  scope === 'all'
+                    ? 'bg-zinc-900 text-white shadow-xs'
+                    : 'text-zinc-600 hover:text-zinc-900'
+                }`}
+              >
+                <Layers className="w-3.5 h-3.5" />
+                <span>{tr('সবকিছু একসাথে (পূর্ণাঙ্গ রিপোর্ট)', 'All Combined (Complete Report)', language)}</span>
+              </button>
 
-            <button
-              onClick={() => handleSelectScope('press')}
-              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                scope === 'press'
-                  ? 'bg-zinc-900 text-white shadow-xs'
-                  : 'text-zinc-600 hover:text-zinc-900'
-              }`}
-            >
-              <CreditCard className="w-3.5 h-3.5" />
-              <span>🏭 {tr('শুধু প্রেস হিসাব ও পেমেন্ট', 'Press Accounts & Payments Only', language)}</span>
-            </button>
+              <button
+                type="button"
+                onClick={() => handleSelectScope('press')}
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                  scope === 'press'
+                    ? 'bg-zinc-900 text-white shadow-xs'
+                    : 'text-zinc-600 hover:text-zinc-900'
+                }`}
+              >
+                <CreditCard className="w-3.5 h-3.5" />
+                <span>🏭 {tr('শুধু প্রেস হিসাব ও পেমেন্ট', 'Press Accounts & Payments Only', language)}</span>
+              </button>
 
-            <button
-              onClick={() => handleSelectScope('online')}
-              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                scope === 'online'
-                  ? 'bg-zinc-900 text-white shadow-xs'
-                  : 'text-zinc-600 hover:text-zinc-900'
-              }`}
-            >
-              <Globe className="w-3.5 h-3.5" />
-              <span>🌐 {tr('শুধু অনলাইন সেলস ও ডিউ', 'Online Sales & Dues Only', language)}</span>
-            </button>
+              <button
+                type="button"
+                onClick={() => handleSelectScope('online')}
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                  scope === 'online'
+                    ? 'bg-zinc-900 text-white shadow-xs'
+                    : 'text-zinc-600 hover:text-zinc-900'
+                }`}
+              >
+                <Globe className="w-3.5 h-3.5" />
+                <span>🌐 {tr('শুধু অনলাইন সেলস ও ডিউ', 'Online Sales & Dues Only', language)}</span>
+              </button>
 
-            <button
-              onClick={() => handleSelectScope('offline')}
-              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                scope === 'offline'
-                  ? 'bg-zinc-900 text-white shadow-xs'
-                  : 'text-zinc-600 hover:text-zinc-900'
-              }`}
-            >
-              <Store className="w-3.5 h-3.5" />
-              <span>🏪 {tr('শুধু অফলাইন সেলস ও ডিউ', 'Offline Sales & Dues Only', language)}</span>
-            </button>
+              <button
+                type="button"
+                onClick={() => handleSelectScope('offline')}
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                  scope === 'offline'
+                    ? 'bg-zinc-900 text-white shadow-xs'
+                    : 'text-zinc-600 hover:text-zinc-900'
+                }`}
+              >
+                <Store className="w-3.5 h-3.5" />
+                <span>🏪 {tr('শুধু অফলাইন সেলস ও ডিউ', 'Offline Sales & Dues Only', language)}</span>
+              </button>
 
-            <button
-              onClick={() => handleSelectScope('sales_due')}
-              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                scope === 'sales_due'
-                  ? 'bg-zinc-900 text-white shadow-xs'
-                  : 'text-zinc-600 hover:text-zinc-900'
-              }`}
-            >
-              <HandCoins className="w-3.5 h-3.5" />
-              <span>🌐+🏪 {tr('অনলাইন ও অফলাইন সেলস ও ডিউ', 'Online & Offline Sales & Dues', language)}</span>
-            </button>
+              <button
+                type="button"
+                onClick={() => handleSelectScope('sales_due')}
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                  scope === 'sales_due'
+                    ? 'bg-zinc-900 text-white shadow-xs'
+                    : 'text-zinc-600 hover:text-zinc-900'
+                }`}
+              >
+                <HandCoins className="w-3.5 h-3.5" />
+                <span>🌐+🏪 {tr('অনলাইন ও অফলাইন সেলস ও ডিউ', 'Online & Offline Sales & Dues', language)}</span>
+              </button>
+            </div>
+          </div>
 
-            <button
-              onClick={() => handleSelectScope('press_vouchers')}
-              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                scope === 'press_vouchers'
-                  ? 'bg-zinc-900 text-white shadow-xs'
-                  : 'text-zinc-600 hover:text-zinc-900'
-              }`}
-            >
-              <Receipt className="w-3.5 h-3.5" />
-              <span>🧾 {tr('প্রেস পেমেন্ট ভাউচার (১০টি/পৃষ্ঠা)', 'Press Payment Vouchers (10/page)', language)}</span>
-            </button>
+          {/* Row 2: Prominent Voucher Print Formats (10 per Page A4 Print) */}
+          <div className="p-3 bg-gradient-to-r from-emerald-50 via-teal-50 to-indigo-50 border-2 border-emerald-300 rounded-2xl shadow-xs space-y-2.5">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5">
+              <div className="flex items-center gap-2">
+                <span className="flex h-2.5 w-2.5 rounded-full bg-emerald-600 animate-pulse" />
+                <span className="text-xs font-black text-emerald-950 uppercase tracking-wide flex items-center gap-1.5">
+                  <Receipt className="w-4 h-4 text-emerald-700" />
+                  <span>{tr('🧾 বিশেষ ভাউচার প্রিন্ট ফরম্যাট (১০টি/পৃষ্ঠা A4)', 'Special Voucher Print Formats (10/Page A4)', language)}</span>
+                </span>
+              </div>
+              <span className="text-[11px] font-semibold text-emerald-800 bg-white/90 border border-emerald-200 px-2.5 py-0.5 rounded-full self-start sm:self-auto">
+                ⚡ {tr('প্রতি পৃষ্ঠায় ঠিক ১০টি ভাউচার স্লিপ সহ প্রিন্ট ও কাটিং ফরম্যাট', 'Ready-to-cut slip format: strictly 10 vouchers per printed page', language)}
+              </span>
+            </div>
 
-            <button
-              onClick={() => handleSelectScope('collection_vouchers')}
-              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                scope === 'collection_vouchers'
-                  ? 'bg-zinc-900 text-white shadow-xs'
-                  : 'text-zinc-600 hover:text-zinc-900'
-              }`}
-            >
-              <HandCoins className="w-3.5 h-3.5" />
-              <span>💵 {tr('অনলাইন ও লাইব্রেরি আদায় ভাউচার (১০টি/পৃষ্ঠা)', 'Collection Vouchers (10/page)', language)}</span>
-            </button>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {/* Collection Voucher Button */}
+              <button
+                type="button"
+                onClick={() => handleSelectScope('collection_vouchers')}
+                className={`flex items-center justify-between p-3 rounded-xl border text-xs font-bold transition-all shadow-xs text-left ${
+                  scope === 'collection_vouchers'
+                    ? 'bg-emerald-700 text-white border-emerald-800 ring-2 ring-emerald-400'
+                    : 'bg-white hover:bg-emerald-100/70 text-emerald-950 border-emerald-300'
+                }`}
+              >
+                <div className="flex items-center gap-2.5">
+                  <span className={`p-2 rounded-lg ${scope === 'collection_vouchers' ? 'bg-emerald-800 text-white' : 'bg-emerald-100 text-emerald-800'}`}>
+                    <HandCoins className="w-5 h-5" />
+                  </span>
+                  <div>
+                    <div className="text-xs font-black flex items-center gap-1.5">
+                      <span>{tr('💵 অনলাইন ও লাইব্রেরি আদায় ভাউচার', 'Collection Vouchers (Online & Library)', language)}</span>
+                      {scope === 'collection_vouchers' && (
+                        <span className="text-[10px] bg-white text-emerald-800 px-1.5 py-0.2 rounded font-bold">
+                          {tr('সক্রিয়', 'Active', language)}
+                        </span>
+                      )}
+                    </div>
+                    <div className={`text-[11px] font-normal ${scope === 'collection_vouchers' ? 'text-emerald-100' : 'text-zinc-600'}`}>
+                      {tr('লাইব্রেরি ভিত্তিক ফিল্টার বা আলাদা পৃষ্ঠা (Split)', 'Filter by library or split per library', language)}
+                    </div>
+                  </div>
+                </div>
+                <div className="flex flex-col items-end shrink-0 pl-2">
+                  <span className={`text-[11px] px-2.5 py-0.5 rounded-full font-bold ${
+                    scope === 'collection_vouchers' ? 'bg-emerald-800 text-emerald-100' : 'bg-emerald-100 text-emerald-800 border border-emerald-200'
+                  }`}>
+                    {formatNumber(channelCollections.length, language)} {tr('টি ভাউচার', 'vouchers', language)}
+                  </span>
+                  <span className={`text-[10px] font-semibold mt-0.5 ${scope === 'collection_vouchers' ? 'text-emerald-200' : 'text-emerald-700'}`}>
+                    ⚡ ১০টি/পৃষ্ঠা
+                  </span>
+                </div>
+              </button>
+
+              {/* Press Payment Voucher Button */}
+              <button
+                type="button"
+                onClick={() => handleSelectScope('press_vouchers')}
+                className={`flex items-center justify-between p-3 rounded-xl border text-xs font-bold transition-all shadow-xs text-left ${
+                  scope === 'press_vouchers'
+                    ? 'bg-zinc-900 text-white border-black ring-2 ring-zinc-500'
+                    : 'bg-white hover:bg-zinc-100 text-zinc-900 border-zinc-300'
+                }`}
+              >
+                <div className="flex items-center gap-2.5">
+                  <span className={`p-2 rounded-lg ${scope === 'press_vouchers' ? 'bg-zinc-800 text-white' : 'bg-zinc-100 text-zinc-800'}`}>
+                    <Receipt className="w-5 h-5" />
+                  </span>
+                  <div>
+                    <div className="text-xs font-black flex items-center gap-1.5">
+                      <span>{tr('🧾 প্রেস পেমেন্ট ভাউচার প্রিন্ট', 'Press Payment Vouchers Print', language)}</span>
+                      {scope === 'press_vouchers' && (
+                        <span className="text-[10px] bg-white text-zinc-900 px-1.5 py-0.2 rounded font-bold">
+                          {tr('সক্রিয়', 'Active', language)}
+                        </span>
+                      )}
+                    </div>
+                    <div className={`text-[11px] font-normal ${scope === 'press_vouchers' ? 'text-zinc-300' : 'text-zinc-600'}`}>
+                      {tr('বই বা তারিখ অনুযায়ী প্রেস পরিশোধ স্লিপ', 'Press payment slips with voucher no & dates', language)}
+                    </div>
+                  </div>
+                </div>
+                <div className="flex flex-col items-end shrink-0 pl-2">
+                  <span className={`text-[11px] px-2.5 py-0.5 rounded-full font-bold ${
+                    scope === 'press_vouchers' ? 'bg-zinc-800 text-zinc-200' : 'bg-zinc-100 text-zinc-800 border border-zinc-200'
+                  }`}>
+                    {formatNumber(pressPayments.length, language)} {tr('টি ভাউচার', 'vouchers', language)}
+                  </span>
+                  <span className={`text-[10px] font-semibold mt-0.5 ${scope === 'press_vouchers' ? 'text-zinc-400' : 'text-zinc-600'}`}>
+                    ⚡ ১০টি/পৃষ্ঠা
+                  </span>
+                </div>
+              </button>
+            </div>
           </div>
 
           {/* Interactive Voucher Print Toolbar (Shown when press_vouchers or collection_vouchers is selected) */}
           {(scope === 'press_vouchers' || scope === 'collection_vouchers') && (
-            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 p-3 bg-zinc-50 border border-zinc-200 rounded-xl text-xs animate-in fade-in">
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="font-bold text-zinc-900 flex items-center gap-1.5">
-                  <Receipt className="w-4 h-4 text-zinc-700" />
-                  <span>
-                    {scope === 'press_vouchers'
-                      ? tr('প্রেস পেমেন্ট ভাউচার লেআউট:', 'Press Payment Voucher Layout:', language)
-                      : tr('অনলাইন ও লাইব্রেরি আদায় ভাউচার লেআউট:', 'Collection Voucher Layout:', language)
-                    }
-                  </span>
-                </span>
-                <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-blue-100 text-blue-800 border border-blue-300">
-                  ⚡ {tr('প্রতি পৃষ্ঠায় ঠিক ১০টি ভাউচার (A4 অটো-ব্রেক)', 'Exactly 10 Vouchers per Page (A4 Auto-Break)', language)}
-                </span>
-              </div>
-
-              <div className="flex items-center gap-2 flex-wrap">
-                {/* Library Filter Dropdown (Exclusive to Collection Vouchers) */}
-                {scope === 'collection_vouchers' && (
-                  <div className="flex items-center gap-1.5 bg-white border border-zinc-300 rounded-lg px-2.5 py-1 text-xs shadow-xs">
-                    <Building2 className="w-3.5 h-3.5 text-zinc-600 shrink-0" />
-                    <span className="font-bold text-zinc-700 shrink-0">
-                      {tr('লাইব্রেরি ফিল্টার:', 'Library Filter:', language)}
+            <div className="space-y-2 animate-in fade-in">
+              <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 p-3 bg-zinc-50 border border-zinc-200 rounded-xl text-xs">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="font-bold text-zinc-900 flex items-center gap-1.5">
+                    <Receipt className="w-4 h-4 text-zinc-700" />
+                    <span>
+                      {scope === 'press_vouchers'
+                        ? tr('প্রেস পেমেন্ট ভাউচার লেআউট:', 'Press Payment Voucher Layout:', language)
+                        : tr('অনলাইন ও লাইব্রেরি আদায় ভাউচার লেআউট:', 'Collection Voucher Layout:', language)
+                      }
                     </span>
-                    <select
-                      value={selectedLibraryFilter}
-                      onChange={(e) => setSelectedLibraryFilter(e.target.value)}
-                      className="bg-transparent font-semibold text-zinc-900 border-none outline-none cursor-pointer text-xs pr-1 max-w-[220px] sm:max-w-none"
-                    >
-                      <option value="all">
-                        {tr('🌐 + 🏪 সকল লাইব্রেরি ও চ্যানেল একসাথে (All Combined)', '🌐 + 🏪 All Libraries & Channels Combined', language)}
-                        {` (${channelCollections.length})`}
-                      </option>
-                      <option value="split_libraries">
-                        {tr('📑 প্রতিটি লাইব্রেরি আলাদা পৃষ্ঠা (Separate Page per Library)', '📑 Separate Page per Library (Auto-Break)', language)}
-                      </option>
-                      <optgroup label={tr('🏪 অফলাইন ও ডিলার লাইব্রেরি (Offline / Dealer)', '🏪 Offline / Dealer Libraries', language)}>
-                        {availableLibraries.filter(l => l.type === 'offline').map(l => (
-                          <option key={l.key} value={l.key}>
-                            {language === 'en' && l.nameEn ? l.nameEn : l.name} — {l.count > 0 ? `${formatNumber(l.count, language)} ${tr('ভাউচার', 'vouchers', language)} (${formatBDT(l.totalAmount, language)})` : tr('০টি ভাউচার', '0 vouchers', language)}
-                          </option>
-                        ))}
-                      </optgroup>
-                      <optgroup label={tr('🌐 অনলাইন চ্যানেলসমূহ (Online Channels)', '🌐 Online Channels', language)}>
-                        {availableLibraries.filter(l => l.type === 'online').map(l => (
-                          <option key={l.key} value={l.key}>
-                            {language === 'en' && l.nameEn ? l.nameEn : l.name} — {l.count > 0 ? `${formatNumber(l.count, language)} ${tr('ভাউচার', 'vouchers', language)} (${formatBDT(l.totalAmount, language)})` : tr('০টি ভাউচার', '0 vouchers', language)}
-                          </option>
-                        ))}
-                      </optgroup>
-                    </select>
-                  </div>
-                )}
+                  </span>
+                  <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-blue-100 text-blue-800 border border-blue-300">
+                    ⚡ {tr('প্রতি পৃষ্ঠায় ঠিক ১০টি ভাউচার (A4 অটো-ব্রেক)', 'Exactly 10 Vouchers per Page (A4 Auto-Break)', language)}
+                  </span>
+                </div>
 
-                {/* Search Box */}
-                <div className="relative">
-                  <Search className="w-3.5 h-3.5 text-zinc-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
-                  <input
-                    type="text"
-                    value={voucherSearchQuery}
-                    onChange={(e) => setVoucherSearchQuery(e.target.value)}
-                    placeholder={tr('ভাউচার নং বা নাম...', 'Search voucher no or name...', language)}
-                    className="pl-8 pr-2.5 py-1 text-xs border border-zinc-300 rounded-lg bg-white w-36 sm:w-44 text-zinc-900 focus:ring-1 focus:ring-zinc-900"
-                  />
-                  {voucherSearchQuery && (
+                <div className="flex items-center gap-2 flex-wrap">
+                  {/* Library Filter Dropdown (Exclusive to Collection Vouchers) */}
+                  {scope === 'collection_vouchers' && (
+                    <div className="flex items-center gap-1.5 bg-white border border-zinc-300 rounded-lg px-2.5 py-1 text-xs shadow-xs">
+                      <Building2 className="w-3.5 h-3.5 text-zinc-600 shrink-0" />
+                      <span className="font-bold text-zinc-700 shrink-0">
+                        {tr('লাইব্রেরি ফিল্টার:', 'Library Filter:', language)}
+                      </span>
+                      <select
+                        value={selectedLibraryFilter}
+                        onChange={(e) => setSelectedLibraryFilter(e.target.value)}
+                        className="bg-transparent font-semibold text-zinc-900 border-none outline-none cursor-pointer text-xs pr-1 max-w-[220px] sm:max-w-none"
+                      >
+                        <option value="all">
+                          {tr('🌐 + 🏪 সকল লাইব্রেরি ও চ্যানেল একসাথে (All Combined)', '🌐 + 🏪 All Libraries & Channels Combined', language)}
+                          {` (${channelCollections.length})`}
+                        </option>
+                        <option value="split_libraries">
+                          {tr('📑 প্রতিটি লাইব্রেরি আলাদা পৃষ্ঠা (Separate Page per Library)', '📑 Separate Page per Library (Auto-Break)', language)}
+                        </option>
+                        <optgroup label={tr('🏪 অফলাইন ও ডিলার লাইব্রেরি (Offline / Dealer)', '🏪 Offline / Dealer Libraries', language)}>
+                          {availableLibraries.filter(l => l.type === 'offline').map(l => (
+                            <option key={l.key} value={l.key}>
+                              {language === 'en' && l.nameEn ? l.nameEn : l.name} — {l.count > 0 ? `${formatNumber(l.count, language)} ${tr('ভাউচার', 'vouchers', language)} (${formatBDT(l.totalAmount, language)})` : tr('০টি ভাউচার', '0 vouchers', language)}
+                            </option>
+                          ))}
+                        </optgroup>
+                        <optgroup label={tr('🌐 অনলাইন চ্যানেলসমূহ (Online Channels)', '🌐 Online Channels', language)}>
+                          {availableLibraries.filter(l => l.type === 'online').map(l => (
+                            <option key={l.key} value={l.key}>
+                              {language === 'en' && l.nameEn ? l.nameEn : l.name} — {l.count > 0 ? `${formatNumber(l.count, language)} ${tr('ভাউচার', 'vouchers', language)} (${formatBDT(l.totalAmount, language)})` : tr('০টি ভাউচার', '0 vouchers', language)}
+                            </option>
+                          ))}
+                        </optgroup>
+                      </select>
+                    </div>
+                  )}
+
+                  {/* Search Box */}
+                  <div className="relative">
+                    <Search className="w-3.5 h-3.5 text-zinc-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
+                    <input
+                      type="text"
+                      value={voucherSearchQuery}
+                      onChange={(e) => setVoucherSearchQuery(e.target.value)}
+                      placeholder={tr('ভাউচার নং বা নাম...', 'Search voucher no or name...', language)}
+                      className="pl-8 pr-2.5 py-1 text-xs border border-zinc-300 rounded-lg bg-white w-36 sm:w-44 text-zinc-900 focus:ring-1 focus:ring-zinc-900"
+                    />
+                    {voucherSearchQuery && (
+                      <button
+                        type="button"
+                        onClick={() => setVoucherSearchQuery('')}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 text-[10px]"
+                      >
+                        ✕
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Table vs Slips Toggle */}
+                  <div className="inline-flex items-center bg-white p-0.5 rounded-lg border border-zinc-300 text-xs shadow-xs">
                     <button
                       type="button"
-                      onClick={() => setVoucherSearchQuery('')}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 text-[10px]"
+                      onClick={() => setVoucherLayoutMode('table')}
+                      className={`px-2.5 py-1 rounded font-bold transition-all ${
+                        voucherLayoutMode === 'table'
+                          ? 'bg-zinc-900 text-white shadow-xs'
+                          : 'text-zinc-600 hover:text-zinc-900'
+                      }`}
                     >
-                      ✕
+                      📊 {tr('রেজিস্টার টেবিল', 'Register Table', language)}
                     </button>
-                  )}
-                </div>
-
-                {/* Table vs Slips Toggle */}
-                <div className="inline-flex items-center bg-white p-0.5 rounded-lg border border-zinc-300 text-xs shadow-xs">
-                  <button
-                    type="button"
-                    onClick={() => setVoucherLayoutMode('table')}
-                    className={`px-2.5 py-1 rounded font-bold transition-all ${
-                      voucherLayoutMode === 'table'
-                        ? 'bg-zinc-900 text-white shadow-xs'
-                        : 'text-zinc-600 hover:text-zinc-900'
-                    }`}
-                  >
-                    📊 {tr('রেজিস্টার টেবিল', 'Register Table', language)}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setVoucherLayoutMode('slips')}
-                    className={`px-2.5 py-1 rounded font-bold transition-all ${
-                      voucherLayoutMode === 'slips'
-                        ? 'bg-zinc-900 text-white shadow-xs'
-                        : 'text-zinc-600 hover:text-zinc-900'
-                    }`}
-                  >
-                    📋 {tr('কাটার উপযোগী স্লিপস', 'Cuttable Slips', language)}
-                  </button>
+                    <button
+                      type="button"
+                      onClick={() => setVoucherLayoutMode('slips')}
+                      className={`px-2.5 py-1 rounded font-bold transition-all ${
+                        voucherLayoutMode === 'slips'
+                          ? 'bg-zinc-900 text-white shadow-xs'
+                          : 'text-zinc-600 hover:text-zinc-900'
+                      }`}
+                    >
+                      📋 {tr('কাটার উপযোগী স্লিপস', 'Cuttable Slips', language)}
+                    </button>
+                  </div>
                 </div>
               </div>
+
+              {/* Quick Library Filter Chips / Pills (Exclusive to Collection Vouchers) */}
+              {scope === 'collection_vouchers' && (
+                <div className="p-3 bg-emerald-50/60 border border-emerald-200/90 rounded-xl text-xs space-y-1.5">
+                  <div className="flex items-center justify-between flex-wrap gap-2">
+                    <span className="font-bold text-emerald-950 flex items-center gap-1.5">
+                      <Building2 className="w-4 h-4 text-emerald-700" />
+                      <span>{tr('লাইব্রেরি ভিত্তিক দ্রুত ফিল্টার:', 'Quick Library Filter Pills:', language)}</span>
+                    </span>
+                    <span className="text-[11px] text-emerald-800">
+                      {tr('যেকোনো লাইব্রেরিতে ক্লিক করলে শুধু সেই লাইব্রেরির ভাউচার ১০টি করে পৃষ্ঠায় সাজানো হবে', 'Click any library pill to instantly view only its vouchers 10 per page', language)}
+                    </span>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+                    <button
+                      type="button"
+                      onClick={() => setSelectedLibraryFilter('all')}
+                      className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${
+                        selectedLibraryFilter === 'all'
+                          ? 'bg-emerald-700 text-white shadow-xs ring-1 ring-emerald-500'
+                          : 'bg-white hover:bg-emerald-100/60 text-zinc-800 border border-zinc-200'
+                      }`}
+                    >
+                      🌐 + 🏪 {tr('সকল লাইব্রেরি একসাথে', 'All Libraries Combined', language)} ({channelCollections.length})
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setSelectedLibraryFilter('split_libraries')}
+                      className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${
+                        selectedLibraryFilter === 'split_libraries'
+                          ? 'bg-emerald-700 text-white shadow-xs ring-1 ring-emerald-500'
+                          : 'bg-emerald-100/80 hover:bg-emerald-200 text-emerald-900 border border-emerald-300'
+                      }`}
+                    >
+                      📑 {tr('প্রতিটি লাইব্রেরি আলাদা পৃষ্ঠা (Split Pages)', 'Separate Page per Library (Split)', language)}
+                    </button>
+
+                    {availableLibraries.map(lib => (
+                      <button
+                        key={lib.key}
+                        type="button"
+                        onClick={() => setSelectedLibraryFilter(lib.key)}
+                        className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
+                          selectedLibraryFilter === lib.key
+                            ? 'bg-emerald-800 text-white shadow-xs ring-2 ring-emerald-500'
+                            : lib.count > 0
+                              ? 'bg-white hover:bg-emerald-50 text-zinc-900 border border-emerald-300'
+                              : 'bg-zinc-50 hover:bg-zinc-100 text-zinc-500 border border-zinc-200'
+                        }`}
+                      >
+                        <span>{lib.type === 'online' ? '🌐' : '🏪'}</span>
+                        <span>{language === 'en' && lib.nameEn ? lib.nameEn : lib.name}</span>
+                        <span className={`px-1.5 py-0.2 rounded text-[10px] font-mono ${
+                          selectedLibraryFilter === lib.key 
+                            ? 'bg-emerald-900 text-white' 
+                            : lib.count > 0 
+                              ? 'bg-emerald-100 text-emerald-800 font-bold' 
+                              : 'bg-zinc-200 text-zinc-500'
+                        }`}>
+                          {formatNumber(lib.count, language)}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>
