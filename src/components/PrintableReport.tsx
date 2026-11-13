@@ -955,7 +955,7 @@ export const PrintableReport: React.FC<PrintableReportProps> = ({
                                 <button
                                   type="button"
                                   onClick={() => openImagePreview(c.voucherImage || c.receiptImage, `${c.channelName} (${c.receiptNo || 'রশিদ'})`, `${c.date} • ${formatBDT(c.amount, language)}`)}
-                                  className="print:hidden p-0.5 text-emerald-600 hover:text-emerald-800 hover:bg-emerald-50 rounded"
+                                  className="print:hidden p-0.5 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded"
                                   title={tr('মানি রিসিটের ছবি দেখুন', 'View Receipt Image', language)}
                                 >
                                   <ImageIcon className="w-3.5 h-3.5" />
@@ -968,7 +968,7 @@ export const PrintableReport: React.FC<PrintableReportProps> = ({
                           </td>
                           <td className="py-1.5 px-2 text-center uppercase font-mono text-[10px] border-r border-zinc-200">
                             <span className={`px-1.5 py-0.2 rounded font-bold ${
-                              cType === 'online' ? 'bg-sky-50 text-sky-700' : 'bg-emerald-50 text-emerald-700'
+                              cType === 'online' ? 'bg-blue-50 text-blue-700 border border-blue-200' : 'bg-zinc-100 text-zinc-700 border border-zinc-200'
                             }`}>
                               {cType === 'online' ? tr('অনলাইন', 'Online', language) : tr('অফলাইন', 'Offline', language)}
                             </span>
@@ -979,7 +979,7 @@ export const PrintableReport: React.FC<PrintableReportProps> = ({
                           <td className="py-1.5 px-3 text-zinc-600 border-r border-zinc-200 text-[11px]">
                             {c.notes || '—'}
                           </td>
-                          <td className="py-1.5 px-3 text-right font-mono font-bold text-emerald-700 border-r border-zinc-200">
+                          <td className="py-1.5 px-3 text-right font-mono font-bold text-zinc-900 border-r border-zinc-200">
                             {formatBDT(c.amount, language)}
                           </td>
                           <td className="py-1.5 px-3 text-center">
@@ -1015,7 +1015,7 @@ export const PrintableReport: React.FC<PrintableReportProps> = ({
                     <td colSpan={7} className="py-2 px-3 text-right border-r border-zinc-300">
                       {tr('এই পৃষ্ঠার মোট আদায় (Subtotal):', 'Page Subtotal:', language)}
                     </td>
-                    <td className="py-2 px-3 text-right font-mono font-black border-r border-zinc-300 text-emerald-800">
+                    <td className="py-2 px-3 text-right font-mono font-black border-r border-zinc-300 text-zinc-900">
                       {formatBDT(pageSubtotal, language)}
                     </td>
                     <td></td>
@@ -1025,7 +1025,7 @@ export const PrintableReport: React.FC<PrintableReportProps> = ({
                       <td colSpan={7} className="py-2.5 px-3 text-right border-r border-zinc-300">
                         {tr(`সর্বমোট সংগৃহীত আদায় (${groupLabel}):`, `Grand Total Collected (${groupLabel}):`, language)}
                       </td>
-                      <td className="py-2.5 px-3 text-right font-mono font-black text-sm border-r border-zinc-300 text-emerald-900">
+                      <td className="py-2.5 px-3 text-right font-mono font-black text-sm border-r border-zinc-300 text-zinc-900">
                         {formatBDT(grandTotalAmount, language)}
                       </td>
                       <td></td>
@@ -1049,9 +1049,9 @@ export const PrintableReport: React.FC<PrintableReportProps> = ({
                       >
                         <div className="flex items-center justify-between border-b border-zinc-200 pb-1">
                           <div className="flex items-center gap-1.5">
-                            <span className="w-2 h-2 rounded-full bg-emerald-600"></span>
+                            <span className="w-2 h-2 rounded-full bg-zinc-900"></span>
                             <span className="font-bold text-[11px] text-zinc-900">{tr('বিদ্যাবাড়ি পাবলিকেশন', 'Biddabari Publication', language)}</span>
-                            <span className="text-[10px] text-emerald-700 font-medium">({tr('মানি রিসিট', 'Money Receipt', language)})</span>
+                            <span className="text-[10px] text-zinc-500 font-medium">({tr('মানি রিসিট', 'Money Receipt', language)})</span>
                           </div>
                           <div className="flex items-center gap-1">
                             <span className="font-mono text-[10px] px-1.5 py-0.2 bg-zinc-200 text-zinc-800 rounded font-bold">
@@ -1061,7 +1061,7 @@ export const PrintableReport: React.FC<PrintableReportProps> = ({
                               <button
                                 type="button"
                                 onClick={() => openImagePreview(c.voucherImage || c.receiptImage, `${c.channelName} (${c.receiptNo || 'রশিদ'})`, `${c.date} • ${formatBDT(c.amount, language)}`)}
-                                className="print:hidden p-0.5 text-emerald-600 hover:text-emerald-800 hover:bg-emerald-50 rounded"
+                                className="print:hidden p-0.5 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded"
                                 title={tr('মানি রিসিটের ছবি দেখুন', 'View Receipt Image', language)}
                               >
                                 <ImageIcon className="w-3.5 h-3.5" />
@@ -1084,7 +1084,7 @@ export const PrintableReport: React.FC<PrintableReportProps> = ({
                               {c.notes || tr('বই বিক্রয় বাবদ আদায়', 'Book sales collection', language)}
                             </span>
                             <span className={`text-[9px] px-1.5 py-0.2 rounded font-bold uppercase ${
-                              cType === 'online' ? 'bg-sky-100 text-sky-800' : 'bg-emerald-100 text-emerald-800'
+                              cType === 'online' ? 'bg-blue-50 text-blue-800 border border-blue-200' : 'bg-zinc-100 text-zinc-800 border border-zinc-200'
                             }`}>
                               {cType === 'online' ? tr('অনলাইন', 'Online', language) : tr('অফলাইন', 'Offline', language)}
                             </span>
@@ -1094,7 +1094,7 @@ export const PrintableReport: React.FC<PrintableReportProps> = ({
                         <div className="pt-1 border-t border-zinc-200 flex items-center justify-between">
                           <div>
                             <span className="text-[9px] text-zinc-400 block">{tr('আদায়কৃত টাকা:', 'Collected Amount:', language)}</span>
-                            <span className="font-black text-sm text-emerald-700 font-mono">{formatBDT(c.amount, language)}</span>
+                            <span className="font-black text-sm text-zinc-900 font-mono">{formatBDT(c.amount, language)}</span>
                           </div>
                           <div className="flex items-center gap-3 text-[9px] text-zinc-500">
                             <div className="text-center">
@@ -1138,7 +1138,7 @@ export const PrintableReport: React.FC<PrintableReportProps> = ({
                   <span className="text-zinc-800">
                     {tr(`সর্বমোট সংগৃহীত আদায় (${groupLabel}):`, `Grand Total Collected (${groupLabel}):`, language)}
                   </span>
-                  <span className="font-mono text-emerald-800 text-sm font-black">
+                  <span className="font-mono text-zinc-900 text-sm font-black">
                     {formatBDT(grandTotalAmount, language)}
                   </span>
                 </div>
@@ -1461,14 +1461,14 @@ export const PrintableReport: React.FC<PrintableReportProps> = ({
                 onClick={() => handleSelectScope('collection_vouchers')}
                 className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
                   scope === 'collection_vouchers'
-                    ? 'bg-emerald-700 text-white shadow-xs'
-                    : 'text-emerald-800 hover:text-emerald-950 hover:bg-emerald-50'
+                    ? 'bg-zinc-900 text-white shadow-xs'
+                    : 'text-zinc-700 hover:text-zinc-900 hover:bg-zinc-200/60'
                 }`}
               >
                 <HandCoins className="w-3.5 h-3.5" />
                 <span>💵 {tr('আদায় ভাউচার (১০টি/পৃষ্ঠা)', 'Collection Vouchers (10/Page)', language)}</span>
                 <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
-                  scope === 'collection_vouchers' ? 'bg-emerald-900 text-white' : 'bg-emerald-100 text-emerald-800'
+                  scope === 'collection_vouchers' ? 'bg-zinc-800 text-zinc-100' : 'bg-zinc-200 text-zinc-800'
                 }`}>
                   {formatNumber(channelCollections.length, language)}
                 </span>
@@ -1509,7 +1509,7 @@ export const PrintableReport: React.FC<PrintableReportProps> = ({
                       }
                     </span>
                   </span>
-                  <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-blue-100 text-blue-800 border border-blue-300">
+                  <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-zinc-200/80 text-zinc-800 border border-zinc-300">
                     ⚡ {tr('প্রতি পৃষ্ঠায় ঠিক ১০টি ভাউচার (A4 অটো-ব্রেক)', 'Exactly 10 Vouchers per Page (A4 Auto-Break)', language)}
                   </span>
                 </div>
@@ -1603,13 +1603,13 @@ export const PrintableReport: React.FC<PrintableReportProps> = ({
 
               {/* Quick Library Filter Chips / Pills (Exclusive to Collection Vouchers) */}
               {scope === 'collection_vouchers' && (
-                <div className="p-3 bg-emerald-50/60 border border-emerald-200/90 rounded-xl text-xs space-y-1.5">
+                <div className="p-3 bg-zinc-50 border border-zinc-200 rounded-xl text-xs space-y-2">
                   <div className="flex items-center justify-between flex-wrap gap-2">
-                    <span className="font-bold text-emerald-950 flex items-center gap-1.5">
-                      <Building2 className="w-4 h-4 text-emerald-700" />
-                      <span>{tr('লাইব্রেরি ভিত্তিক দ্রুত ফিল্টার:', 'Quick Library Filter Pills:', language)}</span>
+                    <span className="font-bold text-zinc-900 flex items-center gap-1.5">
+                      <Building2 className="w-4 h-4 text-zinc-700" />
+                      <span>{tr('লাইব্রেরি ভিত্তিক ফিল্টার:', 'Library Filter Options:', language)}</span>
                     </span>
-                    <span className="text-[11px] text-emerald-800">
+                    <span className="text-[11px] text-zinc-500">
                       {tr('যেকোনো লাইব্রেরিতে ক্লিক করলে শুধু সেই লাইব্রেরির ভাউচার ১০টি করে পৃষ্ঠায় সাজানো হবে', 'Click any library pill to instantly view only its vouchers 10 per page', language)}
                     </span>
                   </div>
@@ -1620,8 +1620,8 @@ export const PrintableReport: React.FC<PrintableReportProps> = ({
                       onClick={() => setSelectedLibraryFilter('all')}
                       className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${
                         selectedLibraryFilter === 'all'
-                          ? 'bg-emerald-700 text-white shadow-xs ring-1 ring-emerald-500'
-                          : 'bg-white hover:bg-emerald-100/60 text-zinc-800 border border-zinc-200'
+                          ? 'bg-zinc-900 text-white shadow-xs'
+                          : 'bg-white hover:bg-zinc-100 text-zinc-700 border border-zinc-200'
                       }`}
                     >
                       🌐 + 🏪 {tr('সকল লাইব্রেরি একসাথে', 'All Libraries Combined', language)} ({channelCollections.length})
@@ -1632,8 +1632,8 @@ export const PrintableReport: React.FC<PrintableReportProps> = ({
                       onClick={() => setSelectedLibraryFilter('split_libraries')}
                       className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${
                         selectedLibraryFilter === 'split_libraries'
-                          ? 'bg-emerald-700 text-white shadow-xs ring-1 ring-emerald-500'
-                          : 'bg-emerald-100/80 hover:bg-emerald-200 text-emerald-900 border border-emerald-300'
+                          ? 'bg-zinc-900 text-white shadow-xs'
+                          : 'bg-zinc-100 hover:bg-zinc-200 text-zinc-800 border border-zinc-300'
                       }`}
                     >
                       📑 {tr('প্রতিটি লাইব্রেরি আলাদা পৃষ্ঠা (Split Pages)', 'Separate Page per Library (Split)', language)}
@@ -1646,20 +1646,20 @@ export const PrintableReport: React.FC<PrintableReportProps> = ({
                         onClick={() => setSelectedLibraryFilter(lib.key)}
                         className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
                           selectedLibraryFilter === lib.key
-                            ? 'bg-emerald-800 text-white shadow-xs ring-2 ring-emerald-500'
+                            ? 'bg-zinc-900 text-white shadow-xs'
                             : lib.count > 0
-                              ? 'bg-white hover:bg-emerald-50 text-zinc-900 border border-emerald-300'
-                              : 'bg-zinc-50 hover:bg-zinc-100 text-zinc-500 border border-zinc-200'
+                              ? 'bg-white hover:bg-zinc-100 text-zinc-900 border border-zinc-300 font-semibold'
+                              : 'bg-zinc-50 hover:bg-zinc-100 text-zinc-400 border border-zinc-200'
                         }`}
                       >
                         <span>{lib.type === 'online' ? '🌐' : '🏪'}</span>
                         <span>{language === 'en' && lib.nameEn ? lib.nameEn : lib.name}</span>
                         <span className={`px-1.5 py-0.2 rounded text-[10px] font-mono ${
                           selectedLibraryFilter === lib.key 
-                            ? 'bg-emerald-900 text-white' 
+                            ? 'bg-zinc-700 text-white font-bold' 
                             : lib.count > 0 
-                              ? 'bg-emerald-100 text-emerald-800 font-bold' 
-                              : 'bg-zinc-200 text-zinc-500'
+                              ? 'bg-zinc-100 text-zinc-800 font-bold border border-zinc-200' 
+                              : 'bg-zinc-100 text-zinc-400'
                         }`}>
                           {formatNumber(lib.count, language)}
                         </span>
