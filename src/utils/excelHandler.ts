@@ -1,10 +1,39 @@
 import * as XLSX from 'xlsx';
-import { BookRecord } from '../types/book';
+import { 
+  BookRecord, 
+  PressPaymentRecord, 
+  PressOrderRecord, 
+  PressDeliveryRecord, 
+  ChannelCollectionRecord, 
+  ChannelConfig 
+} from '../types/book';
 import { calculateBookMetrics } from './calculations';
 import { EXCEL_HEADERS } from './excelHeaders';
 
-export function exportBooksToExcel(books: BookRecord[], month?: number, year?: number) {
-  // 1. Build Sheet1 (373 columns matrix)
+export interface FullDatabaseBackupData {
+  pressPayments?: PressPaymentRecord[];
+  pressOrders?: PressOrderRecord[];
+  pressDeliveries?: PressDeliveryRecord[];
+  channelCollections?: ChannelCollectionRecord[];
+  channels?: ChannelConfig[];
+}
+
+export interface FullDatabaseImportResult {
+  books: BookRecord[];
+  pressPayments?: PressPaymentRecord[];
+  pressOrders?: PressOrderRecord[];
+  pressDeliveries?: PressDeliveryRecord[];
+  channelCollections?: ChannelCollectionRecord[];
+  channels?: ChannelConfig[];
+}
+
+export function exportBooksToExcel(
+  books: BookRecord[], 
+  month?: number, 
+  year?: number, 
+  additionalData?: FullDatabaseBackupData
+) {
+  // 1. Build Sheet1 (373 columns matrix - Complete Book Sales & Daily Activity)
   const sheet1Data: (string | number | null | undefined)[][] = [];
   sheet1Data.push(EXCEL_HEADERS);
 
@@ -126,7 +155,128 @@ export function exportBooksToExcel(books: BookRecord[], month?: number, year?: n
     sheet1Data.push(row);
   });
 
-  // 2. Build Summary Sheet
+  const wb = XLSX.utils.book_new();
+
+  // Sheet 1: Books Matrix
+  const wsSheet1 = XLSX.utils.aoa_to_sheet(sheet1Data);
+  XLSX.utils.book_append_sheet(wb, wsSheet1, 'Sheet1');
+
+  // Sheet 2: Press Payments
+  if (additionalData?.pressPayments && additionalData.pressPayments.length > 0) {
+    const paymentRows: (string | number)[][] = [
+      ['ID', 'Date', 'Book ID', 'Book Name', 'Amount', 'Payment Method', 'Voucher No', 'Notes', 'Voucher Image', 'Created At']
+    ];
+    additionalData.pressPayments.forEach(p => {
+      paymentRows.push([
+        p.id || '',
+        p.date || '',
+        p.bookId || '',
+        p.bookName || '',
+        Number(p.amount) || 0,
+        p.paymentMethod || 'bank',
+        p.voucherNo || '',
+        p.notes || '',
+        p.voucherImage || '',
+        p.createdAt || ''
+      ]);
+    });
+    const wsPayments = XLSX.utils.aoa_to_sheet(paymentRows);
+    XLSX.utils.book_append_sheet(wb, wsPayments, 'Press Payments');
+  }
+
+  // Sheet 3: Press Orders
+  if (additionalData?.pressOrders && additionalData.pressOrders.length > 0) {
+    const orderRows: (string | number)[][] = [
+      ['ID', 'Book ID', 'Book Name', 'Order Date', 'Order Quantity', 'Lot Name', 'Making Cost', 'Total Bill', 'Order No', 'Notes', 'Voucher Image', 'Created At']
+    ];
+    additionalData.pressOrders.forEach(o => {
+      orderRows.push([
+        o.id || '',
+        o.bookId || '',
+        o.bookName || '',
+        o.orderDate || '',
+        Number(o.orderQuantity) || 0,
+        o.lotName || '',
+        Number(o.makingCost) || 0,
+        Number(o.totalBill) || 0,
+        o.orderNo || '',
+        o.notes || '',
+        o.voucherImage || '',
+        o.createdAt || ''
+      ]);
+    });
+    const wsOrders = XLSX.utils.aoa_to_sheet(orderRows);
+    XLSX.utils.book_append_sheet(wb, wsOrders, 'Press Orders');
+  }
+
+  // Sheet 4: Press Deliveries (Chalans)
+  if (additionalData?.pressDeliveries && additionalData.pressDeliveries.length > 0) {
+    const deliveryRows: (string | number)[][] = [
+      ['ID', 'Book ID', 'Book Name', 'Delivery Date', 'Quantity', 'Chalan No', 'Lot Name', 'Received By', 'Notes', 'Voucher Image', 'Created At']
+    ];
+    additionalData.pressDeliveries.forEach(d => {
+      deliveryRows.push([
+        d.id || '',
+        d.bookId || '',
+        d.bookName || '',
+        d.deliveryDate || '',
+        Number(d.quantity) || 0,
+        d.chalanNo || '',
+        d.lotName || '',
+        d.receivedBy || '',
+        d.notes || '',
+        d.voucherImage || '',
+        d.createdAt || ''
+      ]);
+    });
+    const wsDeliveries = XLSX.utils.aoa_to_sheet(deliveryRows);
+    XLSX.utils.book_append_sheet(wb, wsDeliveries, 'Press Deliveries');
+  }
+
+  // Sheet 5: Channel Collections (Money Receipts)
+  if (additionalData?.channelCollections && additionalData.channelCollections.length > 0) {
+    const collectionRows: (string | number)[][] = [
+      ['ID', 'Date', 'Channel Key', 'Channel Name', 'Amount', 'Payment Method', 'Receipt No', 'Notes', 'Voucher Image', 'Created At']
+    ];
+    additionalData.channelCollections.forEach(c => {
+      collectionRows.push([
+        c.id || '',
+        c.date || '',
+        c.channelKey || '',
+        c.channelName || '',
+        Number(c.amount) || 0,
+        c.paymentMethod || 'cash',
+        c.receiptNo || '',
+        c.notes || '',
+        c.voucherImage || c.receiptImage || '',
+        c.createdAt || ''
+      ]);
+    });
+    const wsCollections = XLSX.utils.aoa_to_sheet(collectionRows);
+    XLSX.utils.book_append_sheet(wb, wsCollections, 'Channel Collections');
+  }
+
+  // Sheet 6: Sales Channels Configuration
+  if (additionalData?.channels && additionalData.channels.length > 0) {
+    const channelRows: (string | number)[][] = [
+      ['ID', 'Name', 'English Name', 'Type', 'Source', 'Category', 'Is System Default']
+    ];
+    additionalData.channels.forEach(ch => {
+      channelRows.push([
+        ch.id || '',
+        ch.name || '',
+        ch.nameEn || '',
+        ch.type || 'offline',
+        ch.source || 'headOffice',
+        ch.category || '',
+        ch.isSystemDefault ? 1 : 0
+      ]);
+    });
+    const wsChannels = XLSX.utils.aoa_to_sheet(channelRows);
+    XLSX.utils.book_append_sheet(wb, wsChannels, 'Sales Channels');
+  }
+
+  // Sheet 7: Executive Summary
   const summaryHeaders = [
     'ক্রমিক (SL)',
     'বইয়ের নাম (Book Name)',
@@ -178,27 +328,26 @@ export function exportBooksToExcel(books: BookRecord[], month?: number, year?: n
     ]);
   });
 
-  const wb = XLSX.utils.book_new();
-
-  const wsSheet1 = XLSX.utils.aoa_to_sheet(sheet1Data);
-  XLSX.utils.book_append_sheet(wb, wsSheet1, 'Sheet1');
-
   const wsSummary = XLSX.utils.aoa_to_sheet(summaryData);
   XLSX.utils.book_append_sheet(wb, wsSummary, 'Executive Report');
 
   const now = new Date();
   const dateStr = now.toISOString().split('T')[0];
-  const filePrefix = year && month ? `Biddabari_Report_${year}_${String(month).padStart(2, '0')}` : `Biddabari_Publication_Report_${dateStr}`;
+  const filePrefix = year && month 
+    ? `Biddabari_Full_Database_Backup_${year}_${String(month).padStart(2, '0')}` 
+    : `Biddabari_Full_Database_Backup_${dateStr}`;
   XLSX.writeFile(wb, `${filePrefix}.xlsx`);
 }
 
-export function importBooksFromExcel(file: File): Promise<BookRecord[]> {
+export function importBooksFromExcel(file: File): Promise<FullDatabaseImportResult> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = (e) => {
       try {
         const data = new Uint8Array(e.target?.result as ArrayBuffer);
         const wb = XLSX.read(data, { type: 'array' });
+        
+        // 1. Parse Sheet1 / Main Books
         const sheetName = wb.SheetNames.includes('Sheet1') ? 'Sheet1' : wb.SheetNames[0];
         const ws = wb.Sheets[sheetName];
         const rows: any[][] = XLSX.utils.sheet_to_json(ws, { header: 1 });
@@ -290,7 +439,144 @@ export function importBooksFromExcel(file: File): Promise<BookRecord[]> {
           });
         }
 
-        resolve(books);
+        // 2. Parse Press Payments (if sheet exists)
+        let pressPayments: PressPaymentRecord[] | undefined = undefined;
+        if (wb.SheetNames.includes('Press Payments')) {
+          const wsPay = wb.Sheets['Press Payments'];
+          const payRows: any[][] = XLSX.utils.sheet_to_json(wsPay, { header: 1 });
+          if (payRows.length > 1) {
+            pressPayments = [];
+            for (let i = 1; i < payRows.length; i++) {
+              const r = payRows[i];
+              if (!r || !r[0]) continue;
+              pressPayments.push({
+                id: String(r[0]),
+                date: String(r[1] || ''),
+                bookId: r[2] ? String(r[2]) : undefined,
+                bookName: r[3] ? String(r[3]) : undefined,
+                amount: Number(r[4]) || 0,
+                paymentMethod: (r[5] || 'bank') as any,
+                voucherNo: r[6] ? String(r[6]) : undefined,
+                notes: r[7] ? String(r[7]) : undefined,
+                voucherImage: r[8] ? String(r[8]) : undefined,
+                createdAt: String(r[9] || new Date().toISOString())
+              });
+            }
+          }
+        }
+
+        // 3. Parse Press Orders (if sheet exists)
+        let pressOrders: PressOrderRecord[] | undefined = undefined;
+        if (wb.SheetNames.includes('Press Orders')) {
+          const wsOrd = wb.Sheets['Press Orders'];
+          const ordRows: any[][] = XLSX.utils.sheet_to_json(wsOrd, { header: 1 });
+          if (ordRows.length > 1) {
+            pressOrders = [];
+            for (let i = 1; i < ordRows.length; i++) {
+              const r = ordRows[i];
+              if (!r || !r[0]) continue;
+              pressOrders.push({
+                id: String(r[0]),
+                bookId: String(r[1] || ''),
+                bookName: String(r[2] || ''),
+                orderDate: String(r[3] || ''),
+                orderQuantity: Number(r[4]) || 0,
+                lotName: r[5] ? String(r[5]) : undefined,
+                makingCost: r[6] ? Number(r[6]) : undefined,
+                totalBill: r[7] ? Number(r[7]) : undefined,
+                orderNo: r[8] ? String(r[8]) : undefined,
+                notes: r[9] ? String(r[9]) : undefined,
+                voucherImage: r[10] ? String(r[10]) : undefined,
+                createdAt: String(r[11] || new Date().toISOString())
+              });
+            }
+          }
+        }
+
+        // 4. Parse Press Deliveries (if sheet exists)
+        let pressDeliveries: PressDeliveryRecord[] | undefined = undefined;
+        if (wb.SheetNames.includes('Press Deliveries')) {
+          const wsDel = wb.Sheets['Press Deliveries'];
+          const delRows: any[][] = XLSX.utils.sheet_to_json(wsDel, { header: 1 });
+          if (delRows.length > 1) {
+            pressDeliveries = [];
+            for (let i = 1; i < delRows.length; i++) {
+              const r = delRows[i];
+              if (!r || !r[0]) continue;
+              pressDeliveries.push({
+                id: String(r[0]),
+                bookId: String(r[1] || ''),
+                bookName: String(r[2] || ''),
+                deliveryDate: String(r[3] || ''),
+                quantity: Number(r[4]) || 0,
+                chalanNo: String(r[5] || ''),
+                lotName: r[6] ? String(r[6]) : undefined,
+                receivedBy: r[7] ? String(r[7]) : undefined,
+                notes: r[8] ? String(r[8]) : undefined,
+                voucherImage: r[9] ? String(r[9]) : undefined,
+                createdAt: String(r[10] || new Date().toISOString())
+              });
+            }
+          }
+        }
+
+        // 5. Parse Channel Collections (if sheet exists)
+        let channelCollections: ChannelCollectionRecord[] | undefined = undefined;
+        if (wb.SheetNames.includes('Channel Collections')) {
+          const wsCol = wb.Sheets['Channel Collections'];
+          const colRows: any[][] = XLSX.utils.sheet_to_json(wsCol, { header: 1 });
+          if (colRows.length > 1) {
+            channelCollections = [];
+            for (let i = 1; i < colRows.length; i++) {
+              const r = colRows[i];
+              if (!r || !r[0]) continue;
+              channelCollections.push({
+                id: String(r[0]),
+                date: String(r[1] || ''),
+                channelKey: String(r[2] || ''),
+                channelName: String(r[3] || ''),
+                amount: Number(r[4]) || 0,
+                paymentMethod: (r[5] || 'cash') as any,
+                receiptNo: r[6] ? String(r[6]) : undefined,
+                notes: r[7] ? String(r[7]) : undefined,
+                voucherImage: r[8] ? String(r[8]) : undefined,
+                createdAt: String(r[9] || new Date().toISOString())
+              });
+            }
+          }
+        }
+
+        // 6. Parse Sales Channels (if sheet exists)
+        let channels: ChannelConfig[] | undefined = undefined;
+        if (wb.SheetNames.includes('Sales Channels')) {
+          const wsCh = wb.Sheets['Sales Channels'];
+          const chRows: any[][] = XLSX.utils.sheet_to_json(wsCh, { header: 1 });
+          if (chRows.length > 1) {
+            channels = [];
+            for (let i = 1; i < chRows.length; i++) {
+              const r = chRows[i];
+              if (!r || !r[0]) continue;
+              channels.push({
+                id: String(r[0]),
+                name: String(r[1] || ''),
+                nameEn: r[2] ? String(r[2]) : undefined,
+                type: (r[3] || 'offline') as any,
+                source: r[4] ? (r[4] as any) : undefined,
+                category: r[5] ? String(r[5]) : undefined,
+                isSystemDefault: r[6] === 1 || r[6] === '1' || r[6] === true
+              });
+            }
+          }
+        }
+
+        resolve({
+          books,
+          pressPayments,
+          pressOrders,
+          pressDeliveries,
+          channelCollections,
+          channels
+        });
       } catch (err) {
         reject(err);
       }

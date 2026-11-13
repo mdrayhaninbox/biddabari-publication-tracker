@@ -1,14 +1,30 @@
 import React, { useState } from 'react';
-import { X, Upload, Download, FileSpreadsheet, AlertCircle, CheckCircle } from 'lucide-react';
-import { BookRecord } from '../types/book';
-import { importBooksFromExcel, exportBooksToExcel } from '../utils/excelHandler';
+import { X, Upload, Download, FileSpreadsheet, AlertCircle, CheckCircle, Database } from 'lucide-react';
+import { 
+  BookRecord, 
+  PressPaymentRecord, 
+  PressOrderRecord, 
+  PressDeliveryRecord, 
+  ChannelCollectionRecord, 
+  ChannelConfig 
+} from '../types/book';
+import { 
+  importBooksFromExcel, 
+  exportBooksToExcel, 
+  FullDatabaseImportResult 
+} from '../utils/excelHandler';
 import { Language, tr } from '../utils/i18n';
 
 interface ExcelSyncModalProps {
   isOpen: boolean;
   onClose: () => void;
   books: BookRecord[];
-  onImportSuccess: (importedBooks: BookRecord[]) => void;
+  pressPayments?: PressPaymentRecord[];
+  pressOrders?: PressOrderRecord[];
+  pressDeliveries?: PressDeliveryRecord[];
+  channelCollections?: ChannelCollectionRecord[];
+  channels?: ChannelConfig[];
+  onImportSuccess: (result: FullDatabaseImportResult) => void;
   language?: Language;
 }
 
@@ -16,6 +32,11 @@ export const ExcelSyncModal: React.FC<ExcelSyncModalProps> = ({
   isOpen,
   onClose,
   books,
+  pressPayments = [],
+  pressOrders = [],
+  pressDeliveries = [],
+  channelCollections = [],
+  channels = [],
   onImportSuccess,
   language = 'en',
 }) => {
@@ -36,10 +57,23 @@ export const ExcelSyncModal: React.FC<ExcelSyncModalProps> = ({
     try {
       const imported = await importBooksFromExcel(file);
       onImportSuccess(imported);
-      setSuccessMsg(tr(`সফলভাবে ${imported.length} টি বই ইমপোর্ট করা হয়েছে!`, `Successfully imported ${imported.length} books!`, language));
+      
+      const details: string[] = [];
+      if (imported.books.length > 0) details.push(`${imported.books.length}টি বই`);
+      if (imported.pressPayments?.length) details.push(`${imported.pressPayments.length}টি প্রেস পেমেন্ট`);
+      if (imported.pressOrders?.length) details.push(`${imported.pressOrders.length}টি প্রেস অর্ডার`);
+      if (imported.pressDeliveries?.length) details.push(`${imported.pressDeliveries.length}টি চালান`);
+      if (imported.channelCollections?.length) details.push(`${imported.channelCollections.length}টি আদায় ভাউচার`);
+      
+      const summaryText = details.length > 0 ? ` (${details.join(', ')})` : '';
+      setSuccessMsg(tr(
+        `সফলভাবে সম্পূর্ণ ডাটাবেজ ইমপোর্ট ও রিস্টোর করা হয়েছে!${summaryText}`, 
+        `Successfully restored full database!${summaryText}`, 
+        language
+      ));
       setTimeout(() => {
         onClose();
-      }, 1800);
+      }, 2000);
     } catch (err: any) {
       setErrorMsg(err.message || tr('এক্সেল ফাইল পড়তে সমস্যা হয়েছে। দয়া করে সঠিক ফরম্যাট দিন।', 'Failed to read Excel file. Please check format.', language));
     } finally {
@@ -124,22 +158,33 @@ export const ExcelSyncModal: React.FC<ExcelSyncModalProps> = ({
           {/* Option 2: Export Current State */}
           <div className="border border-zinc-200 rounded-xl p-4 bg-white flex items-center justify-between">
             <div>
-              <h4 className="text-xs font-bold text-zinc-900">
-                {tr('বর্তমান ডাটা এক্সপোর্ট', 'Export Current Data', language)}
+              <h4 className="text-xs font-bold text-zinc-900 flex items-center gap-1.5">
+                <Database className="w-4 h-4 text-zinc-700" />
+                <span>{tr('সম্পূর্ণ ডাটাবেজ এক্সপোর্ট (অল-ইন-ওয়ান ব্যাকআপ)', 'Full Database Export (All-in-One Backup)', language)}</span>
               </h4>
-              <p className="text-[11px] text-zinc-500">
-                {tr('৩৭১ কলামের ফুল এক্সেল (.xlsx) ফাইল', 'Full 371-column Excel (.xlsx) file', language)}
+              <p className="text-[11px] text-zinc-500 mt-0.5">
+                {tr(
+                  'বই সেলস, স্টক, প্রেস হিসাব, প্রেস অর্ডার, চালান ভাউচার, আদায় রিসিট ও চ্যানেল কনফিগ সহ সম্পূর্ণ ডাটাবেজ',
+                  'Complete database with book sales, stock, press accounts, orders, chalans, collection receipts & channels',
+                  language
+                )}
               </p>
             </div>
             <button
               onClick={() => {
-                exportBooksToExcel(books);
+                exportBooksToExcel(books, undefined, undefined, {
+                  pressPayments,
+                  pressOrders,
+                  pressDeliveries,
+                  channelCollections,
+                  channels,
+                });
                 onClose();
               }}
-              className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-white bg-zinc-900 hover:bg-black rounded-lg shadow-xs transition-colors"
+              className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-white bg-zinc-900 hover:bg-black rounded-lg shadow-xs transition-colors shrink-0 ml-3"
             >
               <Download className="w-4 h-4" />
-              <span>{tr('ডাউনলোড', 'Download', language)}</span>
+              <span>{tr('ফুল ব্যাকআপ ডাউনলোড', 'Download Backup', language)}</span>
             </button>
           </div>
 

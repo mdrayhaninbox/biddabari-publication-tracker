@@ -33,7 +33,7 @@ import { AddPressDeliveryModal } from './components/AddPressDeliveryModal';
 import { AddChannelCollectionModal } from './components/AddChannelCollectionModal';
 import { AddEditChannelModal } from './components/AddEditChannelModal';
 import { ResetConfirmModal } from './components/ResetConfirmModal';
-import { exportBooksToExcel } from './utils/excelHandler';
+import { exportBooksToExcel, FullDatabaseImportResult } from './utils/excelHandler';
 import { idbSet, idbGet, idbClear } from './utils/indexedDBStorage';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { db } from './firebase';
@@ -1184,10 +1184,12 @@ export const App: React.FC = () => {
     setActiveTab('entry');
   };
 
-  const handleImportBooksSuccess = (importedBooks: BookRecord[]) => {
+  const handleImportBooksSuccess = (result: FullDatabaseImportResult) => {
     try {
       localStorage.removeItem(CLEAN_SLATE_ZERO_KEY);
     } catch {}
+
+    const importedBooks = result.books || [];
     setBooks(importedBooks);
     if (importedBooks.length > 0) {
       setSelectedMatrixBookId(importedBooks[0].id);
@@ -1196,6 +1198,45 @@ export const App: React.FC = () => {
     }
     // Full sync-save to localStorage, IndexedDB, Master Catalog, and Google Cloud Firestore
     syncSaveBooks(importedBooks, selectedYear, selectedMonth);
+
+    // 1. Press Payments
+    if (result.pressPayments !== undefined) {
+      setPressPayments(result.pressPayments);
+      safeLocalStorageSet(PRESS_PAYMENTS_STORAGE_KEY, JSON.stringify(result.pressPayments));
+      idbSet(PRESS_PAYMENTS_STORAGE_KEY, JSON.stringify(result.pressPayments)).catch(() => {});
+      syncPressPaymentsToFirestore(result.pressPayments);
+    }
+
+    // 2. Press Orders (Editions)
+    if (result.pressOrders !== undefined) {
+      setPressOrders(result.pressOrders);
+      safeLocalStorageSet(PRESS_ORDERS_STORAGE_KEY, JSON.stringify(result.pressOrders));
+      idbSet(PRESS_ORDERS_STORAGE_KEY, JSON.stringify(result.pressOrders)).catch(() => {});
+      syncPressOrdersToFirestore(result.pressOrders);
+    }
+
+    // 3. Press Deliveries (Chalans)
+    if (result.pressDeliveries !== undefined) {
+      setPressDeliveries(result.pressDeliveries);
+      safeLocalStorageSet(PRESS_DELIVERIES_STORAGE_KEY, JSON.stringify(result.pressDeliveries));
+      idbSet(PRESS_DELIVERIES_STORAGE_KEY, JSON.stringify(result.pressDeliveries)).catch(() => {});
+      syncPressDeliveriesToFirestore(result.pressDeliveries);
+    }
+
+    // 4. Channel Collections (Receipts)
+    if (result.channelCollections !== undefined) {
+      setChannelCollections(result.channelCollections);
+      safeLocalStorageSet(CHANNEL_COLLECTIONS_STORAGE_KEY, JSON.stringify(result.channelCollections));
+      idbSet(CHANNEL_COLLECTIONS_STORAGE_KEY, JSON.stringify(result.channelCollections)).catch(() => {});
+      syncChannelCollectionsToFirestore(result.channelCollections);
+    }
+
+    // 5. Channels Configuration
+    if (result.channels !== undefined && result.channels.length > 0) {
+      setChannels(result.channels);
+      safeLocalStorageSet(CHANNELS_STORAGE_KEY, JSON.stringify(result.channels));
+      syncChannelsToFirestore(result.channels);
+    }
   };
 
   return (
@@ -1212,7 +1253,13 @@ export const App: React.FC = () => {
         onOpenDailyEntry={() => {
           setActiveTab('entry');
         }}
-        onExportExcel={() => exportBooksToExcel(books, selectedMonth, selectedYear)}
+        onExportExcel={() => exportBooksToExcel(books, selectedMonth, selectedYear, {
+          pressPayments,
+          pressOrders,
+          pressDeliveries,
+          channelCollections,
+          channels,
+        })}
         onOpenImport={() => setIsExcelSyncOpen(true)}
         onResetData={handleResetAllData}
         onPrint={() => {
@@ -1420,6 +1467,11 @@ export const App: React.FC = () => {
         isOpen={isExcelSyncOpen}
         onClose={() => setIsExcelSyncOpen(false)}
         books={books}
+        pressPayments={pressPayments}
+        pressOrders={pressOrders}
+        pressDeliveries={pressDeliveries}
+        channelCollections={channelCollections}
+        channels={channels}
         onImportSuccess={handleImportBooksSuccess}
         language={language}
       />
