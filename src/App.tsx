@@ -35,6 +35,17 @@ import { AddEditChannelModal } from './components/AddEditChannelModal';
 import { ResetConfirmModal } from './components/ResetConfirmModal';
 import { exportBooksToExcel } from './utils/excelHandler';
 import { idbSet, idbGet, idbClear } from './utils/indexedDBStorage';
+import { doc, onSnapshot } from 'firebase/firestore';
+import { db } from './firebase';
+import { 
+  syncBooksToFirestore, 
+  syncPressPaymentsToFirestore, 
+  syncPressOrdersToFirestore, 
+  syncPressDeliveriesToFirestore, 
+  syncChannelCollectionsToFirestore, 
+  syncChannelsToFirestore,
+  resetFirestoreData
+} from './services/firebaseSync';
 import { 
   getDaysInMonth, 
   createFreshMonthBooks, 
@@ -297,6 +308,9 @@ export const App: React.FC = () => {
         }));
         safeLocalStorageSet(MASTER_CATALOG_STORAGE_KEY, JSON.stringify(masterCatalog));
       }
+
+      // Sync to Firebase Cloud Firestore in background
+      syncBooksToFirestore(year, month, updatedBooks).catch(() => {});
     } catch (e) {
       console.error('Failed to sync-save books:', e);
     }
@@ -480,6 +494,131 @@ export const App: React.FC = () => {
     hydrateFromIndexedDB();
   }, []);
 
+  // 1. Real-time Firebase Firestore Sync for Active Month Books
+  useEffect(() => {
+    const monthStr = String(selectedMonth).padStart(2, '0');
+    const docRef = doc(db, 'publication_data', `books_${selectedYear}_${monthStr}`);
+    
+    const unsubscribe = onSnapshot(docRef, (snapshot) => {
+      if (snapshot.exists()) {
+        const data = snapshot.data();
+        if (Array.isArray(data?.books) && data.books.length > 0) {
+          setBooks(prev => {
+            if (JSON.stringify(prev) === JSON.stringify(data.books)) return prev;
+            const currentKey = getMonthlyStorageKey(selectedYear, selectedMonth);
+            safeLocalStorageSet(currentKey, JSON.stringify(data.books));
+            idbSet(currentKey, JSON.stringify(data.books)).catch(() => {});
+            return data.books;
+          });
+        }
+      } else {
+        // If Firestore document doesn't exist yet, seed it with current local books
+        if (books.length > 0) {
+          syncBooksToFirestore(selectedYear, selectedMonth, books).catch(() => {});
+        }
+      }
+    }, (error) => {
+      console.warn('Firestore books subscription note:', error);
+    });
+
+    return () => unsubscribe();
+  }, [selectedYear, selectedMonth]);
+
+  // 2. Real-time Firebase Firestore Sync for Ledgers & Configurations
+  useEffect(() => {
+    // Press Payments Listener
+    const unsubPayments = onSnapshot(doc(db, 'publication_data', 'press_payments'), (snap) => {
+      if (snap.exists()) {
+        const data = snap.data();
+        if (Array.isArray(data?.payments)) {
+          setPressPayments(prev => {
+            if (JSON.stringify(prev) === JSON.stringify(data.payments)) return prev;
+            safeLocalStorageSet(PRESS_PAYMENTS_STORAGE_KEY, JSON.stringify(data.payments));
+            idbSet(PRESS_PAYMENTS_STORAGE_KEY, JSON.stringify(data.payments)).catch(() => {});
+            return data.payments;
+          });
+        }
+      } else if (pressPayments.length > 0) {
+        syncPressPaymentsToFirestore(pressPayments).catch(() => {});
+      }
+    });
+
+    // Press Orders Listener
+    const unsubOrders = onSnapshot(doc(db, 'publication_data', 'press_orders'), (snap) => {
+      if (snap.exists()) {
+        const data = snap.data();
+        if (Array.isArray(data?.orders)) {
+          setPressOrders(prev => {
+            if (JSON.stringify(prev) === JSON.stringify(data.orders)) return prev;
+            safeLocalStorageSet(PRESS_ORDERS_STORAGE_KEY, JSON.stringify(data.orders));
+            idbSet(PRESS_ORDERS_STORAGE_KEY, JSON.stringify(data.orders)).catch(() => {});
+            return data.orders;
+          });
+        }
+      } else if (pressOrders.length > 0) {
+        syncPressOrdersToFirestore(pressOrders).catch(() => {});
+      }
+    });
+
+    // Press Deliveries Listener
+    const unsubDeliveries = onSnapshot(doc(db, 'publication_data', 'press_deliveries'), (snap) => {
+      if (snap.exists()) {
+        const data = snap.data();
+        if (Array.isArray(data?.deliveries)) {
+          setPressDeliveries(prev => {
+            if (JSON.stringify(prev) === JSON.stringify(data.deliveries)) return prev;
+            safeLocalStorageSet(PRESS_DELIVERIES_STORAGE_KEY, JSON.stringify(data.deliveries));
+            idbSet(PRESS_DELIVERIES_STORAGE_KEY, JSON.stringify(data.deliveries)).catch(() => {});
+            return data.deliveries;
+          });
+        }
+      } else if (pressDeliveries.length > 0) {
+        syncPressDeliveriesToFirestore(pressDeliveries).catch(() => {});
+      }
+    });
+
+    // Channel Collections Listener
+    const unsubCollections = onSnapshot(doc(db, 'publication_data', 'channel_collections'), (snap) => {
+      if (snap.exists()) {
+        const data = snap.data();
+        if (Array.isArray(data?.collections)) {
+          setChannelCollections(prev => {
+            if (JSON.stringify(prev) === JSON.stringify(data.collections)) return prev;
+            safeLocalStorageSet(CHANNEL_COLLECTIONS_STORAGE_KEY, JSON.stringify(data.collections));
+            idbSet(CHANNEL_COLLECTIONS_STORAGE_KEY, JSON.stringify(data.collections)).catch(() => {});
+            return data.collections;
+          });
+        }
+      } else if (channelCollections.length > 0) {
+        syncChannelCollectionsToFirestore(channelCollections).catch(() => {});
+      }
+    });
+
+    // Sales Channels Listener
+    const unsubChannels = onSnapshot(doc(db, 'publication_data', 'sales_channels'), (snap) => {
+      if (snap.exists()) {
+        const data = snap.data();
+        if (Array.isArray(data?.channels) && data.channels.length > 0) {
+          setChannels(prev => {
+            if (JSON.stringify(prev) === JSON.stringify(data.channels)) return prev;
+            safeLocalStorageSet(CHANNELS_STORAGE_KEY, JSON.stringify(data.channels));
+            return data.channels;
+          });
+        }
+      } else if (channels.length > 0) {
+        syncChannelsToFirestore(channels).catch(() => {});
+      }
+    });
+
+    return () => {
+      unsubPayments();
+      unsubOrders();
+      unsubDeliveries();
+      unsubCollections();
+      unsubChannels();
+    };
+  }, []);
+
   // Auto-save active month's books to its dedicated localStorage key
   useEffect(() => {
     try {
@@ -530,6 +669,7 @@ export const App: React.FC = () => {
   useEffect(() => {
     try {
       localStorage.setItem(CHANNELS_STORAGE_KEY, JSON.stringify(channels));
+      syncChannelsToFirestore(channels).catch(() => {});
     } catch (e) {
       console.error(e);
     }
@@ -768,6 +908,8 @@ export const App: React.FC = () => {
     setPressPayments(prev => {
       const updated = [newRecord, ...prev];
       safeLocalStorageSet(PRESS_PAYMENTS_STORAGE_KEY, JSON.stringify(updated));
+      idbSet(PRESS_PAYMENTS_STORAGE_KEY, JSON.stringify(updated)).catch(() => {});
+      syncPressPaymentsToFirestore(updated).catch(() => {});
       return updated;
     });
     setIsPressPaymentModalOpen(false);
@@ -777,6 +919,8 @@ export const App: React.FC = () => {
     setPressPayments(prev => {
       const updated = prev.filter(p => p.id !== id);
       safeLocalStorageSet(PRESS_PAYMENTS_STORAGE_KEY, JSON.stringify(updated));
+      idbSet(PRESS_PAYMENTS_STORAGE_KEY, JSON.stringify(updated)).catch(() => {});
+      syncPressPaymentsToFirestore(updated).catch(() => {});
       return updated;
     });
   };
@@ -791,6 +935,8 @@ export const App: React.FC = () => {
     const updatedOrders = [newRecord, ...pressOrders];
     setPressOrders(updatedOrders);
     safeLocalStorageSet(PRESS_ORDERS_STORAGE_KEY, JSON.stringify(updatedOrders));
+    idbSet(PRESS_ORDERS_STORAGE_KEY, JSON.stringify(updatedOrders)).catch(() => {});
+    syncPressOrdersToFirestore(updatedOrders).catch(() => {});
 
     // Synchronize the book's totalOrderFaridBhai to the exact sum of its press orders
     setBooks(prev => {
@@ -815,6 +961,8 @@ export const App: React.FC = () => {
     const remaining = pressOrders.filter(o => o.id !== id);
     setPressOrders(remaining);
     safeLocalStorageSet(PRESS_ORDERS_STORAGE_KEY, JSON.stringify(remaining));
+    idbSet(PRESS_ORDERS_STORAGE_KEY, JSON.stringify(remaining)).catch(() => {});
+    syncPressOrdersToFirestore(remaining).catch(() => {});
 
     // Synchronize the book's totalOrderFaridBhai
     setBooks(prev => {
@@ -848,6 +996,8 @@ export const App: React.FC = () => {
     setPressDeliveries(prev => {
       const updated = [newRecord, ...prev];
       safeLocalStorageSet(PRESS_DELIVERIES_STORAGE_KEY, JSON.stringify(updated));
+      idbSet(PRESS_DELIVERIES_STORAGE_KEY, JSON.stringify(updated)).catch(() => {});
+      syncPressDeliveriesToFirestore(updated).catch(() => {});
       return updated;
     });
 
@@ -881,6 +1031,8 @@ export const App: React.FC = () => {
     setPressDeliveries(prev => {
       const remaining = prev.filter(d => d.id !== id);
       safeLocalStorageSet(PRESS_DELIVERIES_STORAGE_KEY, JSON.stringify(remaining));
+      idbSet(PRESS_DELIVERIES_STORAGE_KEY, JSON.stringify(remaining)).catch(() => {});
+      syncPressDeliveriesToFirestore(remaining).catch(() => {});
       return remaining;
     });
 
@@ -924,6 +1076,8 @@ export const App: React.FC = () => {
     setChannelCollections(prev => {
       const updated = [newRecord, ...prev];
       safeLocalStorageSet(CHANNEL_COLLECTIONS_STORAGE_KEY, JSON.stringify(updated));
+      idbSet(CHANNEL_COLLECTIONS_STORAGE_KEY, JSON.stringify(updated)).catch(() => {});
+      syncChannelCollectionsToFirestore(updated).catch(() => {});
       return updated;
     });
     setIsChannelCollectionModalOpen(false);
@@ -933,6 +1087,8 @@ export const App: React.FC = () => {
     setChannelCollections(prev => {
       const updated = prev.filter(c => c.id !== id);
       safeLocalStorageSet(CHANNEL_COLLECTIONS_STORAGE_KEY, JSON.stringify(updated));
+      idbSet(CHANNEL_COLLECTIONS_STORAGE_KEY, JSON.stringify(updated)).catch(() => {});
+      syncChannelCollectionsToFirestore(updated).catch(() => {});
       return updated;
     });
   };
@@ -954,10 +1110,17 @@ export const App: React.FC = () => {
       keysToRemove.forEach(k => localStorage.removeItem(k));
       localStorage.setItem(CLEAN_SLATE_ZERO_KEY, 'true');
       idbClear().catch(() => {});
+      resetFirestoreData().catch(() => {});
     } catch (e) {
       console.error(e);
     }
     setBooks([]);
+    setPressOrders([]);
+    setPressDeliveries([]);
+    setPressPayments([]);
+    setChannelCollections([]);
+    setChannels(DEFAULT_CHANNELS);
+    setIsResetConfirmOpen(false);
     setPressOrders([]);
     setPressDeliveries([]);
     setPressPayments([]);

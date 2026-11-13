@@ -106,12 +106,16 @@ export const Header: React.FC<HeaderProps> = ({
               </div>
               
               <div>
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                   <h1 className="text-lg sm:text-2xl font-bold tracking-tight text-zinc-900">
                     {language === 'bn' ? 'বিদ্যাবাড়ি পাবলিকেশন' : 'Biddabari Publication'}
                   </h1>
                   <span className="bg-zinc-100 text-zinc-800 text-[10px] sm:text-[11px] px-2 py-0.5 rounded-full font-semibold border border-zinc-200">
                     {language === 'bn' ? 'বুক ট্র্যাকার' : 'Book Tracker'}
+                  </span>
+                  <span className="inline-flex items-center gap-1.5 bg-emerald-50 text-emerald-800 text-[10px] sm:text-[11px] px-2.5 py-0.5 rounded-full font-bold border border-emerald-300 shadow-2xs">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0"></span>
+                    <span>{language === 'bn' ? 'ফায়ারবেস ক্লাউড লাইভ' : 'Firebase Cloud Live'}</span>
                   </span>
                 </div>
                 <p className="text-[11px] sm:text-xs text-zinc-500 font-normal">
