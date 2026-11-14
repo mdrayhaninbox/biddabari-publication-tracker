@@ -61,6 +61,22 @@ function detectCategory(fileName: string, mime: string): FileCategory {
   return 'other';
 }
 
+function dataUrlToBlob(dataUrl: string): Blob {
+  try {
+    const parts = dataUrl.split(',');
+    const mime = parts[0].match(/:(.*?);/)?.[1] || 'application/octet-stream';
+    const bstr = atob(parts[1]);
+    let n = bstr.length;
+    const u8arr = new Uint8Array(n);
+    while (n--) {
+      u8arr[n] = bstr.charCodeAt(n);
+    }
+    return new Blob([u8arr], { type: mime });
+  } catch {
+    return new Blob([dataUrl], { type: 'text/plain' });
+  }
+}
+
 export const FileStorageModal: React.FC<FileStorageModalProps> = ({
   isOpen,
   onClose,
@@ -141,12 +157,24 @@ export const FileStorageModal: React.FC<FileStorageModalProps> = ({
 
   // Download file helper
   const handleDownloadFile = (file: StoredFileRecord) => {
-    const link = document.createElement('a');
-    link.href = file.dataUrl;
-    link.download = file.name;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    try {
+      const blob = dataUrlToBlob(file.dataUrl);
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = file.name;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      setTimeout(() => URL.revokeObjectURL(url), 2000);
+    } catch {
+      const link = document.createElement('a');
+      link.href = file.dataUrl;
+      link.download = file.name;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
   };
 
   // View / Open File
@@ -154,15 +182,11 @@ export const FileStorageModal: React.FC<FileStorageModalProps> = ({
     if (file.category === 'image' || file.category === 'text') {
       setPreviewFile(file);
     } else {
-      // For PDF or other files, open in new tab
-      const win = window.open();
-      if (win) {
-        if (file.category === 'pdf') {
-          win.document.write(`<iframe src="${file.dataUrl}" frameborder="0" style="border:0; top:0px; left:0px; bottom:0px; right:0px; width:100%; height:100%;" allowfullscreen></iframe>`);
-        } else {
-          handleDownloadFile(file);
-        }
-      } else {
+      try {
+        const blob = dataUrlToBlob(file.dataUrl);
+        const url = URL.createObjectURL(blob);
+        window.open(url, '_blank');
+      } catch {
         handleDownloadFile(file);
       }
     }

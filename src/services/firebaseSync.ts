@@ -220,10 +220,12 @@ export async function saveStoredFileToFirestore(file: StoredFileRecord): Promise
 export async function deleteStoredFileFromFirestore(fileId: string): Promise<void> {
   try {
     await deleteDoc(doc(db, FILES_COLLECTION, fileId));
-    // Clean up any chunks if present
-    for (let i = 0; i < 25; i++) {
-      deleteDoc(doc(db, FILES_COLLECTION, `${fileId}_chk_${i}`)).catch(() => {});
+    // Clean up any chunks if present (up to 50 chunks = ~30MB capacity)
+    const chunkDeletes: Promise<void>[] = [];
+    for (let i = 0; i < 50; i++) {
+      chunkDeletes.push(deleteDoc(doc(db, FILES_COLLECTION, `${fileId}_chk_${i}`)).catch(() => {}));
     }
+    await Promise.all(chunkDeletes);
   } catch (err) {
     console.error('Firestore deleteStoredFile error:', err);
   }
@@ -282,6 +284,9 @@ export async function fetchStoredFilesFromFirestore(): Promise<StoredFileRecord[
         createdAt: f.createdAt,
       };
     });
+
+    // Sort newest first
+    fullFiles.sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
 
     return fullFiles;
   } catch (err) {

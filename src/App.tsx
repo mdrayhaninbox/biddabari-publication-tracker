@@ -693,19 +693,20 @@ export const App: React.FC = () => {
     // Stored Files Collection Listener (Sync across all browsers)
     const unsubFiles = onSnapshot(collection(db, 'publication_stored_files'), (snap) => {
       if (snap.metadata.hasPendingWrites) return;
-      if (!snap.empty) {
-        fetchStoredFilesFromFirestore().then(cloudFiles => {
-          if (cloudFiles.length > 0) {
-            setStoredFiles(prev => {
-              const prevIds = prev.map(f => f.id).sort().join(',');
-              const cloudIds = cloudFiles.map(f => f.id).sort().join(',');
-              if (prevIds === cloudIds && prev.length === cloudFiles.length) return prev;
-              idbSet(STORED_FILES_KEY, cloudFiles).catch(() => {});
-              return cloudFiles;
-            });
-          }
-        }).catch(console.error);
+      if (snap.empty) {
+        setStoredFiles([]);
+        idbSet(STORED_FILES_KEY, []).catch(() => {});
+        return;
       }
+      fetchStoredFilesFromFirestore().then(cloudFiles => {
+        setStoredFiles(prev => {
+          const prevIds = prev.map(f => f.id).sort().join(',');
+          const cloudIds = cloudFiles.map(f => f.id).sort().join(',');
+          if (prevIds === cloudIds && prev.length === cloudFiles.length) return prev;
+          idbSet(STORED_FILES_KEY, cloudFiles).catch(() => {});
+          return cloudFiles;
+        });
+      }).catch(console.error);
     });
 
     return () => {
