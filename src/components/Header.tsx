@@ -12,6 +12,7 @@ import {
   CalendarRange,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
   Calendar,
   Receipt,
   RotateCcw,
@@ -42,6 +43,11 @@ interface HeaderProps {
   onSetZoom?: (zoom: '75' | '100') => void;
   onOpenStorage?: () => void;
   storageCount?: number;
+  onOpenCreateCollection?: () => void;
+  onOpenCreatePayment?: () => void;
+  onOpenCreateDelivery?: () => void;
+  onOpenCreateOrder?: () => void;
+  onOpenPrintCollectionVouchers?: () => void;
 
   // Language & Theme
   language: Language;
@@ -71,6 +77,11 @@ export const Header: React.FC<HeaderProps> = ({
   onSetZoom,
   onOpenStorage,
   storageCount = 0,
+  onOpenCreateCollection,
+  onOpenCreatePayment,
+  onOpenCreateDelivery,
+  onOpenCreateOrder,
+  onOpenPrintCollectionVouchers,
   language,
   onSetLanguage,
   theme,
@@ -82,13 +93,18 @@ export const Header: React.FC<HeaderProps> = ({
   onNextMonth,
 }) => {
   const [isThemeOpen, setIsThemeOpen] = useState(false);
+  const [isVoucherMenuOpen, setIsVoucherMenuOpen] = useState(false);
   const themeDropdownRef = useRef<HTMLDivElement>(null);
+  const voucherDropdownRef = useRef<HTMLDivElement>(null);
 
-  // Close theme dropdown on outside click
+  // Close dropdowns on outside click
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (themeDropdownRef.current && !themeDropdownRef.current.contains(event.target as Node)) {
         setIsThemeOpen(false);
+      }
+      if (voucherDropdownRef.current && !voucherDropdownRef.current.contains(event.target as Node)) {
+        setIsVoucherMenuOpen(false);
       }
     }
     document.addEventListener('mousedown', handleClickOutside);
@@ -261,6 +277,155 @@ export const Header: React.FC<HeaderProps> = ({
                 <RotateCcw className="w-3.5 h-3.5 text-zinc-500" />
                 <span className="hidden md:inline">{language === 'bn' ? 'রিসেট (০)' : 'Reset (0)'}</span>
               </button>
+            )}
+
+            {/* CREATE VOUCHER BUTTON / DROPDOWN - ON THE LEFT OF STORAGE */}
+            {(onOpenCreateCollection || onOpenCreatePayment || onOpenCreateDelivery || onOpenCreateOrder) && (
+              <div className="relative inline-block" ref={voucherDropdownRef}>
+                <button
+                  type="button"
+                  onClick={() => setIsVoucherMenuOpen(prev => !prev)}
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold text-zinc-700 bg-white hover:bg-zinc-100 rounded-lg transition-colors border border-zinc-200 shadow-2xs"
+                  title={language === 'bn' ? 'ভাউচার বা রিসিট তৈরি করুন' : 'Create Voucher or Receipt'}
+                >
+                  <Receipt className="w-3.5 h-3.5 text-zinc-600" />
+                  <span className="hidden sm:inline">
+                    {language === 'bn' ? 'ভাউচার তৈরি' : 'Create Voucher'}
+                  </span>
+                  <ChevronDown className="w-3 h-3 text-zinc-400" />
+                </button>
+
+                {isVoucherMenuOpen && (
+                  <div className="absolute right-0 sm:left-0 mt-1.5 w-60 bg-white rounded-xl shadow-xl border border-zinc-200 py-1.5 z-50 animate-in fade-in zoom-in-95 duration-100">
+                    <div className="px-3 py-1.5 text-[11px] font-bold text-zinc-400 uppercase tracking-wider border-b border-zinc-100 mb-1 flex items-center justify-between">
+                      <span>{language === 'bn' ? 'ভাউচার নির্বাচন করুন' : 'Create New Voucher'}</span>
+                      <Receipt className="w-3.5 h-3.5 text-zinc-400" />
+                    </div>
+
+                    {/* 1. Collection Voucher / Money Receipt */}
+                    {onOpenCreateCollection && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsVoucherMenuOpen(false);
+                          onOpenCreateCollection();
+                        }}
+                        className="w-full text-left px-3 py-2 text-xs font-medium text-zinc-700 hover:bg-zinc-50 hover:text-zinc-900 flex items-center gap-2.5 transition-colors"
+                      >
+                        <span className="p-1 rounded-md bg-amber-50 text-amber-700 border border-amber-200 shrink-0 text-sm">
+                          💰
+                        </span>
+                        <div>
+                          <div className="font-bold text-zinc-900">
+                            {language === 'bn' ? 'আদায় ভাউচার / মানি রিসিট' : 'Collection Voucher / Receipt'}
+                          </div>
+                          <div className="text-[10px] text-zinc-400">
+                            {language === 'bn' ? 'লাইব্রেরি ও অনলাইন টাকা আদায়' : 'Library & channel money collection'}
+                          </div>
+                        </div>
+                      </button>
+                    )}
+
+                    {/* 2. Press Payment Voucher */}
+                    {onOpenCreatePayment && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsVoucherMenuOpen(false);
+                          onOpenCreatePayment();
+                        }}
+                        className="w-full text-left px-3 py-2 text-xs font-medium text-zinc-700 hover:bg-zinc-50 hover:text-zinc-900 flex items-center gap-2.5 transition-colors"
+                      >
+                        <span className="p-1 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200 shrink-0 text-sm">
+                          💳
+                        </span>
+                        <div>
+                          <div className="font-bold text-zinc-900">
+                            {language === 'bn' ? 'প্রেস পেমেন্ট ভাউচার' : 'Press Payment Voucher'}
+                          </div>
+                          <div className="text-[10px] text-zinc-400">
+                            {language === 'bn' ? 'ছাপাখানার বিল পরিশোধ রিসিট' : 'Press printing bill payment slip'}
+                          </div>
+                        </div>
+                      </button>
+                    )}
+
+                    {/* 3. Press Delivery Chalan */}
+                    {onOpenCreateDelivery && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsVoucherMenuOpen(false);
+                          onOpenCreateDelivery();
+                        }}
+                        className="w-full text-left px-3 py-2 text-xs font-medium text-zinc-700 hover:bg-zinc-50 hover:text-zinc-900 flex items-center gap-2.5 transition-colors"
+                      >
+                        <span className="p-1 rounded-md bg-blue-50 text-blue-700 border border-blue-200 shrink-0 text-sm">
+                          🚚
+                        </span>
+                        <div>
+                          <div className="font-bold text-zinc-900">
+                            {language === 'bn' ? 'প্রেস ডেলিভারি চালান' : 'Press Delivery Chalan'}
+                          </div>
+                          <div className="text-[10px] text-zinc-400">
+                            {language === 'bn' ? 'বই প্রাপ্তির চালান কপি' : 'Books received chalan slip'}
+                          </div>
+                        </div>
+                      </button>
+                    )}
+
+                    {/* 4. Press Order Slip */}
+                    {onOpenCreateOrder && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsVoucherMenuOpen(false);
+                          onOpenCreateOrder();
+                        }}
+                        className="w-full text-left px-3 py-2 text-xs font-medium text-zinc-700 hover:bg-zinc-50 hover:text-zinc-900 flex items-center gap-2.5 transition-colors"
+                      >
+                        <span className="p-1 rounded-md bg-purple-50 text-purple-700 border border-purple-200 shrink-0 text-sm">
+                          📋
+                        </span>
+                        <div>
+                          <div className="font-bold text-zinc-900">
+                            {language === 'bn' ? 'প্রেস অর্ডার স্লিপ' : 'Press Order Slip'}
+                          </div>
+                          <div className="text-[10px] text-zinc-400">
+                            {language === 'bn' ? 'নতুন লট মুদ্রণ অর্ডার ফরম' : 'Book lot printing order slip'}
+                          </div>
+                        </div>
+                      </button>
+                    )}
+
+                    {onOpenPrintCollectionVouchers && (
+                      <>
+                        <div className="border-t border-zinc-100 my-1"></div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setIsVoucherMenuOpen(false);
+                            onOpenPrintCollectionVouchers();
+                          }}
+                          className="w-full text-left px-3 py-2 text-xs font-medium text-emerald-800 hover:bg-emerald-50 flex items-center gap-2.5 transition-colors"
+                        >
+                          <span className="p-1 rounded-md bg-emerald-100 text-emerald-800 shrink-0 text-sm">
+                            🖨️
+                          </span>
+                          <div>
+                            <div className="font-bold text-emerald-950">
+                              {language === 'bn' ? 'আদায় ভাউচার প্রিন্ট (১০টি/পৃষ্ঠা)' : 'Print Vouchers (10/Page)'}
+                            </div>
+                            <div className="text-[10px] text-emerald-700">
+                              {language === 'bn' ? 'প্রিন্টযোগ্য ১০ ভাউচার শিট' : '10 vouchers per A4 page'}
+                            </div>
+                          </div>
+                        </button>
+                      </>
+                    )}
+                  </div>
+                )}
+              </div>
             )}
 
             {/* STORAGE & NOTEBOOK BUTTON - ON THE LEFT OF THEME */}

@@ -1531,6 +1531,11 @@ export const App: React.FC = () => {
         onSetZoom={setUiZoom}
         onOpenStorage={() => setIsStorageOpen(true)}
         storageCount={storedFiles.length + notebookNotes.length + totalVouchersCount}
+        onOpenCreateCollection={() => handleOpenAddChannelCollection()}
+        onOpenCreatePayment={() => setIsPressPaymentModalOpen(true)}
+        onOpenCreateDelivery={() => setIsPressDeliveryModalOpen(true)}
+        onOpenCreateOrder={() => setIsPressOrderModalOpen(true)}
+        onOpenPrintCollectionVouchers={handleOpenPrintCollectionVouchers}
         language={language}
         onSetLanguage={setLanguage}
         theme={theme}
