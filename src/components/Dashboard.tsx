@@ -464,8 +464,18 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     {book.sl}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <h4 className="font-bold text-zinc-900 text-sm flex items-center gap-2">
-                      <span className="truncate">{book.bookName}</span>
+                    <h4 className="font-bold text-zinc-900 text-sm flex items-center gap-1.5 flex-wrap">
+                      <span>{book.bookName}</span>
+                      {book.edition && (
+                        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-blue-50 text-blue-900 border border-blue-200 shrink-0">
+                          {book.edition}
+                        </span>
+                      )}
+                      {book.category && (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-purple-50 text-purple-700 border border-purple-200 shrink-0">
+                          📚 {book.category}
+                        </span>
+                      )}
                       {isLowStock && (
                         <span className="text-[10px] bg-zinc-100 text-zinc-800 px-2 py-0.5 rounded font-semibold border border-zinc-300 shrink-0">
                           {tr('লো স্টক', 'Low Stock', language)}
@@ -476,6 +486,11 @@ export const Dashboard: React.FC<DashboardProps> = ({
                       <span>{tr('মূল্য:', 'MRP:', language)} <b className="text-zinc-800 font-mono">{formatBDT(m.perBookAmount, language)}</b></span>
                       <span>{tr('উৎপাদন:', 'Cost:', language)} <span className="font-mono">{formatBDT(m.makingCost, language)}</span></span>
                       <span>{tr('কপি প্রতি লাভ:', 'Profit/unit:', language)} <b className="text-zinc-900 font-mono">+{formatBDT(m.profitPerBook, language)}</b></span>
+                      {book.publishMonth && (
+                        <span className="inline-flex items-center gap-1 text-zinc-600 font-medium bg-zinc-100 px-1.5 py-0.5 rounded text-[10px]">
+                          📅 {book.publishMonth}
+                        </span>
+                      )}
                       {book.remarks && (
                         <span className="text-zinc-400 italic truncate max-w-[150px]">“{book.remarks}”</span>
                       )}

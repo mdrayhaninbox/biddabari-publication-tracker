@@ -2084,9 +2084,19 @@ export const PrintableReport: React.FC<PrintableReportProps> = ({
                 <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider block">
                   {tr('একক বই স্পেশাল রিপোর্ট', 'Single Book Executive Report', language)}
                 </span>
-                <h2 className="text-xl font-black text-zinc-900 flex items-center gap-2">
+                <h2 className="text-xl font-black text-zinc-900 flex items-center gap-2 flex-wrap">
                   <span>{effectiveBooks[0].sl}.</span>
                   <span>{effectiveBooks[0].bookName}</span>
+                  {effectiveBooks[0].edition && (
+                    <span className="text-xs px-2 py-0.5 rounded font-bold bg-blue-50 text-blue-900 border border-blue-200">
+                      {effectiveBooks[0].edition}
+                    </span>
+                  )}
+                  {effectiveBooks[0].category && (
+                    <span className="text-xs px-2 py-0.5 rounded font-bold bg-purple-50 text-purple-700 border border-purple-200">
+                      📚 {effectiveBooks[0].category}
+                    </span>
+                  )}
                 </h2>
                 {effectiveBooks[0].remarks && (
                   <p className="text-xs text-zinc-600 mt-0.5">{effectiveBooks[0].remarks}</p>
