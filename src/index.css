@@ -37,73 +37,229 @@ html[data-theme="navy"] body {
   background-color: #f0f4f9;
   color: #0f172a;
 }
+
 html[data-theme="navy"] header {
   background-color: #1e3a8a !important;
   border-color: #172554 !important;
   color: #ffffff !important;
 }
+
 html[data-theme="navy"] header .text-zinc-900,
 html[data-theme="navy"] header .text-zinc-800,
 html[data-theme="navy"] header .text-zinc-700,
 html[data-theme="navy"] header .text-zinc-600 {
   color: #ffffff !important;
 }
+
 html[data-theme="navy"] header .text-zinc-500,
 html[data-theme="navy"] header .text-zinc-400 {
   color: #bfdbfe !important;
 }
+
 html[data-theme="navy"] header .border-zinc-200,
 html[data-theme="navy"] header .border-zinc-100 {
-  border-color: rgba(37, 99, 235, 0.25) !important;
+  border-color: rgba(255, 255, 255, 0.15) !important;
 }
-html[data-theme="navy"] header .bg-zinc-50,
-html[data-theme="navy"] header .bg-zinc-100,
-html[data-theme="navy"] header .bg-white {
+
+/* Header buttons & selectors in Navy */
+html[data-theme="navy"] header select {
   background-color: #172554 !important;
   color: #ffffff !important;
+  border-color: rgba(255, 255, 255, 0.25) !important;
 }
+
+html[data-theme="navy"] header select option {
+  background-color: #1e3a8a !important;
+  color: #ffffff !important;
+}
+
+html[data-theme="navy"] header button {
+  border-color: rgba(255, 255, 255, 0.18) !important;
+}
+
+/* Header Navigation Tabs in Navy */
+html[data-theme="navy"] header nav .nav-tab-active,
+html[data-theme="navy"] header nav [data-active="true"] {
+  background-color: #ffffff !important;
+  color: #1e3a8a !important;
+  border-color: #ffffff !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25) !important;
+}
+html[data-theme="navy"] header nav .nav-tab-active svg,
+html[data-theme="navy"] header nav [data-active="true"] svg {
+  color: #1e3a8a !important;
+}
+
+html[data-theme="navy"] header nav .nav-tab-inactive,
+html[data-theme="navy"] header nav [data-active="false"] {
+  background-color: rgba(255, 255, 255, 0.12) !important;
+  color: rgba(255, 255, 255, 0.9) !important;
+  border-color: rgba(255, 255, 255, 0.18) !important;
+}
+html[data-theme="navy"] header nav .nav-tab-inactive:hover,
+html[data-theme="navy"] header nav [data-active="false"]:hover {
+  background-color: rgba(255, 255, 255, 0.22) !important;
+  color: #ffffff !important;
+}
+
+/* Theme Dropdown Menu popup in Navy: keep clean white with dark text */
+html[data-theme="navy"] header .header-dropdown-menu {
+  background-color: #ffffff !important;
+  color: #18181b !important;
+  border-color: #e4e4e7 !important;
+}
+html[data-theme="navy"] header .header-dropdown-menu * {
+  color: inherit !important;
+}
+html[data-theme="navy"] header .header-dropdown-menu button {
+  color: #27272a !important;
+  background-color: transparent !important;
+  border-color: transparent !important;
+}
+html[data-theme="navy"] header .header-dropdown-menu button:hover {
+  background-color: #f4f4f5 !important;
+  color: #09090b !important;
+}
+html[data-theme="navy"] header .header-dropdown-menu button.active-theme-opt {
+  background-color: #e4e4e7 !important;
+  color: #09090b !important;
+  font-weight: bold !important;
+}
+
+/* Body Primary Elements in Navy */
 html[data-theme="navy"] .bg-zinc-900 {
   background-color: #1e3a8a !important;
 }
-html[data-theme="navy"] .hover\:bg-zinc-900:hover {
+html[data-theme="navy"] .hover\:bg-zinc-900:hover,
+html[data-theme="navy"] .hover\:bg-black:hover {
   background-color: #172554 !important;
 }
+html[data-theme="navy"] .border-zinc-900 {
+  border-color: #1e3a8a !important;
+}
+html[data-theme="navy"] .focus\:ring-zinc-900:focus {
+  --tw-ring-color: #1e3a8a !important;
+}
 
-/* 3. Deep Emerald Green Theme */
+/* 2. Deep Emerald Green Theme */
 html[data-theme="emerald"] body {
   background-color: #f0fdf4;
   color: #064e3b;
 }
+
 html[data-theme="emerald"] header {
   background-color: #064e3b !important;
   border-color: #022c22 !important;
   color: #ffffff !important;
 }
+
 html[data-theme="emerald"] header .text-zinc-900,
 html[data-theme="emerald"] header .text-zinc-800,
 html[data-theme="emerald"] header .text-zinc-700,
 html[data-theme="emerald"] header .text-zinc-600 {
   color: #ffffff !important;
 }
+
 html[data-theme="emerald"] header .text-zinc-500,
 html[data-theme="emerald"] header .text-zinc-400 {
   color: #a7f3d0 !important;
 }
+
 html[data-theme="emerald"] header .border-zinc-200,
 html[data-theme="emerald"] header .border-zinc-100 {
-  border-color: rgba(5, 150, 105, 0.25) !important;
+  border-color: rgba(255, 255, 255, 0.15) !important;
 }
-html[data-theme="emerald"] header .bg-zinc-50,
-html[data-theme="emerald"] header .bg-zinc-100,
-html[data-theme="emerald"] header .bg-white {
+
+/* Header buttons & selectors in Emerald */
+html[data-theme="emerald"] header select {
   background-color: #022c22 !important;
   color: #ffffff !important;
+  border-color: rgba(255, 255, 255, 0.25) !important;
 }
+
+html[data-theme="emerald"] header select option {
+  background-color: #064e3b !important;
+  color: #ffffff !important;
+}
+
+html[data-theme="emerald"] header button {
+  border-color: rgba(255, 255, 255, 0.18) !important;
+}
+
+/* Header Navigation Tabs in Emerald */
+html[data-theme="emerald"] header nav .nav-tab-active,
+html[data-theme="emerald"] header nav [data-active="true"] {
+  background-color: #ffffff !important;
+  color: #064e3b !important;
+  border-color: #ffffff !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25) !important;
+}
+html[data-theme="emerald"] header nav .nav-tab-active svg,
+html[data-theme="emerald"] header nav [data-active="true"] svg {
+  color: #064e3b !important;
+}
+
+html[data-theme="emerald"] header nav .nav-tab-inactive,
+html[data-theme="emerald"] header nav [data-active="false"] {
+  background-color: rgba(255, 255, 255, 0.12) !important;
+  color: rgba(255, 255, 255, 0.9) !important;
+  border-color: rgba(255, 255, 255, 0.18) !important;
+}
+html[data-theme="emerald"] header nav .nav-tab-inactive:hover,
+html[data-theme="emerald"] header nav [data-active="false"]:hover {
+  background-color: rgba(255, 255, 255, 0.22) !important;
+  color: #ffffff !important;
+}
+
+/* Theme Dropdown Menu popup in Emerald: keep clean white with dark text */
+html[data-theme="emerald"] header .header-dropdown-menu {
+  background-color: #ffffff !important;
+  color: #18181b !important;
+  border-color: #e4e4e7 !important;
+}
+html[data-theme="emerald"] header .header-dropdown-menu * {
+  color: inherit !important;
+}
+html[data-theme="emerald"] header .header-dropdown-menu button {
+  color: #27272a !important;
+  background-color: transparent !important;
+  border-color: transparent !important;
+}
+html[data-theme="emerald"] header .header-dropdown-menu button:hover {
+  background-color: #f4f4f5 !important;
+  color: #09090b !important;
+}
+html[data-theme="emerald"] header .header-dropdown-menu button.active-theme-opt {
+  background-color: #e4e4e7 !important;
+  color: #09090b !important;
+  font-weight: bold !important;
+}
+
+/* Body Primary Elements in Emerald */
 html[data-theme="emerald"] .bg-zinc-900 {
   background-color: #065f46 !important;
 }
-html[data-theme="emerald"] .hover\:bg-zinc-900:hover {
+html[data-theme="emerald"] .hover\:bg-zinc-900:hover,
+html[data-theme="emerald"] .hover\:bg-black:hover {
   background-color: #064e3b !important;
+}
+html[data-theme="emerald"] .border-zinc-900 {
+  border-color: #065f46 !important;
+}
+html[data-theme="emerald"] .focus\:ring-zinc-900:focus {
+  --tw-ring-color: #065f46 !important;
+}
+
+/* 3. Classic Monochrome Theme */
+html[data-theme="classic"] body {
+  background-color: #fafafa;
+  color: #18181b;
+}
+
+html[data-theme="classic"] header {
+  background-color: #ffffff;
+  border-color: #e4e4e7;
+  color: #18181b;
 }
 
 /* ======================================================== */
