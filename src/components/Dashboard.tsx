@@ -13,7 +13,7 @@ import {
   PlusCircle,
   Edit2
 } from 'lucide-react';
-import { BookRecord, ChannelConfig, DEFAULT_CHANNELS } from '../types/book';
+import { BookRecord, ChannelConfig, DEFAULT_CHANNELS, getBookDisplayEdition } from '../types/book';
 import { calculateBookMetrics, getBookChannelSales, sumDaily, formatBDT, formatNumber, formatMonthYearBengali } from '../utils/calculations';
 import { Language, tr } from '../utils/i18n';
 
@@ -136,7 +136,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
             </option>
             {books.map(b => (
               <option key={b.id} value={b.id}>
-                {b.sl}. {b.bookName}{b.edition ? ` [${b.edition}]` : ''}
+                {b.sl}. {b.bookName} [{getBookDisplayEdition(b, books)}]
               </option>
             ))}
           </select>
@@ -454,6 +454,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
           {filteredBooks.map((book) => {
             const m = calculateBookMetrics(book);
             const isLowStock = m.totalPresentStockHO < 300;
+            const editionLabel = getBookDisplayEdition(book, books);
 
             return (
               <div key={book.id} className="p-4 hover:bg-zinc-50/80 transition-colors flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -466,11 +467,9 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   <div className="min-w-0 flex-1">
                     <h4 className="font-bold text-zinc-900 text-sm flex items-center gap-1.5 flex-wrap">
                       <span>{book.bookName}</span>
-                      {book.edition && (
-                        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-blue-50 text-blue-900 border border-blue-200 shrink-0">
-                          {book.edition}
-                        </span>
-                      )}
+                      <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-blue-50 text-blue-900 border border-blue-200 shrink-0">
+                        {editionLabel}
+                      </span>
                       {book.category && (
                         <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-purple-50 text-purple-700 border border-purple-200 shrink-0">
                           📚 {book.category}

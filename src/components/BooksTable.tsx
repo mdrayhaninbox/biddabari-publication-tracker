@@ -11,7 +11,7 @@ import {
   Layers,
   X
 } from 'lucide-react';
-import { BookRecord, DEFAULT_BOOK_CATEGORIES } from '../types/book';
+import { BookRecord, DEFAULT_BOOK_CATEGORIES, getBookDisplayEdition } from '../types/book';
 import { calculateBookMetrics, formatBDT, formatNumber } from '../utils/calculations';
 import { Language, tr } from '../utils/i18n';
 
@@ -322,11 +322,9 @@ export const BooksTable: React.FC<BooksTableProps> = ({
                               📚 {book.category}
                             </span>
                           )}
-                          {book.edition && (
-                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-blue-50 text-blue-900 border border-blue-200">
-                              {book.edition}
-                            </span>
-                          )}
+                          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-blue-50 text-blue-900 border border-blue-200">
+                            {getBookDisplayEdition(book, books)}
+                          </span>
                         </div>
                         <div className="flex items-center gap-2 text-[11px] text-zinc-500 mt-0.5 flex-wrap">
                           {book.publishMonth && (

@@ -172,6 +172,54 @@ export function getEffectivePresses(channels?: ChannelConfig[]): ChannelConfig[]
   return effective.filter(c => c.type === 'press' || c.id === 'faridBhaiPress');
 }
 
+/**
+ * Resolves the display edition of a book. If undefined or empty,
+ * automatically generates ordinal editions (e.g. "1st Edition", "2nd Edition")
+ * based on order of occurrence among books sharing the same title.
+ */
+export function getBookDisplayEdition(book: BookRecord, allBooks: BookRecord[] = []): string {
+  if (book.edition && book.edition.trim()) {
+    return book.edition.trim();
+  }
+
+  const cleanTitle = (book.bookName || '').trim().toLowerCase();
+  const sameTitleBooks = allBooks.filter(
+    b => (b.bookName || '').trim().toLowerCase() === cleanTitle
+  );
+
+  if (sameTitleBooks.length > 1) {
+    const idx = sameTitleBooks.findIndex(b => b.id === book.id);
+    const ordinals = ['1st Edition', '2nd Edition', '3rd Edition', '4th Edition', '5th Edition'];
+    return ordinals[idx] || `${idx + 1}th Edition`;
+  }
+
+  return '1st Edition';
+}
+
+/**
+ * Ensures all books in an array have an edition populated.
+ */
+export function sanitizeBooksWithEditions(booksList: BookRecord[]): BookRecord[] {
+  const nameCounts: { [name: string]: number } = {};
+  
+  return booksList.map(b => {
+    const cleanName = (b.bookName || '').trim().toLowerCase();
+    nameCounts[cleanName] = (nameCounts[cleanName] || 0) + 1;
+    const occurrence = nameCounts[cleanName];
+
+    let effectiveEdition = b.edition?.trim();
+    if (!effectiveEdition) {
+      const ordinals = ['1st Edition', '2nd Edition', '3rd Edition', '4th Edition', '5th Edition'];
+      effectiveEdition = ordinals[occurrence - 1] || `${occurrence}th Edition`;
+    }
+
+    return {
+      ...b,
+      edition: effectiveEdition,
+    };
+  });
+}
+
 export interface ChannelInfo {
   key: string;
   name: string;

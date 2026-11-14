@@ -10,7 +10,8 @@ import {
   ChannelType,
   DEFAULT_CHANNELS,
   DEFAULT_BOOK_CATEGORIES,
-  getEffectiveChannels
+  getEffectiveChannels,
+  sanitizeBooksWithEditions
 } from './types/book';
 import { INITIAL_BOOKS } from './data/initialBooks';
 import { 
@@ -252,14 +253,14 @@ export const App: React.FC = () => {
             safeLocalStorageSet(currentKey, JSON.stringify(monthBooks));
           }
         }
-        return monthBooks;
+        return sanitizeBooksWithEditions(monthBooks);
       }
 
       // If this month has NO saved books yet, but master catalog has books:
       if (masterCatalog.length > 0) {
         const freshFromMaster = createFreshMonthBooks(masterCatalog);
         safeLocalStorageSet(currentKey, JSON.stringify(freshFromMaster));
-        return freshFromMaster;
+        return sanitizeBooksWithEditions(freshFromMaster);
       }
 
       // Fallback: search any other existing monthly keys for books!
@@ -275,7 +276,7 @@ export const App: React.FC = () => {
                   const freshFromFallback = createFreshMonthBooks(fallbackParsed);
                   safeLocalStorageSet(currentKey, JSON.stringify(freshFromFallback));
                   safeLocalStorageSet(MASTER_CATALOG_STORAGE_KEY, JSON.stringify(fallbackParsed));
-                  return freshFromFallback;
+                  return sanitizeBooksWithEditions(freshFromFallback);
                 }
               }
             } catch (e) {
@@ -285,7 +286,7 @@ export const App: React.FC = () => {
         }
       }
 
-      return INITIAL_BOOKS;
+      return sanitizeBooksWithEditions(INITIAL_BOOKS);
     } catch (e) {
       console.error('Failed to load books for period:', e);
       return INITIAL_BOOKS;
@@ -481,15 +482,16 @@ export const App: React.FC = () => {
           if (idbBooks) {
             const parsed = JSON.parse(idbBooks);
             if (Array.isArray(parsed) && parsed.length > 0) {
-              setBooks(parsed);
-              localStorage.setItem(currentKey, idbBooks);
+              const sanitized = sanitizeBooksWithEditions(parsed);
+              setBooks(sanitized);
+              localStorage.setItem(currentKey, JSON.stringify(sanitized));
             }
           } else {
             const idbMaster = await idbGet<string>(MASTER_CATALOG_STORAGE_KEY);
             if (idbMaster) {
               const parsedMaster = JSON.parse(idbMaster);
               if (Array.isArray(parsedMaster) && parsedMaster.length > 0) {
-                const fresh = createFreshMonthBooks(parsedMaster);
+                const fresh = sanitizeBooksWithEditions(createFreshMonthBooks(parsedMaster));
                 setBooks(fresh);
                 syncSaveBooks(fresh);
               }
@@ -561,12 +563,13 @@ export const App: React.FC = () => {
         const data = snapshot.data();
         if (Array.isArray(data?.books)) {
           if (data.books.length > 0) {
+            const sanitized = sanitizeBooksWithEditions(data.books);
             setBooks(prev => {
-              if (JSON.stringify(prev) === JSON.stringify(data.books)) return prev;
+              if (JSON.stringify(prev) === JSON.stringify(sanitized)) return prev;
               const currentKey = getMonthlyStorageKey(selectedYear, selectedMonth);
-              safeLocalStorageSet(currentKey, JSON.stringify(data.books));
-              idbSet(currentKey, JSON.stringify(data.books)).catch(() => {});
-              return data.books;
+              safeLocalStorageSet(currentKey, JSON.stringify(sanitized));
+              idbSet(currentKey, JSON.stringify(sanitized)).catch(() => {});
+              return sanitized;
             });
           } else if (localStorage.getItem(CLEAN_SLATE_ZERO_KEY) === 'true') {
             setBooks([]);
