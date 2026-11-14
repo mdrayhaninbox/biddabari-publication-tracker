@@ -158,7 +158,7 @@ export const BooksTable: React.FC<BooksTableProps> = ({
                 key={cat}
                 className={`inline-flex items-center rounded-xl text-xs font-bold transition-all border ${
                   isSelected
-                    ? 'bg-zinc-900 text-white border-zinc-900 shadow-xs'
+                    ? 'bg-blue-600 text-white border-blue-700 shadow-xs'
                     : 'bg-zinc-50 hover:bg-zinc-100 text-zinc-800 border-zinc-200'
                 }`}
               >
@@ -190,7 +190,7 @@ export const BooksTable: React.FC<BooksTableProps> = ({
                     }}
                     title={tr(`"${cat}" ক্যাটেগরি মুছুন`, `Delete "${cat}" category`, language)}
                     className={`p-1 pr-2 rounded-r-xl transition-colors ${
-                      isSelected ? 'text-zinc-300 hover:text-white' : 'text-zinc-400 hover:text-red-600'
+                      isSelected ? 'text-blue-200 hover:text-white' : 'text-zinc-400 hover:text-red-600'
                     }`}
                   >
                     <X className="w-3.5 h-3.5" />
@@ -222,11 +222,11 @@ export const BooksTable: React.FC<BooksTableProps> = ({
                   value={newCategoryInput}
                   onChange={(e) => setNewCategoryInput(e.target.value)}
                   placeholder={tr('নতুন ক্যাটেগরির নাম...', 'New category name...', language)}
-                  className="text-xs px-2.5 py-1 bg-white border border-zinc-300 rounded-lg focus:outline-hidden focus:ring-1 focus:ring-zinc-900 font-medium"
+                  className="text-xs px-2.5 py-1 bg-white border border-zinc-300 rounded-lg focus:outline-hidden focus:ring-1 focus:ring-blue-600 font-medium"
                 />
                 <button
                   type="submit"
-                  className="px-2.5 py-1 text-xs font-bold bg-zinc-900 hover:bg-black text-white rounded-lg transition-colors shadow-xs"
+                  className="px-2.5 py-1 text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors shadow-xs"
                 >
                   {tr('যোগ করুন', 'Add', language)}
                 </button>
@@ -245,7 +245,7 @@ export const BooksTable: React.FC<BooksTableProps> = ({
               <button
                 type="button"
                 onClick={() => setIsAddingCategory(true)}
-                className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-bold text-zinc-700 hover:text-zinc-900 bg-zinc-100 hover:bg-zinc-200 border border-zinc-300 rounded-xl transition-colors shadow-xs"
+                className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-bold text-blue-700 hover:text-blue-900 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-xl transition-colors shadow-xs"
                 title={tr('নতুন কাস্টম ক্যাটেগরি যুক্ত করুন', 'Add custom book category', language)}
               >
                 <Plus className="w-3.5 h-3.5" />

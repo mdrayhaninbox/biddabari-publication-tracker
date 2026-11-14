@@ -1355,7 +1355,7 @@ export const AccountsDueLedger: React.FC<AccountsDueLedgerProps> = ({
           <div className="bg-white rounded-2xl border border-zinc-200 shadow-xs overflow-hidden">
             <div className="p-4 border-b border-zinc-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <div className="flex items-center gap-2">
-                <div className="p-2 bg-zinc-100 text-zinc-900 rounded-lg">
+                <div className="p-2 bg-blue-50 text-blue-700 rounded-lg">
                   <Building2 className="w-5 h-5" />
                 </div>
                 <div>
@@ -1372,7 +1372,7 @@ export const AccountsDueLedger: React.FC<AccountsDueLedgerProps> = ({
                 <button
                   type="button"
                   onClick={() => onOpenAddChannel('press')}
-                  className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-white bg-zinc-900 hover:bg-black rounded-xl transition-all shadow-xs"
+                  className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition-all shadow-xs"
                 >
                   <PlusCircle className="w-3.5 h-3.5" />
                   <span>{tr('+ নতুন প্রেস এন্ট্রি', '+ New Press Entry', language)}</span>
@@ -1425,7 +1425,7 @@ export const AccountsDueLedger: React.FC<AccountsDueLedgerProps> = ({
                             <button
                               type="button"
                               onClick={() => onOpenEditChannel(p)}
-                              className="p-1.5 text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 rounded-lg transition-colors inline-flex items-center gap-1 text-[11px] font-bold border border-zinc-200 hover:border-zinc-300"
+                              className="p-1.5 text-zinc-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors inline-flex items-center gap-1 text-[11px] font-bold border border-zinc-200 hover:border-blue-200"
                               title={tr('প্রেস সম্পাদনা বা মুছুন', 'Edit or Delete Press', language)}
                             >
                               <Edit2 className="w-3.5 h-3.5" />

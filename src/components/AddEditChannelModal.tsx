@@ -126,8 +126,8 @@ export const AddEditChannelModal: React.FC<AddEditChannelModalProps> = ({
     <div className="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4">
       <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden border border-zinc-200 animate-in fade-in zoom-in duration-200">
         
-        {/* Header */}
-        <div className="bg-zinc-900 text-white px-6 py-4 flex items-center justify-between">
+        {/* Header - Styled blue/dark to match user design */}
+        <div className="bg-blue-600 text-white px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <span className="text-xl">
               {type === 'press' ? '🏭' : type === 'online' ? '🌐' : '🏪'}
@@ -185,7 +185,7 @@ export const AddEditChannelModal: React.FC<AddEditChannelModalProps> = ({
                       }}
                       className={`flex flex-col sm:flex-row items-center justify-center gap-1.5 p-2.5 rounded-xl border text-xs font-bold transition-all text-center ${
                         type === 'online'
-                          ? 'border-zinc-900 bg-zinc-900 text-white shadow-xs'
+                          ? 'border-blue-600 bg-blue-50 text-blue-700 shadow-2xs'
                           : 'border-zinc-200 bg-zinc-50 text-zinc-600 hover:bg-zinc-100'
                       }`}
                     >
@@ -201,7 +201,7 @@ export const AddEditChannelModal: React.FC<AddEditChannelModalProps> = ({
                       }}
                       className={`flex flex-col sm:flex-row items-center justify-center gap-1.5 p-2.5 rounded-xl border text-xs font-bold transition-all text-center ${
                         type === 'offline'
-                          ? 'border-zinc-900 bg-zinc-900 text-white shadow-xs'
+                          ? 'border-blue-600 bg-blue-50 text-blue-700 shadow-2xs'
                           : 'border-zinc-200 bg-zinc-50 text-zinc-600 hover:bg-zinc-100'
                       }`}
                     >
@@ -217,7 +217,7 @@ export const AddEditChannelModal: React.FC<AddEditChannelModalProps> = ({
                       }}
                       className={`flex flex-col sm:flex-row items-center justify-center gap-1.5 p-2.5 rounded-xl border text-xs font-bold transition-all text-center ${
                         type === 'press'
-                          ? 'border-zinc-900 bg-zinc-900 text-white shadow-xs'
+                          ? 'border-blue-600 bg-blue-50 text-blue-700 shadow-2xs'
                           : 'border-zinc-200 bg-zinc-50 text-zinc-600 hover:bg-zinc-100'
                       }`}
                     >
@@ -315,7 +315,7 @@ export const AddEditChannelModal: React.FC<AddEditChannelModalProps> = ({
                   <div className="grid grid-cols-2 gap-2">
                     <label className={`flex items-center gap-2 p-2.5 rounded-xl border text-xs font-semibold cursor-pointer transition-all ${
                       source === 'headOffice'
-                        ? 'border-zinc-900 bg-zinc-100 text-zinc-900 font-bold shadow-2xs'
+                        ? 'border-blue-600 bg-blue-50/50 text-zinc-900 font-bold'
                         : 'border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50'
                     }`}>
                       <input
@@ -324,14 +324,14 @@ export const AddEditChannelModal: React.FC<AddEditChannelModalProps> = ({
                         value="headOffice"
                         checked={source === 'headOffice'}
                         onChange={() => setSource('headOffice')}
-                        className="text-zinc-900 focus:ring-0"
+                        className="text-blue-600 focus:ring-0"
                       />
                       <span>{tr('হেড অফিস থেকে', 'From Head Office', language)}</span>
                     </label>
 
                     <label className={`flex items-center gap-2 p-2.5 rounded-xl border text-xs font-semibold cursor-pointer transition-all ${
                       source === 'press'
-                        ? 'border-zinc-900 bg-zinc-100 text-zinc-900 font-bold shadow-2xs'
+                        ? 'border-blue-600 bg-blue-50/50 text-zinc-900 font-bold'
                         : 'border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50'
                     }`}>
                       <input
@@ -340,7 +340,7 @@ export const AddEditChannelModal: React.FC<AddEditChannelModalProps> = ({
                         value="press"
                         checked={source === 'press'}
                         onChange={() => setSource('press')}
-                        className="text-zinc-900 focus:ring-0"
+                        className="text-blue-600 focus:ring-0"
                       />
                       <span>{tr('সরাসরি প্রেস থেকে', 'Directly from Press', language)}</span>
                     </label>
@@ -418,7 +418,7 @@ export const AddEditChannelModal: React.FC<AddEditChannelModalProps> = ({
                 </button>
                 <button
                   type="submit"
-                  className="inline-flex items-center gap-1.5 px-5 py-2 text-xs font-bold text-white bg-zinc-900 hover:bg-black rounded-lg shadow-xs transition-colors"
+                  className="inline-flex items-center gap-1.5 px-5 py-2 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-xs transition-colors"
                 >
                   <Save className="w-4 h-4" />
                   <span>

@@ -302,7 +302,7 @@ export const Header: React.FC<HeaderProps> = ({
               </button>
 
               {isThemeOpen && (
-                <div className="header-dropdown-menu absolute right-0 mt-1.5 w-56 bg-white rounded-xl shadow-xl border border-zinc-200 py-1.5 z-50">
+                <div className="absolute right-0 mt-1.5 w-56 bg-white rounded-xl shadow-xl border border-zinc-200 py-1.5 z-50">
                   <div className="px-3 py-1.5 text-[11px] font-bold text-zinc-400 uppercase tracking-wider border-b border-zinc-100 mb-1 flex items-center justify-between">
                     <span>{language === 'bn' ? 'কালার থিম নির্বাচন করুন' : 'Select Color Theme'}</span>
                     <Palette className="w-3.5 h-3.5 text-zinc-400" />
@@ -315,7 +315,7 @@ export const Header: React.FC<HeaderProps> = ({
                         setIsThemeOpen(false);
                       }}
                       className={`w-full text-left px-3 py-2 text-xs font-medium flex items-center justify-between transition-colors ${
-                        theme === opt.key ? 'active-theme-opt bg-zinc-100 font-bold text-zinc-900' : 'hover:bg-zinc-50 text-zinc-700'
+                        theme === opt.key ? 'bg-zinc-100 font-bold text-zinc-900' : 'hover:bg-zinc-50 text-zinc-700'
                       }`}
                     >
                       <div className="flex items-center gap-2.5">
@@ -377,11 +377,10 @@ export const Header: React.FC<HeaderProps> = ({
         <nav className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-1 sm:gap-1.5 mt-2.5 sm:mt-3 border-t border-zinc-100 pt-2 sm:pt-2.5">
           <button
             onClick={() => setActiveTab('dashboard')}
-            data-active={activeTab === 'dashboard'}
-            className={`nav-tab flex items-center justify-center gap-1.5 px-2 py-2 rounded-xl text-[11px] sm:text-xs font-bold transition-all text-center min-w-0 ${
+            className={`flex items-center justify-center gap-1.5 px-2 py-2 rounded-xl text-[11px] sm:text-xs font-bold transition-all text-center min-w-0 ${
               activeTab === 'dashboard'
-                ? 'nav-tab-active bg-zinc-900 text-white shadow-xs'
-                : 'nav-tab-inactive bg-zinc-50 text-zinc-700 hover:bg-zinc-100 hover:text-zinc-900 border border-zinc-200/60'
+                ? 'bg-zinc-900 text-white shadow-xs'
+                : 'bg-zinc-50 text-zinc-700 hover:bg-zinc-100 hover:text-zinc-900 border border-zinc-200/60'
             }`}
           >
             <BarChart3 className="w-3.5 h-3.5 shrink-0" />
@@ -390,11 +389,10 @@ export const Header: React.FC<HeaderProps> = ({
 
           <button
             onClick={() => setActiveTab('period')}
-            data-active={activeTab === 'period'}
-            className={`nav-tab flex items-center justify-center gap-1.5 px-2 py-2 rounded-xl text-[11px] sm:text-xs font-bold transition-all text-center min-w-0 ${
+            className={`flex items-center justify-center gap-1.5 px-2 py-2 rounded-xl text-[11px] sm:text-xs font-bold transition-all text-center min-w-0 ${
               activeTab === 'period'
-                ? 'nav-tab-active bg-zinc-900 text-white shadow-xs'
-                : 'nav-tab-inactive bg-zinc-50 text-zinc-700 hover:bg-zinc-100 hover:text-zinc-900 border border-zinc-200/60'
+                ? 'bg-zinc-900 text-white shadow-xs'
+                : 'bg-zinc-50 text-zinc-700 hover:bg-zinc-100 hover:text-zinc-900 border border-zinc-200/60'
             }`}
           >
             <CalendarRange className="w-3.5 h-3.5 shrink-0" />
@@ -403,11 +401,10 @@ export const Header: React.FC<HeaderProps> = ({
 
           <button
             onClick={() => setActiveTab('accounts')}
-            data-active={activeTab === 'accounts'}
-            className={`nav-tab flex items-center justify-center gap-1.5 px-2 py-2 rounded-xl text-[11px] sm:text-xs font-bold transition-all text-center min-w-0 ${
+            className={`flex items-center justify-center gap-1.5 px-2 py-2 rounded-xl text-[11px] sm:text-xs font-bold transition-all text-center min-w-0 ${
               activeTab === 'accounts'
-                ? 'nav-tab-active bg-zinc-900 text-white shadow-xs'
-                : 'nav-tab-inactive bg-zinc-50 text-zinc-700 hover:bg-zinc-100 hover:text-zinc-900 border border-zinc-200/60'
+                ? 'bg-zinc-900 text-white shadow-xs'
+                : 'bg-zinc-50 text-zinc-700 hover:bg-zinc-100 hover:text-zinc-900 border border-zinc-200/60'
             }`}
           >
             <Receipt className="w-3.5 h-3.5 shrink-0" />
@@ -416,11 +413,10 @@ export const Header: React.FC<HeaderProps> = ({
 
           <button
             onClick={() => setActiveTab('entry')}
-            data-active={activeTab === 'entry'}
-            className={`nav-tab flex items-center justify-center gap-1.5 px-2 py-2 rounded-xl text-[11px] sm:text-xs font-bold transition-all text-center min-w-0 ${
+            className={`flex items-center justify-center gap-1.5 px-2 py-2 rounded-xl text-[11px] sm:text-xs font-bold transition-all text-center min-w-0 ${
               activeTab === 'entry'
-                ? 'nav-tab-active bg-zinc-900 text-white shadow-xs'
-                : 'nav-tab-inactive bg-zinc-50 text-zinc-700 hover:bg-zinc-100 hover:text-zinc-900 border border-zinc-200/60'
+                ? 'bg-zinc-900 text-white shadow-xs'
+                : 'bg-zinc-50 text-zinc-700 hover:bg-zinc-100 hover:text-zinc-900 border border-zinc-200/60'
             }`}
           >
             <CalendarPlus className="w-3.5 h-3.5 shrink-0" />
@@ -429,11 +425,10 @@ export const Header: React.FC<HeaderProps> = ({
 
           <button
             onClick={() => setActiveTab('books')}
-            data-active={activeTab === 'books'}
-            className={`nav-tab flex items-center justify-center gap-1.5 px-2 py-2 rounded-xl text-[11px] sm:text-xs font-bold transition-all text-center min-w-0 ${
+            className={`flex items-center justify-center gap-1.5 px-2 py-2 rounded-xl text-[11px] sm:text-xs font-bold transition-all text-center min-w-0 ${
               activeTab === 'books'
-                ? 'nav-tab-active bg-zinc-900 text-white shadow-xs'
-                : 'nav-tab-inactive bg-zinc-50 text-zinc-700 hover:bg-zinc-100 hover:text-zinc-900 border border-zinc-200/60'
+                ? 'bg-zinc-900 text-white shadow-xs'
+                : 'bg-zinc-50 text-zinc-700 hover:bg-zinc-100 hover:text-zinc-900 border border-zinc-200/60'
             }`}
           >
             <TableIcon className="w-3.5 h-3.5 shrink-0" />
@@ -442,11 +437,10 @@ export const Header: React.FC<HeaderProps> = ({
 
           <button
             onClick={() => setActiveTab('matrix')}
-            data-active={activeTab === 'matrix'}
-            className={`nav-tab flex items-center justify-center gap-1.5 px-2 py-2 rounded-xl text-[11px] sm:text-xs font-bold transition-all text-center min-w-0 ${
+            className={`flex items-center justify-center gap-1.5 px-2 py-2 rounded-xl text-[11px] sm:text-xs font-bold transition-all text-center min-w-0 ${
               activeTab === 'matrix'
-                ? 'nav-tab-active bg-zinc-900 text-white shadow-xs'
-                : 'nav-tab-inactive bg-zinc-50 text-zinc-700 hover:bg-zinc-100 hover:text-zinc-900 border border-zinc-200/60'
+                ? 'bg-zinc-900 text-white shadow-xs'
+                : 'bg-zinc-50 text-zinc-700 hover:bg-zinc-100 hover:text-zinc-900 border border-zinc-200/60'
             }`}
           >
             <FileSpreadsheet className="w-3.5 h-3.5 shrink-0" />
@@ -455,11 +449,10 @@ export const Header: React.FC<HeaderProps> = ({
 
           <button
             onClick={() => setActiveTab('reports')}
-            data-active={activeTab === 'reports'}
-            className={`nav-tab col-span-2 sm:col-span-1 flex items-center justify-center gap-1.5 px-2 py-2 rounded-xl text-[11px] sm:text-xs font-bold transition-all text-center min-w-0 ${
+            className={`col-span-2 sm:col-span-1 flex items-center justify-center gap-1.5 px-2 py-2 rounded-xl text-[11px] sm:text-xs font-bold transition-all text-center min-w-0 ${
               activeTab === 'reports'
-                ? 'nav-tab-active bg-zinc-900 text-white shadow-xs'
-                : 'nav-tab-inactive bg-zinc-50 text-zinc-700 hover:bg-zinc-100 hover:text-zinc-900 border border-zinc-200/60'
+                ? 'bg-zinc-900 text-white shadow-xs'
+                : 'bg-zinc-50 text-zinc-700 hover:bg-zinc-100 hover:text-zinc-900 border border-zinc-200/60'
             }`}
           >
             <Printer className="w-3.5 h-3.5 shrink-0" />
