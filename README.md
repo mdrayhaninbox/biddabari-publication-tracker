@@ -1,90 +1,104 @@
-# বিদ্যাবাড়ি পাবলিকেশন - বুক ম্যানেজমেন্ট ও সেলস ট্র্যাকার
-### Biddabari Publication - Book Management, Daily Sales & Inventory Tracking System
+# Biddabari Publication - Book Management & Sales Tracking System
 
-একটি আধুনিক, নিরাপদ এবং রিয়েল-টাইম ক্লাউড-সংযুক্ত ওয়েব সফটওয়্যার—যা বিদ্যাবাড়ি পাবলিকেশনের যাবতীয় বইয়ের উৎপাদন, ছাপাখানা (প্রেস), একাধিক সংস্করণ (এডিশন), দৈনিক বিক্রয় চ্যানেল, লাইব্রেরি বকেয়া এবং আর্থিক হিসাব-নিকাশ কেন্দ্রীয়ভাবে পরিচালনা করার জন্য তৈরি।
+A modern, cloud-connected enterprise web application designed for **Biddabari Publication** to streamline book manufacturing, printing press workflows, multi-edition inventory, daily sales channels, library credit accounts, and voucher documentation.
 
-🌐 **লাইভ অ্যাপ্লিকেশন ইউআরএল**: [biddabari-publication.vercel.app](https://biddabari-publication.vercel.app)
-
----
-
-## 🌟 প্রধান সুবিধাসমূহ (Key Features)
-
-### ১. 📚 বই ও এডিশন ব্যবস্থাপনা (Books & Editions)
-- **মাল্টি-এডিশন ট্র্যাকিং**: একই বইয়ের একাধিক সংস্করণ (১ম সংস্করণ, ২য় সংস্করণ ইত্যাদি) স্বয়ংক্রিয়ভাবে শনাক্ত ও এডিশন ব্যাজ সহ নিখুঁতভাবে প্রদর্শন।
-- **কাস্টম ক্যাটাগরি ফিল্টার**: NTRCA, Digest সহ যেকোনো নতুন কাস্টম ক্যাটাগরি তৈরি, ফিল্টার ও মুছে ফেলার পূর্ণ স্বাধীনতা।
-- **আর্থিক বিশ্লেষণ**: প্রতিটি বইয়ের উৎপাদন খরচ (Printing Cost), গায়ের মূল্য (MRP), কমিশন এবং কপি প্রতি লাভ ও নিট প্রফিট স্বয়ংক্রিয় গণনা।
-
-### ২. 🏭 প্রেস ও ছাপাখানা লেজার (Printing Press Operations)
-- **নিবন্ধিত ছাপাখানা তালিকা**: ফরিদ ভাই প্রেস সহ যেকোনো নতুন প্রেস যুক্ত ও পরিচালনা।
-- **প্রেস অর্ডার বুকিং স্লিপ**: লট অনুযায়ী বই ছাপানোর অর্ডার তৈরি এবং অর্ডারের কপি/ছবি সংযুক্তি।
-- **প্রেস ডেলিভারি চালান**: প্রেসে বই তৈরি শেষে হেড অফিসে প্রাপ্তির চালান রেকর্ড এবং স্বয়ংক্রিয়ভাবে হেড অফিস স্টকে যোগ হওয়া।
-- **প্রেস পেমেন্ট লেজার**: ছাপাখানার বিল পরিশোধের ভাউচার এন্ট্রি এবং চেকের ছবি আপলোড।
-
-### ৩. 🏪 বিক্রয় চ্যানেল ও লাইব্রেরি বকেয়া খাতা (Sales & Accounts Dues)
-- **চ্যানেল ক্যাটাগরি**: অনলাইন চ্যানেল (বইবাড়ি, ওয়েবসাইট ইত্যাদি) ও অফলাইন ডিলার লাইব্রেরি (নীলক্ষেত, বাংলাবাজার ইত্যাদি)।
-- **দৈনিক বিক্রয় ও স্টক ট্র্যাকিং**: হেড অফিস স্টক ও প্রেস স্টক থেকে বিক্রিত কপির স্বয়ংক্রিয় হিসাব।
-- **লাইব্রেরি আদায় ও মানি রিসিট**: লাইব্রেরি থেকে টাকা আদায়ের তাৎক্ষণিক এন্ট্রি।
-- **🖨️ আদায় ভাউচার প্রিন্ট (১০টি/পৃষ্ঠা)**: সংগৃহীত টাকার বিপরীতে কালেকশন কর্মীদের জন্য এক পৃষ্ঠায় ১০টি করে প্রিন্টযোগ্য A4 মানি রিসিট ভাউচার।
-
-### ৪. 🧾 দ্রুত ভাউচার তৈরি মেনু (`Create Voucher`)
-- হেডারের এক ক্লিকেই প্রয়োজনীয় যেকোনো ভাউচার তৈরির ড্রপডাউন:
-  - 💰 আদায় ভাউচার / মানি রিসিট (Collection Voucher)
-  - 💳 প্রেস পেমেন্ট ভাউচার (Press Payment Voucher)
-  - 🚚 প্রেস ডেলিভারি চালান (Press Delivery Chalan)
-  - 📋 প্রেস অর্ডার স্লিপ (Press Order Slip)
-  - 🖨️ প্রিন্টযোগ্য ১০ ভাউচার শিট
-
-### ৫. 📁 ডিজিটাল ফাইল স্টোরেজ ও ভাউচার গ্যালারি (File Storage & Digital Notebook)
-- **ভাউচার গ্যালারি**: প্রেস পেমেন্ট, ডেলিভারি চালান, প্রেস অর্ডার এবং লাইব্রেরি কালেকশনের সময় সংযুক্ত করা সকল মূল ডকুমেন্টের ছবি কেন্দ্রীয়ভাবে ক্যাটাগরিভিত্তিক সংরক্ষিত।
-- **ভাউচার প্রিভিউ ও প্রিন্ট**: যেকোনো ভাউচারের ছবি বড় করে দেখা (Zoom), ডাউনলোড ও প্রিন্ট সুবিধা।
-- **ডিজিটাল নোটবুক**: প্রকাশনা সংক্রান্ত জরুরি মেমো, মিটিং নোটস কালার-কোডেড স্টিকি নোটে সংরক্ষণ।
-- **ফাইল স্টোরেজ**: পিডিএফ, ইনভয়েস, চুক্তিপত্র, এক্সেল ও ওয়ার্ড ফাইল (সর্বোচ্চ ২৫MB পর্যন্ত) সংরক্ষণাগার।
-
-### ৬. 📊 ৩০ দিনের ক্যালেন্ডার ম্যাট্রিক্স ও পিরিয়ড ভিউ (30-Day Matrix & Period View)
-- মাসের ১ তারিখ থেকে ৩০/৩১ তারিখ পর্যন্ত প্রতিদিনের চ্যানেলভিত্তিক ও বইভিত্তিক বিক্রয় ম্যাট্রিক্স।
-- পূর্ববর্তী ও পরবর্তী মাসের ডেটা এক ক্লিকে ব্রাউজ করার সুবিধা।
-
-### ৭. ☁️ রিয়েল-টাইম ক্লাউড ব্যাকআপ ও এক্সেল সিঙ্ক (Cloud Sync & Backup)
-- **Firebase Firestore**: রিয়েল-টাইমে স্বয়ংক্রিয় ক্লাউড ব্যাকআপ—যেকোনো ডিভাইস বা ব্রাউজার থেকে একই ডেটা লাইভ দেখা যায়।
-- **IndexedDB & LocalStorage**: অফলাইনেও ডেটা সুরক্ষিত ও ক্যাশড থাকে।
-- **এক্সেল ইমপোর্ট ও এক্সপোর্ট**: সম্পূর্ণ ডাটাবেজ এক্সেল (.xlsx) ফাইলে ডাউনলোড ও রিস্টোর করার সুবিধা।
-
-### ৮. 🎨 কালার থিম ও দ্বিভাষিক ইন্টারফেস (Themes & Languages)
-- **দ্বিভাষিক সমর্থন**: এক ক্লিকে সম্পূর্ণ বাংলা (BN) অথবা ইংরেজি (EN) ইন্টারফেস নির্বাচন।
-- **কালার থিম**: রয়্যাল নেভি ব্লু (Royal Navy Blue), ডিপ এমেরাল্ড গ্রিন (Deep Emerald Green) এবং ক্লাসিক মনোক্রোম (Classic Monochrome)।
-- **A4 প্রিন্ট অপটিমাইজড**: যেকোনো রিপোর্ট সরাসরি প্রিন্ট বা পিডিএফ সংরক্ষণের জন্য পারফেক্ট লেআউট।
+🌐 **Live Application**: [biddabari-publication.vercel.app](https://biddabari-publication.vercel.app)
 
 ---
 
-## 🛠️ প্রযুক্তি (Tech Stack)
+## 🌟 Key Features
 
-- **Frontend Core**: React 19, TypeScript, Vite
-- **Styling**: Tailwind CSS v4, Lucide React Icons
-- **Typography**: Hind Siliguri (Google Fonts Bengali)
-- **Database & Cloud**: Google Firebase Firestore
-- **Local Storage**: IndexedDB (idb-keyval) & LocalStorage
-- **Spreadsheet Engine**: XLSX (SheetJS)
-- **Hosting & CI/CD**: Vercel & GitHub
+### 1. 📚 Book & Multi-Edition Inventory Management
+- **Automatic Edition Detection**: Intelligently identifies and displays edition badges (e.g., *1st Edition*, *2nd Edition*) for books sharing identical titles or varying retail prices.
+- **Custom Category System**: Filter and categorize books with built-in categories (*NTRCA*, *Digest*) or create and delete custom categories on the fly.
+- **Financial Breakdown per Book**: Real-time calculations of Printing Cost, MRP, Channel Commission, Profit per Copy, Head Office Stock, Press Stock, and Total Net Profit.
+
+### 2. 🏭 Printing Press Operations Ledger
+- **Registered Printing Presses**: Dedicated press profiles including Farid Bhai Press and support for adding custom printing and binding houses.
+- **Press Order Slips**: Track lot-by-lot printing orders with lot names, order quantities, production costs, and digital photo slip attachments.
+- **Press Delivery Chalans**: Record incoming book delivery chalans from presses with automatic inventory incrementation at the Head Office.
+- **Press Payment Vouchers**: Manage payments made to printing presses with cheque/voucher photo upload and payment method tagging.
+
+### 3. 🏪 Sales Channels & Library Credit Ledger
+- **Multi-Channel Distribution**: Support for online eCommerce channels (e.g., Boibari, website) and offline distributor libraries (e.g., Nilkhet, Banglabazar, district outlets).
+- **Accounts Receivable & Dues Tracking**: Real-time ledger of total copies supplied, total billed amount, collections received, and outstanding dues per library.
+- **🖨️ Printable Collection Vouchers (10/Page)**: Formats collection receipts strictly 10 per standard A4 page for field collection officers.
+
+### 4. 🧾 Centralized "Create Voucher" Quick Menu
+- Prominent header dropdown allowing one-click creation of:
+  - 💰 **Collection Voucher / Money Receipt** (Library collections)
+  - 💳 **Press Payment Voucher** (Printing press settlements)
+  - 🚚 **Press Delivery Chalan** (Book delivery receipts)
+  - 📋 **Press Order Slip** (New lot printing orders)
+  - 🖨️ **Print Collection Vouchers (10/Page)** (Printable A4 collection sheet)
+
+### 5. 📁 File Storage & Digital Voucher Gallery
+- **Centralized Voucher Gallery**: Aggregates all uploaded receipts, chalans, and payment photos from across all publication operations into a unified, category-filtered gallery.
+- **Preview, Zoom & Print**: Built-in modal viewer with full zoom, high-resolution download, and one-click browser printing.
+- **Digital Notebook**: Keep publication notes, meeting memos, and urgent reminders in color-coded sticky cards.
+- **Document Repository**: Store important contracts, agreements, invoices, spreadsheets, and PDFs (up to 25MB per file).
+
+### 6. 📊 30-Day Sales Matrix & Period Analytics
+- **Day-by-Day Calendar Matrix**: Comprehensive 1st-to-31st daily sales and delivery breakdown for every book across all distribution channels.
+- **Historical Period Navigation**: Seamlessly navigate through months and years with immediate data hydration and comparative statistics.
+
+### 7. ☁️ Real-Time Cloud Sync & Spreadsheet Integration
+- **Google Firebase Firestore**: Real-time bi-directional synchronization—changes update instantly across all team members and devices.
+- **Offline Durability**: Double-layer client persistence using IndexedDB and LocalStorage for smooth offline operation.
+- **Excel (.xlsx) Import & Export**: One-click full database backup and restore, complete with all ledgers, channels, and books.
+
+### 8. 🎨 Multilingual & Multi-Theme Experience
+- **Bilingual Interface**: Toggle effortlessly between Bengali (**বাংলা**) and English (**EN**).
+- **Executive Color Themes**: Choose from Royal Navy Blue, Deep Emerald Green, or Classic Monochrome.
+- **A4 Portrait Print Ready**: Clean, auto-paginated CSS print styling for professional corporate reports.
 
 ---
 
-## 🚀 লোকাল রান করার নিয়ম (Run Locally)
+## 🛠️ Technology Stack
 
-```bash
-# রিপোজিটরি ক্লোন করুন
-git clone https://github.com/mdrayhaninbox/biddabari-publication-tracker.git
-cd biddabari-publication-tracker
-
-# ডিপেন্ডেন্সি ইনস্টল করুন
-npm install
-
-# ডেভেলপমেন্ট সার্ভার চালু করুন
-npm run dev
-
-# প্রোডাকশন বিল্ড তৈরি করুন
-npm run build
-```
+| Layer | Technology |
+| :--- | :--- |
+| **Frontend Framework** | React 19, TypeScript, Vite |
+| **Styling & UI** | Tailwind CSS v4, Lucide React Icons |
+| **Typography** | Hind Siliguri & Inter (Google Fonts) |
+| **Cloud Database** | Google Firebase Firestore |
+| **Offline Persistence** | IndexedDB (`idb-keyval`) & LocalStorage |
+| **Spreadsheet Engine** | SheetJS (`xlsx`) |
+| **Deployment & Hosting** | Vercel & GitHub Actions |
 
 ---
 
-© ২০২৬ **বিদ্যাবাড়ি পাবলিকেশন (Biddabari Publication)**. সর্বস্বত্ব সংরক্ষিত।
+## 🚀 Getting Started (Run Locally)
+
+### Prerequisites
+- Node.js (v18 or higher recommended)
+- npm or yarn
+
+### Installation
+
+1. **Clone the repository**:
+   ```bash
+   git clone https://github.com/mdrayhaninbox/biddabari-publication-tracker.git
+   cd biddabari-publication-tracker
+   ```
+
+2. **Install dependencies**:
+   ```bash
+   npm install
+   ```
+
+3. **Start the development server**:
+   ```bash
+   npm run dev
+   ```
+
+4. **Build for production**:
+   ```bash
+   npm run build
+   ```
+
+---
+
+## 📄 License & Copyright
+
+© 2026 **Biddabari Publication**. All rights reserved.
