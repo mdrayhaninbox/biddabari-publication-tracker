@@ -1120,33 +1120,6 @@ export const AccountsDueLedger: React.FC<AccountsDueLedgerProps> = ({
                     <span>{tr('🖨️ আদায় ভাউচার প্রিন্ট (১০টি/পৃষ্ঠা)', 'Print Collection Vouchers (10/page)', language)}</span>
                   </button>
                 )}
-                {onOpenAddChannel && (
-                  <button
-                    type="button"
-                    onClick={() => onOpenAddChannel('offline')}
-                    className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-zinc-900 bg-zinc-100 hover:bg-zinc-200 border border-zinc-300 rounded-xl transition-all shadow-xs"
-                  >
-                    <PlusCircle className="w-3.5 h-3.5" />
-                    <span>{tr('+ নতুন চ্যানেল যোগ', '+ Add Channel', language)}</span>
-                  </button>
-                )}
-                {onOpenAddChannel && (
-                  <button
-                    type="button"
-                    onClick={() => onOpenAddChannel('press')}
-                    className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-xl transition-all shadow-xs"
-                  >
-                    <Building2 className="w-3.5 h-3.5 text-blue-600" />
-                    <span>{tr('+ নতুন প্রেস এন্ট্রি', '+ New Press Entry', language)}</span>
-                  </button>
-                )}
-                <button
-                  onClick={() => onAddChannelCollection()}
-                  className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-white bg-zinc-900 hover:bg-black rounded-xl transition-all shadow-xs"
-                >
-                  <PlusCircle className="w-3.5 h-3.5" />
-                  <span>{tr('+ নতুন কালেকশন এন্ট্রি', '+ New Collection Entry', language)}</span>
-                </button>
               </div>
             </div>
 
