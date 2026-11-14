@@ -7,7 +7,8 @@ import {
   PressDeliveryRecord, 
   ChannelCollectionRecord, 
   ChannelConfig,
-  DEFAULT_BOOK_CATEGORIES
+  DEFAULT_BOOK_CATEGORIES,
+  getEffectiveChannels
 } from '../types/book';
 import { StoredFileRecord, NotebookNoteRecord } from '../types/storage';
 
@@ -126,7 +127,8 @@ export async function syncChannelCollectionsToFirestore(collections: ChannelColl
  */
 export async function syncChannelsToFirestore(channels: ChannelConfig[]): Promise<void> {
   try {
-    const cleanChannels = sanitizeForFirestore(channels);
+    const effective = getEffectiveChannels(channels);
+    const cleanChannels = sanitizeForFirestore(effective);
     const docRef = doc(db, COLLECTION_NAME, 'sales_channels');
     await setDoc(docRef, { channels: cleanChannels, updatedAt: new Date().toISOString() });
   } catch (err) {

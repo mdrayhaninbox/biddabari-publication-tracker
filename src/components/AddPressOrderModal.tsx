@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X, Layers, Save, Building2 } from 'lucide-react';
-import { BookRecord, PressOrderRecord, ChannelConfig } from '../types/book';
+import { BookRecord, PressOrderRecord, ChannelConfig, getEffectivePresses } from '../types/book';
 import { formatBDT } from '../utils/calculations';
 import { Language, tr } from '../utils/i18n';
 import { VoucherImageUploader } from './VoucherImageUploader';
@@ -39,7 +39,7 @@ export const AddPressOrderModal: React.FC<AddPressOrderModalProps> = ({
   const [makingCost, setMakingCost] = useState<number>(250);
   const [notes, setNotes] = useState<string>('');
 
-  const availablePresses = channels.filter(c => c.type === 'press' || c.id === 'faridBhaiPress');
+  const availablePresses = getEffectivePresses(channels);
   const [selectedPressId, setSelectedPressId] = useState<string>(
     availablePresses[0]?.id || 'faridBhaiPress'
   );

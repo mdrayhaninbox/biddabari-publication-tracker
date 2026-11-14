@@ -9,7 +9,8 @@ import {
   ChannelConfig,
   ChannelType,
   DEFAULT_CHANNELS,
-  DEFAULT_BOOK_CATEGORIES
+  DEFAULT_BOOK_CATEGORIES,
+  getEffectiveChannels
 } from './types/book';
 import { INITIAL_BOOKS } from './data/initialBooks';
 import { 
@@ -389,13 +390,13 @@ export const App: React.FC = () => {
     return INITIAL_PRESS_DELIVERIES;
   });
 
-  // State: Sales Channels (Dynamic Online & Offline Channels)
+  // State: Sales Channels (Dynamic Online, Offline & Printing Press Channels)
   const [channels, setChannels] = useState<ChannelConfig[]>(() => {
     try {
       const saved = localStorage.getItem(CHANNELS_STORAGE_KEY);
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        if (Array.isArray(parsed) && parsed.length > 0) return getEffectiveChannels(parsed);
       }
     } catch (e) {
       console.error(e);
@@ -651,10 +652,11 @@ export const App: React.FC = () => {
       if (snap.exists()) {
         const data = snap.data();
         if (Array.isArray(data?.channels) && data.channels.length > 0) {
+          const effective = getEffectiveChannels(data.channels);
           setChannels(prev => {
-            if (JSON.stringify(prev) === JSON.stringify(data.channels)) return prev;
-            safeLocalStorageSet(CHANNELS_STORAGE_KEY, JSON.stringify(data.channels));
-            return data.channels;
+            if (JSON.stringify(prev) === JSON.stringify(effective)) return prev;
+            safeLocalStorageSet(CHANNELS_STORAGE_KEY, JSON.stringify(effective));
+            return effective;
           });
         }
       }

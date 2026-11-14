@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X, CreditCard, Building2 } from 'lucide-react';
-import { BookRecord, PressPaymentRecord, PaymentMethod, ChannelConfig } from '../types/book';
+import { BookRecord, PressPaymentRecord, PaymentMethod, ChannelConfig, getEffectivePresses } from '../types/book';
 import { Language, tr } from '../utils/i18n';
 import { VoucherImageUploader } from './VoucherImageUploader';
 
@@ -29,7 +29,7 @@ export const AddPressPaymentModal: React.FC<AddPressPaymentModalProps> = ({
   const [voucherImage, setVoucherImage] = useState<string | undefined>(undefined);
   const [notes, setNotes] = useState<string>('');
 
-  const availablePresses = channels.filter(c => c.type === 'press' || c.id === 'faridBhaiPress');
+  const availablePresses = getEffectivePresses(channels);
   const [selectedPressId, setSelectedPressId] = useState<string>(
     availablePresses[0]?.id || 'faridBhaiPress'
   );

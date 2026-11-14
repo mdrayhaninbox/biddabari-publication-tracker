@@ -141,7 +141,7 @@ export interface ChannelConfig {
 }
 
 export const DEFAULT_CHANNELS: ChannelConfig[] = [
-  { id: 'faridBhaiPress', name: 'ফরিদ ভাই প্রেস (Farid Bhai Press)', nameEn: 'Farid Bhai Press', type: 'press', category: 'প্রধান প্রিন্টিং ও বাঁধাই প্রেস', isSystemDefault: true },
+  { id: 'faridBhaiPress', name: 'ফরিদ ভাই প্রেস (Farid Bhai Press)', nameEn: 'Farid Bhai Press', type: 'press', category: 'প্রধান প্রিন্টিং ও বাঁধাই প্রেস', address: 'বাংলাবাজার, ঢাকা', phone: '01711-000000', isSystemDefault: true },
   { id: 'boibari', name: 'বইবাড়ি (Boibari)', nameEn: 'Boibari', type: 'online', category: 'অনলাইন ই-কমার্স', isSystemDefault: true },
   { id: 'rokomari', name: 'রকমারি (Rokomari)', nameEn: 'Rokomari', type: 'online', category: 'অনলাইন ই-কমার্স', isSystemDefault: true },
   { id: 'wafilife', name: 'ওয়াফিলাইফ (Wafilife)', nameEn: 'Wafilife', type: 'online', category: 'অনলাইন ই-কমার্স', isSystemDefault: true },
@@ -152,6 +152,25 @@ export const DEFAULT_CHANNELS: ChannelConfig[] = [
   { id: 'nilkhetLibrary', name: 'নীলক্ষেত লাইব্রেরি (Nilkhet)', nameEn: 'Nilkhet Library', type: 'offline', source: 'headOffice', category: 'লোকাল মার্কেট (হেড অফিস সরবরাহ)', isSystemDefault: true },
   { id: 'headOfficeSellOffline', name: 'হেড অফিস সরাসরি অফলাইন বিক্রয়', nameEn: 'Head Office Direct Counter', type: 'offline', source: 'headOffice', category: 'হেড অফিস সরাসরি', isSystemDefault: true },
 ];
+
+export function getEffectiveChannels(channels?: ChannelConfig[]): ChannelConfig[] {
+  const map = new Map<string, ChannelConfig>();
+  DEFAULT_CHANNELS.forEach(def => map.set(def.id, { ...def }));
+  if (Array.isArray(channels)) {
+    channels.forEach(ch => {
+      if (ch && ch.id) {
+        const existing = map.get(ch.id);
+        map.set(ch.id, { ...(existing || {}), ...ch });
+      }
+    });
+  }
+  return Array.from(map.values());
+}
+
+export function getEffectivePresses(channels?: ChannelConfig[]): ChannelConfig[] {
+  const effective = getEffectiveChannels(channels);
+  return effective.filter(c => c.type === 'press' || c.id === 'faridBhaiPress');
+}
 
 export interface ChannelInfo {
   key: string;

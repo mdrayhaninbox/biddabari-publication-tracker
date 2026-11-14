@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X, Truck, Save, Building2 } from 'lucide-react';
-import { BookRecord, PressDeliveryRecord, ChannelConfig } from '../types/book';
+import { BookRecord, PressDeliveryRecord, ChannelConfig, getEffectivePresses } from '../types/book';
 import { Language, tr } from '../utils/i18n';
 import { VoucherImageUploader } from './VoucherImageUploader';
 
@@ -38,7 +38,7 @@ export const AddPressDeliveryModal: React.FC<AddPressDeliveryModalProps> = ({
   const [voucherImage, setVoucherImage] = useState<string | undefined>(undefined);
   const [notes, setNotes] = useState<string>('');
 
-  const availablePresses = channels.filter(c => c.type === 'press' || c.id === 'faridBhaiPress');
+  const availablePresses = getEffectivePresses(channels);
   const [selectedPressId, setSelectedPressId] = useState<string>(
     availablePresses[0]?.id || 'faridBhaiPress'
   );

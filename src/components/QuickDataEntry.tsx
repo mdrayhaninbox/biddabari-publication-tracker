@@ -9,9 +9,10 @@ import {
   Store, 
   Warehouse, 
   RotateCcw,
-  BookOpen
+  BookOpen,
+  Building2
 } from 'lucide-react';
-import { BookRecord, ChannelConfig, DEFAULT_CHANNELS } from '../types/book';
+import { BookRecord, ChannelConfig, DEFAULT_CHANNELS, getEffectiveChannels, getEffectivePresses } from '../types/book';
 import { calculateBookMetrics, getBookChannelSales, formatBDT, formatNumber, formatMonthYearBengali } from '../utils/calculations';
 import { Language, tr } from '../utils/i18n';
 
@@ -43,6 +44,10 @@ export const QuickDataEntry: React.FC<QuickDataEntryProps> = ({
   channels = DEFAULT_CHANNELS,
 }) => {
   const [entryMode, setEntryMode] = useState<'single' | 'sheet'>('single');
+
+  const effectiveChannels = getEffectiveChannels(channels);
+  const presses = getEffectivePresses(channels);
+  const [selectedPressId, setSelectedPressId] = useState<string>(presses[0]?.id || 'faridBhaiPress');
 
   // Single Book Mode State
   const [selectedBookId, setSelectedBookId] = useState<string>(initialBookId || books[0]?.id || '');
@@ -330,14 +335,41 @@ export const QuickDataEntry: React.FC<QuickDataEntryProps> = ({
 
           {/* Section 1: Press Receipt */}
           <div className="bg-white p-5 rounded-2xl border border-zinc-200 shadow-xs">
-            <h3 className="text-xs font-bold text-zinc-900 mb-3 flex items-center gap-2">
-              <Warehouse className="w-4 h-4 text-zinc-700" />
-              <span>{tr('প্রেস চালান (ফরিদ ভাই থেকে হেড অফিসে প্রাপ্ত বই)', 'Press Receipt (Books received from Farid Bhai Press)', language)}</span>
-            </h3>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
+              <h3 className="text-xs font-bold text-zinc-900 flex items-center gap-2">
+                <Warehouse className="w-4 h-4 text-zinc-700" />
+                <span>
+                  {presses.length > 1
+                    ? tr('প্রেস চালান (হেড অফিসে চালান গ্রহণ)', 'Press Receipt (Books received from Press)', language)
+                    : tr('প্রেস চালান (ফরিদ ভাই থেকে হেড অফিসে প্রাপ্ত বই)', 'Press Receipt (Books received from Farid Bhai Press)', language)}
+                </span>
+              </h3>
+              {presses.length > 1 && (
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <span className="text-[11px] font-bold text-zinc-700 flex items-center gap-1">
+                    <Building2 className="w-3.5 h-3.5 text-blue-600" />
+                    <span>{tr('প্রেস নির্বাচন:', 'Select Press:', language)}</span>
+                  </span>
+                  <select
+                    value={selectedPressId}
+                    onChange={(e) => setSelectedPressId(e.target.value)}
+                    className="text-xs font-bold border border-zinc-300 rounded-lg px-2.5 py-1 bg-white text-zinc-900 focus:ring-2 focus:ring-zinc-900"
+                  >
+                    {presses.map(p => (
+                      <option key={p.id} value={p.id}>
+                        🏭 {p.name} {p.address ? `(${p.address})` : ''}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+            </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center">
               <div>
                 <label className="block text-xs text-zinc-600 mb-1">
-                  {tr(`${day} তারিখে ফরিদ ভাই প্রেস থেকে হেড অফিসে আসা বই`, `Books received on Day ${day} from Farid Bhai Press`, language)}
+                  {presses.length > 1
+                    ? tr(`${day} তারিখে ${presses.find(p => p.id === selectedPressId)?.name || 'প্রেস'} থেকে হেড অফিসে আসা বই`, `Books received on Day ${day} from ${presses.find(p => p.id === selectedPressId)?.name || 'Press'}`, language)
+                    : tr(`${day} তারিখে ফরিদ ভাই প্রেস থেকে হেড অফিসে আসা বই`, `Books received on Day ${day} from Farid Bhai Press`, language)}
                 </label>
                 <input
                   type="number"
@@ -524,7 +556,7 @@ export const QuickDataEntry: React.FC<QuickDataEntryProps> = ({
           
           {/* Day Picker & Bulk Save Bar */}
           <div className="bg-white p-4 rounded-2xl border border-zinc-200 shadow-xs flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 flex-wrap">
               <span className="text-xs font-bold text-zinc-800">{tr('তারিখ নির্বাচন:', 'Select Date:', language)}</span>
               <select
                 value={sheetDay}
@@ -537,6 +569,27 @@ export const QuickDataEntry: React.FC<QuickDataEntryProps> = ({
                   </option>
                 ))}
               </select>
+
+              {presses.length > 1 && (
+                <div className="flex items-center gap-1.5 pl-2 sm:border-l sm:border-zinc-200">
+                  <span className="text-[11px] font-bold text-zinc-700 flex items-center gap-1">
+                    <Building2 className="w-3.5 h-3.5 text-blue-600" />
+                    <span>{tr('প্রেস:', 'Press:', language)}</span>
+                  </span>
+                  <select
+                    value={selectedPressId}
+                    onChange={(e) => setSelectedPressId(e.target.value)}
+                    className="text-xs font-bold border border-zinc-300 rounded-lg px-2.5 py-1 bg-white text-zinc-900 focus:ring-2 focus:ring-zinc-900"
+                  >
+                    {presses.map(p => (
+                      <option key={p.id} value={p.id}>
+                        🏭 {p.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
               <span className="text-xs text-zinc-500">
                 ({books.length} {tr('টি বইয়ের জন্য একযোগে এন্ট্রি', 'Books Bulk Entry', language)})
               </span>

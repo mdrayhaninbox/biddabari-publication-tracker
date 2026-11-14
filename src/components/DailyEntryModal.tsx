@@ -8,9 +8,10 @@ import {
   Warehouse, 
   RotateCcw, 
   Gift, 
-  CheckCircle2 
+  CheckCircle2,
+  Building2
 } from 'lucide-react';
-import { BookRecord, ChannelConfig, DEFAULT_CHANNELS } from '../types/book';
+import { BookRecord, ChannelConfig, DEFAULT_CHANNELS, getEffectiveChannels, getEffectivePresses } from '../types/book';
 import { calculateBookMetrics, getBookChannelSales, formatBDT, formatNumber, formatMonthYearBengali } from '../utils/calculations';
 import { Language, tr } from '../utils/i18n';
 
@@ -66,7 +67,9 @@ export const DailyEntryModal: React.FC<DailyEntryModalProps> = ({
   const [rd, setRd] = useState<number>(0);
   const [gift, setGift] = useState<number>(0);
 
-  const effectiveChannels = channels && channels.length > 0 ? channels : DEFAULT_CHANNELS;
+  const effectiveChannels = getEffectiveChannels(channels);
+  const presses = getEffectivePresses(channels);
+  const [selectedPressId, setSelectedPressId] = useState<string>(presses[0]?.id || 'faridBhaiPress');
   const customOnlineChannels = effectiveChannels.filter(c => c.type === 'online' && !['boibari', 'rokomari', 'wafilife', 'othersOnline'].includes(c.id));
   const customOfflineChannels = effectiveChannels.filter(c => c.type === 'offline' && !['headOfficeSellOffline', 'nilkhetLibrary', 'sumonaLibrary', 'promiseLibrary', 'joystarLibrary'].includes(c.id));
 
@@ -278,14 +281,44 @@ export const DailyEntryModal: React.FC<DailyEntryModalProps> = ({
 
             {/* Section 1: Press Receipt */}
             <div className="border border-zinc-200 rounded-xl p-4 bg-white">
-              <div className="flex items-center gap-2 mb-3 text-zinc-900 font-bold text-xs">
-                <Warehouse className="w-4 h-4 text-zinc-700" />
-                <span>{tr('১. ফরিদ ভাই প্রেস থেকে হেড অফিসে চালান গ্রহণ (Press Receipt)', '1. Press Delivery Received to Head Office (Chalan Receipt)', language)}</span>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
+                <div className="flex items-center gap-2 text-zinc-900 font-bold text-xs">
+                  <Warehouse className="w-4 h-4 text-zinc-700" />
+                  <span>
+                    {presses.length > 1
+                      ? tr('১. ছাপাখানা / প্রেস থেকে চালান গ্রহণ (Press Receipt)', '1. Press Delivery Received to Head Office', language)
+                      : tr('১. ফরিদ ভাই প্রেস থেকে হেড অফিসে চালান গ্রহণ (Press Receipt)', '1. Press Delivery Received to Head Office (Chalan Receipt)', language)}
+                  </span>
+                </div>
+
+                {/* If multiple presses exist, show the Press Selector! */}
+                {presses.length > 1 && (
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <span className="text-[11px] font-bold text-zinc-700 flex items-center gap-1">
+                      <Building2 className="w-3.5 h-3.5 text-blue-600" />
+                      <span>{tr('প্রেস নির্বাচন:', 'Select Press:', language)}</span>
+                    </span>
+                    <select
+                      value={selectedPressId}
+                      onChange={(e) => setSelectedPressId(e.target.value)}
+                      className="text-xs font-bold border border-zinc-300 rounded-lg px-2.5 py-1 bg-white text-zinc-900 focus:ring-2 focus:ring-zinc-900"
+                    >
+                      {presses.map(p => (
+                        <option key={p.id} value={p.id}>
+                          🏭 {p.name} {p.address ? `(${p.address})` : ''}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
               </div>
+
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs text-zinc-600 mb-1">
-                    {tr(`${day} তারিখে প্রাপ্ত মোট বই (Farid Bhai to HO)`, `Books received on Day ${day} (Press to HO)`, language)}
+                    {presses.length > 1
+                      ? tr(`${day} তারিখে ${presses.find(p => p.id === selectedPressId)?.name || 'প্রেস'} থেকে প্রাপ্ত বই`, `Books received on Day ${day} from ${presses.find(p => p.id === selectedPressId)?.name || 'Press'}`, language)
+                      : tr(`${day} তারিখে প্রাপ্ত মোট বই (Farid Bhai to HO)`, `Books received on Day ${day} (Press to HO)`, language)}
                   </label>
                   <input
                     type="number"

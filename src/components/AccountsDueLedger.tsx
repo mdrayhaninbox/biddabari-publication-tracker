@@ -25,7 +25,9 @@ import {
   PressDeliveryRecord,
   ChannelConfig,
   ChannelType,
-  DEFAULT_CHANNELS
+  DEFAULT_CHANNELS,
+  getEffectiveChannels,
+  getEffectivePresses
 } from '../types/book';
 import { 
   calculatePressAccounts, 
@@ -91,8 +93,8 @@ export const AccountsDueLedger: React.FC<AccountsDueLedgerProps> = ({
     setPreviewImage({ url, title, subtitle });
   };
 
-  const effectiveChannels = channels && channels.length > 0 ? channels : DEFAULT_CHANNELS;
-  const presses = effectiveChannels.filter(c => c.type === 'press' || c.id === 'faridBhaiPress');
+  const effectiveChannels = getEffectiveChannels(channels);
+  const presses = getEffectivePresses(channels);
 
   // Compute live press financials (incorporating multi press orders and press filter)
   const pressAccounts = calculatePressAccounts(books, pressPayments, pressOrders, selectedPressFilter);
