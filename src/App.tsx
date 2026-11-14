@@ -1453,6 +1453,49 @@ export const App: React.FC = () => {
     syncNotebookNotesToFirestore(updated).catch(console.error);
   };
 
+  // Remove voucher image from specific record while preserving financial ledger entry
+  const handleRemoveVoucherImage = (type: 'payment' | 'delivery' | 'order' | 'collection', recordId: string) => {
+    if (type === 'payment') {
+      setPressPayments(prev => {
+        const updated = prev.map(p => p.id === recordId ? { ...p, voucherImage: undefined } : p);
+        safeLocalStorageSet(PRESS_PAYMENTS_STORAGE_KEY, JSON.stringify(updated));
+        idbSet(PRESS_PAYMENTS_STORAGE_KEY, JSON.stringify(updated)).catch(() => {});
+        syncPressPaymentsToFirestore(updated).catch(() => {});
+        return updated;
+      });
+    } else if (type === 'delivery') {
+      setPressDeliveries(prev => {
+        const updated = prev.map(d => d.id === recordId ? { ...d, voucherImage: undefined } : d);
+        safeLocalStorageSet(PRESS_DELIVERIES_STORAGE_KEY, JSON.stringify(updated));
+        idbSet(PRESS_DELIVERIES_STORAGE_KEY, JSON.stringify(updated)).catch(() => {});
+        syncPressDeliveriesToFirestore(updated).catch(() => {});
+        return updated;
+      });
+    } else if (type === 'order') {
+      setPressOrders(prev => {
+        const updated = prev.map(o => o.id === recordId ? { ...o, voucherImage: undefined } : o);
+        safeLocalStorageSet(PRESS_ORDERS_STORAGE_KEY, JSON.stringify(updated));
+        idbSet(PRESS_ORDERS_STORAGE_KEY, JSON.stringify(updated)).catch(() => {});
+        syncPressOrdersToFirestore(updated).catch(() => {});
+        return updated;
+      });
+    } else if (type === 'collection') {
+      setChannelCollections(prev => {
+        const updated = prev.map(c => c.id === recordId ? { ...c, voucherImage: undefined, receiptImage: undefined } : c);
+        safeLocalStorageSet(CHANNEL_COLLECTIONS_STORAGE_KEY, JSON.stringify(updated));
+        idbSet(CHANNEL_COLLECTIONS_STORAGE_KEY, JSON.stringify(updated)).catch(() => {});
+        syncChannelCollectionsToFirestore(updated).catch(() => {});
+        return updated;
+      });
+    }
+  };
+
+  const totalVouchersCount = 
+    pressPayments.filter(p => !!p.voucherImage).length +
+    pressDeliveries.filter(d => !!d.voucherImage).length +
+    pressOrders.filter(o => !!o.voucherImage).length +
+    channelCollections.filter(c => !!(c.voucherImage || c.receiptImage)).length;
+
   return (
     <div className="min-h-screen bg-[#fafafa] flex flex-col font-sans text-zinc-900">
       
@@ -1487,7 +1530,7 @@ export const App: React.FC = () => {
         zoom={uiZoom}
         onSetZoom={setUiZoom}
         onOpenStorage={() => setIsStorageOpen(true)}
-        storageCount={storedFiles.length + notebookNotes.length}
+        storageCount={storedFiles.length + notebookNotes.length + totalVouchersCount}
         language={language}
         onSetLanguage={setLanguage}
         theme={theme}
@@ -1779,17 +1822,26 @@ export const App: React.FC = () => {
         language={language}
       />
 
-      {/* File Storage & Digital Notebook Modal */}
+      {/* File Storage, Digital Notebook & Voucher Gallery Modal */}
       <FileStorageModal
         isOpen={isStorageOpen}
         onClose={() => setIsStorageOpen(false)}
         files={storedFiles}
         notes={notebookNotes}
+        pressPayments={pressPayments}
+        pressDeliveries={pressDeliveries}
+        pressOrders={pressOrders}
+        channelCollections={channelCollections}
         onAddFile={handleAddFile}
         onDeleteFile={handleDeleteFile}
         onAddNote={handleAddNote}
         onUpdateNote={handleUpdateNote}
         onDeleteNote={handleDeleteNote}
+        onRemoveVoucherImage={handleRemoveVoucherImage}
+        onDeletePressPayment={handleDeletePressPayment}
+        onDeletePressDelivery={handleDeletePressDelivery}
+        onDeletePressOrder={handleDeletePressOrder}
+        onDeleteChannelCollection={handleDeleteChannelCollection}
         language={language}
       />
 

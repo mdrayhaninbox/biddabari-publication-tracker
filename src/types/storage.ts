@@ -22,3 +22,23 @@ export interface NotebookNoteRecord {
   createdAt: string; // ISO timestamp
   updatedAt: string; // ISO timestamp
 }
+
+export type VoucherCategory = 'all' | 'payment' | 'delivery' | 'order' | 'collection';
+
+export interface VoucherStorageItem {
+  id: string;
+  recordId: string;
+  category: 'payment' | 'delivery' | 'order' | 'collection';
+  categoryLabelBn: string;
+  categoryLabelEn: string;
+  categoryColor: string;
+  icon: string;
+  title: string;
+  subtitle?: string;
+  date: string;
+  voucherNo?: string;
+  amountOrQuantity?: string;
+  paymentMethod?: string;
+  notes?: string;
+  imageUrl: string;
+}
